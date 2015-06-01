@@ -1,0 +1,2 @@
+#set($title="任务调度详情")
+#set($query = "?taskId=${task.id}")

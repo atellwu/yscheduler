@@ -1,0 +1,14 @@
+Version 0.0.1 (2014.11.17)
+1.机器
+  1)web端
+  	采用war包部署，环境要求： JDK 7 + TOMCAT 6.0。
+  	步骤：将war包放到webapps目录下，启动TOMCAT
+  2)agent端
+  	ZIP包，环境要求：JDK 7
+  3)database
+  	使用RDS for MySQL
+2.监控
+  1）web和agent进程监控
+  2）在每个agent上部署高运行频率的heartbeat task，监控该任务的运行状况
+  
+

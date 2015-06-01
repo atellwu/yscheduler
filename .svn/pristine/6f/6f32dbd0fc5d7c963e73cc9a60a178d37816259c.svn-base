@@ -1,0 +1,53 @@
+<assembly
+	xmlns="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.2"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.2 http://maven.apache.org/xsd/assembly-1.1.2.xsd">
+	<id>bin</id>
+	<formats>
+		<format>zip</format>
+	</formats>
+	<includeBaseDirectory>false</includeBaseDirectory>
+	<moduleSets>
+		<moduleSet>
+
+			<!-- Enable access to all projects in the current multimodule build! -->
+			<useAllReactorProjects>true</useAllReactorProjects>
+
+			<!-- Now, select which projects to include in this module-set. -->
+			<includes>
+				<include>com.yeahmobi.yscheduler:agent</include>
+			</includes>
+			<binaries>
+				<outputDirectory>yagent/webapps/yscheduler</outputDirectory>
+				<includeDependencies>false</includeDependencies>
+				<unpack>true</unpack>
+				<unpackOptions>
+					<excludes>
+						<exclude>WEB-INF/classes/logback.xml</exclude>
+					</excludes>
+				</unpackOptions>
+			</binaries>
+		</moduleSet>
+	</moduleSets>
+	<fileSets>
+		<fileSet>
+			<directory>jetty</directory>
+			<outputDirectory>yagent</outputDirectory>
+			<fileMode>0755</fileMode>
+			<lineEnding>keep</lineEnding>
+		</fileSet>
+		<fileSet>
+			<directory>agent/logback</directory>
+			<outputDirectory>yagent/webapps/yscheduler/WEB-INF/classes/</outputDirectory>
+		</fileSet>
+		<fileSet>
+			<directory>agent/version</directory>
+			<outputDirectory>yagent/webapps/yscheduler/WEB-INF/classes/</outputDirectory>
+			<filtered>true</filtered>
+		</fileSet>
+		<fileSet>
+			<directory>agent/conf/product</directory>
+			<outputDirectory>yagent/webapps/yscheduler/WEB-INF/classes/</outputDirectory>
+		</fileSet>
+	</fileSets>
+</assembly>

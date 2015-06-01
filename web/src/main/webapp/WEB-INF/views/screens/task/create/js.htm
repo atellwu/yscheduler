@@ -1,0 +1,181 @@
+<link href="${rc.contextPath}/assets/css/bwizard.css" rel="stylesheet" />
+<link href="${rc.contextPath}/assets/css/autocomplete.css"
+	rel="stylesheet" />
+<link href="${rc.contextPath}/assets/css/chosen.min.css"
+	rel="stylesheet" />
+<link href="${rc.contextPath}/static/css/custom.css" rel="stylesheet" />
+
+
+<script
+	src="${rc.contextPath}/assets/js/bwizard/jquery.bootstrap.wizard.js"
+	type="text/javascript"></script>
+<script src="${rc.contextPath}/assets/js/jquery.autocomplete.js"
+	type="text/javascript"></script>
+<script src="${rc.contextPath}/assets/js/chosen.jquery.min.js"
+	type="text/javascript"></script>
+<script src="${rc.contextPath}/assets/js/bootbox.min.js"
+	type="text/javascript"></script>
+<script src="${rc.contextPath}/assets/js/jquery.validate.min.js"
+	type="text/javascript"></script>
+<script src="${rc.contextPath}/static/js/validate.js"
+	type="text/javascript"></script>
+
+<script type="text/javascript">
+	function schedule_changed() {
+		var value = $("input[name='schedule']:checked").val();
+		if (value == 'clock') {
+			$('#schedule').show();
+		} else {
+			$('#schedule').hide();
+		}
+	}
+	
+	function executetype_changed(obj) {
+		if (obj.value == 'single') {
+			$('#selectAgent').show();
+			$('#agent').prop('disabled', false);
+		} else {
+			$('#selectAgent').hide();
+			$('#agent').prop('disabled', true);
+		}
+	}
+	
+	function changeType(obj){
+		if(obj.value==20){
+			$('.type').hide();
+		} else {
+			$('.type').show();
+		}
+	}
+	
+	function alertDialog(msg,title){
+		bootbox.alert({
+			message : msg,
+			title : title ,callback: function(result) {
+				window.location.href = '${rc.contextPath}/task/detail/'+$("#taskId").val();
+			}
+		});
+	}
+	
+	//该函数将来会被iframe中返回的跨域代理页面调用
+	function getIframeVal(jsonObj) {
+		
+		if(jsonObj.success == 'true'){
+			$.ajax({
+				type : "POST",
+				url : "/task/update/updateVersion?taskId="+$("#taskId").val()+"&version="+jsonObj.version+"&filename="+jsonObj.filename,
+				dataType : "json",
+				success : function(data) {
+					if (data.success == false) {
+						alertDialog(data.notice, "新加任务成功，但作业附件上传失败，确定后可进入任务详情页面重新上传!");
+					} else {
+						//先移除iframe
+						$("#ActionFrame").remove();
+						bootbox.alert("新加任务成功！", function(result) {
+							window.location.href = '/task';
+						});
+					}
+				},
+				error : app.httpError
+			});
+		}else{
+			alertDialog(decodeURIComponent(jsonObj.errmsg), "新加任务成功，但作业附件上传失败，确定后可进入任务详情页面重新上传!");
+		}
+	}
+	
+	$(document).ready(function() {
+		$('textarea[class*=autosize]').autosize({append: "\n"});
+		app.onCrontabTip();
+		$('#wizard').bootstrapWizard({
+			'onNext' : function(tab, navigation, index) {
+				return $('.tab-pane.active').validate().form();
+			},
+			'tabClass' : 'bwizard-steps',
+			'nextSelector' : '.button-next',
+			'previousSelector' : '.button-previous',
+			'finishSelector' : '.button-finish'
+		});
+
+		$(".single").chosen({
+			width : "100%"
+		});
+		$(".multiple").chosen({
+			width : "150%"
+		});
+		var canSkip = $("input[name='canSkip']");
+		var concurrent = $("input[name='concurrent']");
+		var condition = $("input[name='condition']");
+		function updateDisabledInput(){
+			if(canSkip.prop('checked') == true){
+				concurrent.prop('disabled', true);
+				condition.prop('disabled', true);
+			} else{
+				concurrent.prop('disabled', false);
+				if(concurrent.prop('checked') == true){
+					condition.prop('disabled', true);
+				} else{
+					condition.prop('disabled', false);
+				}
+			}
+		}
+		canSkip.change(function(e){
+			updateDisabledInput();
+		});
+		concurrent.change(function(e){
+			updateDisabledInput();
+		});
+
+		$("input[value='single']").attr("checked", true);
+		
+		$('#submit').click(function(e) {
+			if (!$('#form').validate().form()) {
+				return false;
+			}
+			$('#submit').button('loading');
+			$.ajax({
+				type : $('#form').attr('method'),
+				url : $('#form').attr('action'),
+				data : $('#form').serialize(),
+				dataType : "json",
+				success : function(data) {
+					if (data.success == false) {
+						bootbox.alert({
+							message : data.notice,
+							title : "新加任务失败！"
+						});
+						$('#submit').button('reset');
+					} else {
+						if($("input[name='fileUpload']").val()==""){
+							bootbox.alert("新加任务成功！", function(result) {
+								window.location.href = '/task';
+							});
+						}else{
+							$("#taskId").val(data.taskId);
+							$.ajax({
+								url : '/task/create/serverExist?path='+data.uploadPath,
+								type : 'get',
+								dataType : "json",
+								success : function(data0) {
+									if (data0.success == false) {
+										alertDialog(data0.notice, "新加任务成功，但作业附件上传失败(存储服务器不可用)，确定后可进入任务详情页面重新上传!");
+									} else {
+										$("#key").val($("#name").val());
+										$("<iframe width='1' height='1' id='ActionFrame' name='ActionFrame' style='display:none;position:absolute;z-index:4;'  frameborder='no' marginheight='0' marginwidth='0' allowTransparency='true'></iframe>").appendTo('body');
+										//开始提交  
+										var MyForm = document.getElementById("form");
+										MyForm.action = data.uploadPath+"?proxyPath=" + window.location.origin + window.contextPath + "/static/cross_domain_proxy.html&callback=getIframeVal";
+										MyForm.target = "ActionFrame"; 
+										MyForm.submit();
+									}
+								},
+								error : app.httpError,
+								async : false
+							});
+						}
+					}
+				},
+				error : app.httpError
+			});
+		});
+	});
+</script>

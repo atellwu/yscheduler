@@ -1,0 +1,142 @@
+#screen("meta.htm")
+<!DOCTYPE html>
+<html lang="en">
+<head>#parse("common/header.htm")
+</head>
+<body class="skin-1">
+	<div class="navbar navbar-default" id="navbar">
+		<script type="text/javascript">
+			try {
+				ace.settings.check('navbar', 'fixed')
+			} catch (e) {
+			}
+		</script>
+		
+		<div class="navbar-container" id="navbar-container">
+			<div class="navbar-header pull-left">
+				<a href="${rc.contextPath}/" class="navbar-brand"> <small>
+						<i class="icon-leaf"></i> 调度中心
+				</small>
+				</a>
+				<!-- /.brand -->
+			</div>
+			<!-- /.navbar-header -->
+			
+			<div class="navbar-header pull-right" role="navigation">
+				<ul class="nav ace-nav">
+					<li class="light-blue"><a data-toggle="dropdown" href="#"
+						class="dropdown-toggle"> <img class="nav-user-photo"
+							src="${rc.contextPath}/assets/avatars/user.jpg"
+							alt="Jason's Photo" /> <span class="user-info"> <small>Welcome,</small>
+								$!{userContext.getUserContext().username}
+						</span> <i class="icon-caret-down"></i>
+					</a>
+
+						<ul
+							class="user-menu pull-right dropdown-menu dropdown-yellow dropdown-caret dropdown-close">
+
+
+							<li><a href="${rc.contextPath}/profile"> <i
+									class="icon-user"></i> Profile
+							</a></li>
+
+							<li><a href="${rc.contextPath}/member"> <i
+									class="icon-user"></i> Team
+							</a></li>
+
+							<li class="divider"></li>
+
+							<li><a href="${rc.contextPath}/login/logout"> <i
+									class="icon-off"></i> Logout
+							</a></li>
+						</ul></li>
+				</ul>
+				<!-- /.ace-nav -->
+			</div>
+			
+			<div class="navbar-header pull-right">
+				<a href="javascript:;" class="navbar-brand"> <small>
+						 <span id="systemTime"></span>
+				</small>
+				</a>
+				<!-- /.brand -->
+			</div>
+			<!-- /.navbar-header -->
+		</div>
+		<!-- /.container -->
+	</div>
+
+	<div class="main-container" id="main-container">
+		<script type="text/javascript">
+			try {
+				ace.settings.check('main-container', 'fixed')
+			} catch (e) {
+			}
+		</script>
+
+		<div class="main-container-inner">
+			<a class="menu-toggler" id="menu-toggler" href="#"> <span
+				class="menu-text"></span>
+			</a> #parse("common/sidebar.htm")
+
+			<div class="main-content">
+				<div class="breadcrumbs" id="breadcrumbs">
+					<script type="text/javascript">
+						try {
+							ace.settings.check('breadcrumbs', 'fixed')
+						} catch (e) {
+						}
+					</script>
+					#parse("common/breadcrumb.htm")
+					<!-- .breadcrumb -->
+				</div>
+				<div class="page-content">
+					$screen_content
+					<!-- /.row -->
+				</div>
+				<!-- /.page-content -->
+			</div>
+			<!-- /.main-content -->
+
+		</div>
+		<!-- /.main-container-inner -->
+		<a href="#" id="btn-scroll-up"
+			class="btn-scroll-up btn btn-sm btn-inverse"> <i
+			class="icon-double-angle-up icon-only bigger-110"></i>
+		</a>
+	</div>
+	<!-- /.main-container -->
+	#parse("common/baseJs.htm") #parse("common/modals.htm")
+	#screen("js.htm")
+	<script type="text/javascript"> 
+			//从服务器上获取当前时间及时区
+			var timeInfo = $.ajax({url:window.contextPath+"/",async: false});
+			var timeZone = decodeURIComponent(timeInfo.getResponseHeader("timeZone"));
+			var currentDate = new Date(timeInfo.getResponseHeader("systemTime"));
+			function run() 	{ 
+			currentDate.setSeconds(currentDate.getSeconds() + 5); 
+			var time = "";
+			var year = currentDate.getFullYear();
+			var month = currentDate.getMonth() + 1;
+			var day = currentDate.getDate();
+			var hour = currentDate.getHours();
+			var minute = currentDate.getMinutes();
+			var second = currentDate.getSeconds();
+			if(hour < 10){
+				time += "0" + hour;
+			}else{
+				time += hour;
+			}
+			time += ":";
+			if(minute < 10){
+				time += "0" + minute;
+			}else{
+				time += minute;
+			}
+			document.getElementById("systemTime").innerHTML ="<i class='icon-calendar'></i>   "+ timeZone+ "&nbsp;&nbsp;" + year+"年"+month+"月"+day+"日" + time;     
+			} 
+			run();
+			window.setInterval("run();", 1000*5); 
+		</script>
+</body>
+</html>

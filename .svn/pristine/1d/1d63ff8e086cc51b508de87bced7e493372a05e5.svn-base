@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration
+    PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-config.dtd">
+
+<configuration>
+	<properties>
+		<property name="dialect" value="mysql" />
+		<property name="pageSqlId" value=".*WithRowbounds$" />
+	</properties>
+
+	<settings>
+		<!-- changes from the defaults -->
+		<setting name="lazyLoadingEnabled" value="true" />
+	</settings>
+
+	<typeAliases>
+		<typeAlias alias="hashMap" type="java.util.HashMap" />
+	</typeAliases>
+
+	<plugins>
+		<plugin interceptor="com.yeahmobi.yscheduler.model.common.RowBoundsInterceptor"></plugin>
+	</plugins>
+
+</configuration>

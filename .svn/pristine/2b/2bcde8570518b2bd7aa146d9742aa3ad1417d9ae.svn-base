@@ -1,0 +1,10 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>#parse("common/header.htm")
+</head>
+<body>
+	$screen_content
+	#parse("common/baseJs.htm")
+	#parse("common/modals.htm") 
+</body>
+</html>

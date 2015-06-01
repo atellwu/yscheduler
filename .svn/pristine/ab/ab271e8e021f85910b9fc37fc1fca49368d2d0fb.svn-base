@@ -1,0 +1,3 @@
+fs.defaultFS=hdfs://xxxx:9000
+dfs.replication=1
+yscheduler.baseDir=/yscheduler/attemptLog/

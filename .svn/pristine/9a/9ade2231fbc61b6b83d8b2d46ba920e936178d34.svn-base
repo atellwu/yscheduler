@@ -1,0 +1,29 @@
+
+<script type="text/javascript" src="${rc.contextPath}/assets/js/jquery.dataTables.min.js"></script>
+<script type="text/javascript" src="${rc.contextPath}/assets/js/jquery.dataTables.bootstrap.js"></script>
+
+<script type="text/javascript">
+	$("[rel=tooltip]").tooltip();
+	$(document).ready(function() {
+		$('#listTable').dataTable({
+			"bPaginate" : false,
+			"bLengthChange" : false,
+			"bInfo" : false,
+			"bFilter" : false,
+			"aoColumns" : [ {
+				"bSortable" : false
+			}, {
+				"bSortable" : false
+			}, {
+				"bSortable" : false
+			}, {
+				"bSortable" : false
+			}, {
+				"bSortable" : false
+			} ],
+			"aaSorting" : []
+		});
+
+	});
+</script>
+

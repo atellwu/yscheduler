@@ -1,0 +1,286 @@
+package com.yeahmobi.yscheduler.agentframework.zookeeper;
+
+import java.io.UnsupportedEncodingException;
+import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import org.apache.commons.lang.StringUtils;
+import org.apache.curator.RetryPolicy;
+import org.apache.curator.framework.CuratorFramework;
+import org.apache.curator.framework.CuratorFrameworkFactory;
+import org.apache.curator.framework.api.CuratorWatcher;
+import org.apache.curator.retry.BoundedExponentialBackoffRetry;
+import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.KeeperException.NodeExistsException;
+import org.apache.zookeeper.WatchedEvent;
+
+import com.alibaba.fastjson.JSON;
+import com.yeahmobi.yscheduler.common.Constants;
+import com.yeahmobi.yscheduler.model.Agent;
+import com.yeahmobi.yscheduler.model.Attempt;
+import com.yeahmobi.yscheduler.model.type.AttemptStatus;
+
+public class ZookeeperManager implements AssignmentManager, AgentManager {
+
+    private static final String         PATH_AGENTS                   = "/agents";
+    private static final String         PATH_ACTIVE_LIST              = PATH_AGENTS + "/activeList";
+
+    private static final int            DEFAULT_MAX_SLEEP_TIME        = 30000;
+    private static final int            DEFAULT_BASE_SLEEP_TIME       = 500;
+
+    private static final int            DEFAULT_SESSION_TIMEOUT_MS    = 60 * 1000;
+    private static final int            DEFAULT_CONNECTION_TIMEOUT_MS = 15 * 1000;
+
+    private static final String         NAMESPACE                     = "yscheduler";
+    private static final int            MAX_RETRY_VALUE               = 29;
+
+    private List<AssignmentListener>    assignmentListeners           = new ArrayList<AssignmentListener>();
+    private List<StatusChangedListener> statusChangedListeners        = new ArrayList<StatusChangedListener>();
+    private List<CancelListener>        cancelListeners               = new ArrayList<CancelListener>();
+
+    private final CuratorFramework      client;
+
+    private AtomicInteger               loadbalanceIndex              = new AtomicInteger(0);
+    private volatile List<Long>         activeAgentIds;
+
+    public ZookeeperManager(String rootPath, String zkUrl, int sessionTimeoutMs, int connectionTimeoutMs,
+                            RetryPolicy retryPolicy) throws Exception {
+        // 构造并启动zk client
+        if (rootPath == null) {
+            rootPath = NAMESPACE;
+        }
+        this.client = CuratorFrameworkFactory.builder().connectString(zkUrl).sessionTimeoutMs(sessionTimeoutMs).connectionTimeoutMs(connectionTimeoutMs).namespace(rootPath).retryPolicy(retryPolicy).build();
+        this.client.start();
+
+        // init zk base path
+        try {
+            this.client.create().creatingParentsIfNeeded().forPath(PATH_ACTIVE_LIST);
+        } catch (Exception e) {
+            if (e instanceof NodeExistsException) {
+                // ignore
+            } else {
+                throw e;
+            }
+        }
+        // init active agent list
+        this.activeAgentIds = parseActiveAgentIds(this.client.getChildren().usingWatcher(new CuratorWatcher() {
+
+            public void process(WatchedEvent event) throws Exception {
+                ZookeeperManager.this.activeAgentIds = parseActiveAgentIds(ZookeeperManager.this.client.getChildren().usingWatcher(this).forPath(PATH_ACTIVE_LIST));
+            }
+        }).forPath(PATH_ACTIVE_LIST));
+    }
+
+    private ArrayList<Long> parseActiveAgentIds(List<String> agentIdStrs) {
+        ArrayList<Long> list = null;
+        if (agentIdStrs != null) {
+            list = new ArrayList<Long>(agentIdStrs.size());
+            for (String agentIdStr : agentIdStrs) {
+                long agentId = Long.parseLong(agentIdStr);
+                list.add(agentId);
+            }
+        } else {
+            list = new ArrayList<Long>(0);
+        }
+        return list;
+    }
+
+    public ZookeeperManager(String zkUrl, int sessionTimeoutMs, int connectionTimeoutMs) throws Exception {
+        this(null, zkUrl, sessionTimeoutMs, connectionTimeoutMs,
+             new BoundedExponentialBackoffRetry(DEFAULT_BASE_SLEEP_TIME, DEFAULT_MAX_SLEEP_TIME, MAX_RETRY_VALUE));
+    }
+
+    public ZookeeperManager(String rootPath, String zkUrl, int sessionTimeoutMs, int connectionTimeoutMs)
+                                                                                                         throws Exception {
+        this(rootPath, zkUrl, sessionTimeoutMs, connectionTimeoutMs,
+             new BoundedExponentialBackoffRetry(DEFAULT_BASE_SLEEP_TIME, DEFAULT_MAX_SLEEP_TIME, MAX_RETRY_VALUE));
+    }
+
+    public ZookeeperManager(String zkUrl, RetryPolicy retryPolicy) throws Exception {
+        this(null, zkUrl, DEFAULT_SESSION_TIMEOUT_MS, DEFAULT_CONNECTION_TIMEOUT_MS, retryPolicy);
+    }
+
+    public ZookeeperManager(String rootPath, String zkUrl, RetryPolicy retryPolicy) throws Exception {
+        this(rootPath, zkUrl, DEFAULT_SESSION_TIMEOUT_MS, DEFAULT_CONNECTION_TIMEOUT_MS, retryPolicy);
+    }
+
+    public ZookeeperManager(String zkUrl) throws Exception {
+        this(null, zkUrl, DEFAULT_SESSION_TIMEOUT_MS, DEFAULT_CONNECTION_TIMEOUT_MS,
+             new BoundedExponentialBackoffRetry(DEFAULT_BASE_SLEEP_TIME, DEFAULT_MAX_SLEEP_TIME, MAX_RETRY_VALUE));
+    }
+
+    public ZookeeperManager(String rootPath, String zkUrl) throws Exception {
+        this(rootPath, zkUrl, DEFAULT_SESSION_TIMEOUT_MS, DEFAULT_CONNECTION_TIMEOUT_MS,
+             new BoundedExponentialBackoffRetry(DEFAULT_BASE_SLEEP_TIME, DEFAULT_MAX_SLEEP_TIME, MAX_RETRY_VALUE));
+    }
+
+    public void assignTo(Attempt attempt) throws Exception {
+        long agentId = attempt.getAgentId();
+        String path = PATH_AGENTS + "/" + agentId + "/assignments/" + attempt.getId();
+        String statusPath = path + "/status";
+        String cancelPath = path + "/cancelled";
+        String json = toJson(attempt);
+        // json
+        this.client.create().creatingParentsIfNeeded().forPath(path, toBytes(json));
+        // status
+        this.client.create().creatingParentsIfNeeded().forPath(statusPath, toBytes(attempt.getStatus().toString()));
+        // cancel
+        this.client.create().creatingParentsIfNeeded().forPath(cancelPath, toBytes("false"));
+    }
+
+    private byte[] toBytes(String json) {
+        try {
+            return json.getBytes("UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException(e.getMessage(), e);
+        }
+    }
+
+    private String toJson(Attempt attempt) {
+        return JSON.toJSONString(attempt);
+    }
+
+    private Attempt fromJson(String json) {
+        return JSON.parseObject(json, Attempt.class);
+    }
+
+    public void changeStatus(long agentId, long attemptId, AttemptStatus status) throws Exception {
+        String statusPath = getStatusPath(agentId, attemptId);
+        this.client.setData().forPath(statusPath, BigInteger.valueOf(status.getId()).toByteArray());
+    }
+
+    private String getStatusPath(long agentId, long attemptId) {
+        String path = getAttemptPath(agentId, attemptId);
+        String statusPath = path + "/status";
+        return statusPath;
+    }
+
+    private String getAttemptPath(long agentId, long attemptId) {
+        return PATH_AGENTS + "/" + agentId + "/assignments/" + attemptId;
+    }
+
+    public void cancel(long agentId, long attemptId) throws Exception {
+        String cancelPath = getCancelPath(agentId, attemptId);
+        this.client.setData().forPath(cancelPath, toBytes("true"));
+    }
+
+    private String getCancelPath(long agentId, long attemptId) {
+        String path = getAttemptPath(agentId, attemptId);
+        String cancelPath = path + "/cancelled";
+        return cancelPath;
+    }
+
+    public long getAgentId(String host) throws Exception {
+        String path = PATH_AGENTS;
+        List<String> agentIdStrs = this.client.getChildren().forPath(path);
+        if (agentIdStrs != null) {
+            for (String agentIdStr : agentIdStrs) {
+                long agentId = Long.parseLong(agentIdStr);
+                String agentPath = PATH_AGENTS + "/" + agentId;
+                String agentHost = new String(this.client.getData().forPath(agentPath));
+                if (StringUtils.equals(agentHost, host)) {
+                    return agentId;
+                }
+            }
+        }
+        throw new IllegalArgumentException(String.format("Agent not exists(host:%s)", host));
+    }
+
+    public void active(long agentId) throws Exception {
+        String activeAgentPath = PATH_ACTIVE_LIST + "/" + agentId;
+        try {
+            this.client.create().creatingParentsIfNeeded().withMode(CreateMode.EPHEMERAL).forPath(activeAgentPath);
+        } catch (Exception e) {
+            if (e instanceof NodeExistsException) {
+                // ignore
+            } else {
+                throw e;
+            }
+        }
+    }
+
+    public List<Long> activeList() throws Exception {
+        return this.activeAgentIds;
+    }
+
+    public long nextActive() {
+        List<Long> activeAgentIds0 = this.activeAgentIds;
+        int loadbalanceIndex0 = this.loadbalanceIndex.getAndIncrement();
+        // ensure positive
+        if (loadbalanceIndex0 != Integer.MIN_VALUE) {
+            loadbalanceIndex0 = Math.abs(loadbalanceIndex0);
+        } else {
+            loadbalanceIndex0 = 0;
+        }
+        int index = loadbalanceIndex0 % activeAgentIds0.size();
+        return activeAgentIds0.get(index);
+    }
+
+    public void addAssignmentListener(AssignmentListener listener) {
+        this.assignmentListeners.add(listener);
+    }
+
+    public void addStatusChangedListener(StatusChangedListener listener) {
+        this.statusChangedListeners.add(listener);
+    }
+
+    public void addCancelListener(CancelListener listener) {
+        this.cancelListeners.add(listener);
+    }
+
+    public void addAgent(Agent agent) throws Exception {
+        String agentPath = PATH_AGENTS + "/" + agent.getId();
+        String host = getHost(agent);
+        try {
+            this.client.create().forPath(agentPath, toBytes(host));
+        } catch (Exception e) {
+            if (e instanceof NodeExistsException) {
+                // modify if exists
+                this.client.setData().forPath(agentPath, toBytes(host));
+            } else {
+                throw e;
+            }
+        }
+    }
+
+    private String getHost(Agent agent) {
+        String ip = agent.getIp();
+        String host = (StringUtils.contains(ip, ':')) ? ip : ip + ":" + Constants.DEFAULT_AGENT_PORT;
+        return host;
+    }
+
+    public void delAgent(Agent agent) throws Exception {
+        String agentPath = PATH_AGENTS + "/" + agent.getId();
+        this.client.delete().forPath(agentPath);
+    }
+
+    public void modAgent(Agent agent) throws Exception {
+        String agentPath = PATH_AGENTS + "/" + agent.getId();
+        String host = getHost(agent);
+        this.client.setData().forPath(agentPath, toBytes(host));
+    }
+
+    public static void main(String[] args) throws Exception {
+        System.out.println((-9) % -2);
+
+        ZookeeperManager manager = new ZookeeperManager("172.20.0.180:2181");
+
+        // Attempt attempt = new Attempt();
+        // attempt.setAgentId(1L);
+        // attempt.setId(4L);
+        // attempt.setStatus(AttemptStatus.INIT);
+        // manager.assignTo(attempt);
+
+        // System.out.println(manager.getAgentId("127.0.0.1:24368"));
+
+        System.out.println(manager.nextActive());
+        System.out.println(manager.nextActive());
+        System.out.println(manager.nextActive());
+        System.out.println(manager.nextActive());
+        System.out.println(manager.nextActive());
+        // manager.active(1);
+    }
+
+}

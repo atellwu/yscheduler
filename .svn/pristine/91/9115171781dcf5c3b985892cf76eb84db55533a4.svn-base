@@ -1,0 +1,20 @@
+package com.yeahmobi.yscheduler.agentframework.zookeeper;
+
+import com.yeahmobi.yscheduler.model.Attempt;
+import com.yeahmobi.yscheduler.model.type.AttemptStatus;
+
+public interface AssignmentManager {
+
+    void assignTo(Attempt attempt) throws Exception;
+
+    void addAssignmentListener(AssignmentListener listener);
+
+    void changeStatus(long agentId, long attemptId, AttemptStatus status) throws Exception;
+
+    void addStatusChangedListener(StatusChangedListener listener);
+
+    void cancel(long agentId, long attemptId) throws Exception;
+
+    void addCancelListener(CancelListener listener);
+
+}
