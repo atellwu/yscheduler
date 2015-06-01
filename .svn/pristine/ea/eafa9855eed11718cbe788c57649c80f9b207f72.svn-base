@@ -1,0 +1,205 @@
+package com.yeahmobi.yscheduler.web.controller.task;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.commons.lang.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.support.CronTrigger;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.servlet.ModelAndView;
+
+import com.alibaba.fastjson.JSON;
+import com.yeahmobi.yscheduler.model.Task;
+import com.yeahmobi.yscheduler.model.common.NameValuePair;
+import com.yeahmobi.yscheduler.model.service.AgentService;
+import com.yeahmobi.yscheduler.model.service.TaskAuthorityService;
+import com.yeahmobi.yscheduler.model.service.TaskDependencyService;
+import com.yeahmobi.yscheduler.model.service.TaskService;
+import com.yeahmobi.yscheduler.model.service.UserService;
+import com.yeahmobi.yscheduler.model.type.TaskStatus;
+import com.yeahmobi.yscheduler.model.type.TaskType;
+import com.yeahmobi.yscheduler.web.controller.AbstractController;
+
+/**
+ * @author Ryan Sun
+ */
+@Controller
+@RequestMapping(value = { TaskController.SCREEN_NAME })
+public class TaskController extends AbstractController {
+
+    public static final String  SCREEN_NAME = "task";
+
+    private static final Logger LOGGER      = LoggerFactory.getLogger(TaskController.class);
+
+    @Autowired
+    private TaskService         taskService;
+
+    @Autowired
+    private UserService         userService;
+
+    @Autowired
+    private AgentService        agentService;
+
+    @Autowired
+    private TaskDependencyService   dependencyService;
+
+    @Autowired
+    private TaskAuthorityService    authorityService;
+
+    @RequestMapping(value = { "" }, method = RequestMethod.GET)
+    public ModelAndView task() {
+        Map<String, Object> map = new HashMap<String, Object>();
+        List<NameValuePair> tasks = this.taskService.list();
+
+        map.put("types", TaskType.values());
+        map.put("users", this.userService.list());
+        map.put("agents", this.agentService.list());
+        map.put("tasks", tasks);
+        return screen(map, SCREEN_NAME);
+    }
+
+    @RequestMapping(value = { "name_exist" }, method = RequestMethod.GET, produces = "application/json; charset=utf-8")
+    @ResponseBody
+    public Object nameExist(String name) throws ServletException, IOException {
+        Map<String, Object> map = new HashMap<String, Object>();
+        try {
+            map.put("exist", this.taskService.nameExist(name));
+        } catch (Exception e) {
+            LOGGER.error(e.getMessage(), e);
+            map.put("exist", true);
+        }
+        return JSON.toJSONString(map);
+    }
+
+    @RequestMapping(value = { "create" }, method = RequestMethod.POST, produces = "application/json; charset=utf-8")
+    @ResponseBody
+    public Object add(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        Map<String, Object> map = new HashMap<String, Object>();
+        try {
+            Task task = extractTaskFromRequest(request, true);
+
+            String running = request.getParameter("running");
+            if ("on".equals(running)) {
+                task.setStatus(TaskStatus.OPEN);
+            } else {
+                task.setStatus(TaskStatus.PAUSED);
+            }
+            String dependencies = request.getParameter("dependency");
+            String followers = request.getParameter("followers");
+            String readers = request.getParameter("readers");
+            String writers = request.getParameter("writers");
+
+            this.taskService.add(task);
+            this.dependencyService.add(parse(dependencies), task.getId());
+            this.authorityService.add(parse(readers), parse(writers), parse(followers), task.getId());
+            map.put("notice", "添加成功");
+            map.put("success", true);
+        } catch (Exception e) {
+            LOGGER.error(e.getMessage(), e);
+            map.put("notice", e.getMessage());
+            map.put("success", false);
+        }
+        return JSON.toJSONString(map);
+    }
+
+    @RequestMapping(value = { "update" }, method = RequestMethod.POST, produces = "application/json; charset=utf-8")
+    @ResponseBody
+    public Object update(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        Map<String, Object> map = new HashMap<String, Object>();
+
+        try {
+            Task task = extractTaskFromRequest(request, false);
+            String dependencies = request.getParameter("dependency");
+            String followers = request.getParameter("followers");
+            String readers = request.getParameter("readers");
+            String writers = request.getParameter("writers");
+            this.taskService.update(task);
+            if (dependencies != null) {
+                this.dependencyService.update(parse(dependencies), task.getId());
+            }
+            this.authorityService.update(parse(readers), parse(writers), parse(followers), task.getId());
+            map.put("notice", "修改成功");
+            map.put("success", true);
+        } catch (Exception e) {
+            map.put("notice", e.getMessage());
+            map.put("success", false);
+        }
+        return JSON.toJSONString(map);
+    }
+
+    private List<Long> parse(String value) {
+        List<Long> result = new ArrayList<Long>();
+        if (value == null) {
+            return result;
+        }
+        try {
+            for (String item : value.split(",")) {
+                long itemVal = Long.parseLong(item);
+                result.add(itemVal);
+            }
+        } catch (NumberFormatException e) {
+            LOGGER.error(e.getMessage(), e);
+        }
+        return result;
+
+    }
+
+    private Task extractTaskFromRequest(HttpServletRequest request, boolean isNew) {
+        Task result = new Task();
+        String agent = request.getParameter("agent");
+        if (agent != null) {
+            long agentId = Long.parseLong(agent);
+            result.setAgentId(agentId);
+        }
+
+        String retry = request.getParameter("retryTimes");
+        if (StringUtils.isNotBlank(retry) && StringUtils.isNumeric(retry)) {
+            int retryTimes = Integer.parseInt(retry);
+            result.setRetryTimes(retryTimes);
+        } else {
+            result.setRetryTimes(0);
+        }
+        String timeoutStr = request.getParameter("timeout");
+        if (timeoutStr != null) {
+            int timeout = Integer.parseInt(timeoutStr);
+            result.setTimeout(timeout);
+        }
+
+        if (isNew) {
+            int type = Integer.parseInt(request.getParameter("type"));
+            result.setType(TaskType.valueOf(type));
+            result.setName(request.getParameter("name"));
+            long owner = Long.parseLong(request.getParameter("owner"));
+            result.setOwner(owner);
+        } else {
+            result.setId(Long.parseLong(request.getParameter("id")));
+        }
+        String crontab = request.getParameter("crontab");
+        if (!StringUtils.isBlank(crontab)) {
+            try {
+                new CronTrigger(crontab);
+            } catch (Exception e) {
+                throw new RuntimeException("错误的调度时间表达式:\n" + e.getMessage());
+            }
+
+            result.setCrontab(crontab);
+        }
+        result.setCommand(request.getParameter("command"));
+        result.setDescription(request.getParameter("description"));
+        return result;
+    }
+
+}

@@ -1,0 +1,58 @@
+package com.yeahmobi.yscheduler.web.controller.topo;
+
+import java.util.List;
+
+import org.springframework.stereotype.Service;
+
+@Service
+public class PageBuilder {
+
+    private static final String NODE_FORMAT    = "<div class='window %s' id='%s'>%s</div>\n";
+
+    private static final String CSS_FORMAT     = "#%s {left: %sem;top: %sem;}\n";
+
+    private static final String CONNECT_FORMAT = "instance.connect({uuids : [ '%s', '%s' ],overlays : overlays});\n";
+
+    private static final String BOTTOM         = "-bottom";
+
+    private static final String TOP            = "-top";
+
+    private static final int    BASE_LEFT      = 10;
+
+    private static final int    BASE_TOP       = 10;
+
+    private static final int    ITEM_LEFT      = 10;
+
+    private static final int    ITEM_TOP       = 10;
+
+    public String nodeHtml(List<TopoNode> nodes) {
+        String result = "";
+        for (TopoNode node : nodes) {
+            result += String.format(NODE_FORMAT, node.getStatus().name().toLowerCase(), node.getName(), node.getName());
+        }
+        return result;
+    }
+
+    public String css(List<TopoNode> nodes) {
+        String result = "<style>";
+        for (TopoNode node : nodes) {
+            result += String.format(CSS_FORMAT, node.getName(), (node.getColumn() * ITEM_LEFT) + BASE_LEFT,
+                                    (node.getRow() * ITEM_TOP) + BASE_TOP);
+        }
+        return result + "</style>";
+    }
+
+    public String connectHtml(List<TopoNode> nodes, boolean revert) {
+        String result = "";
+        for (TopoNode node : nodes) {
+
+            List<TopoNode> connectNodes = node.getNodes();
+            if (connectNodes != null) {
+                for (TopoNode anotherNode : connectNodes) {
+                    result += String.format(CONNECT_FORMAT, node.getName() + BOTTOM, anotherNode.getName() + TOP);
+                }
+            }
+        }
+        return result;
+    }
+}

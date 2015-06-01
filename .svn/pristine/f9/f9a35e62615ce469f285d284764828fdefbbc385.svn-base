@@ -1,0 +1,164 @@
+<div class="page-header">
+	<h1>工作流详情</h1>
+</div>
+<div id="alertMessageDiv" style="text-align: center;"></div>
+<div class="widget-box transparent" id="recent-box">
+	<div class="widget-header">
+		<div class="widget-toolbar no-border">
+			<ul class="nav nav-tabs" id="recent-tab">
+				<li class="active"><a data-toggle="tab" href="#edit">编辑</a></li>
+				<li class=""><a onclick="getTopo($('#form'))" data-toggle="tab" href="#topo">拓扑图</a></li>
+
+			</ul>
+		</div>
+	</div>
+	<div class="widget-body">
+		<div class="widget-main padding-4">
+			<div class="tab-content padding-8 overflow-visible">
+				<div id="edit" class="tab-pane active">
+					<form id='form' class="form-horizontal" method="post" role="form">
+						<div class="row col-sm-10">
+							<input type="text" name='id' style='display: none' value="$!{workflow.id}">
+							<div class="form-group">
+								<label class="col-sm-4 control-label no-padding-right" for="name"> 工作流名称 </label>
+								<div class="col-sm-8">
+									<input readonly type="text" name='name' class="col-xs-10 col-sm-6" autocomplete="off" value="$!{workflow.name}">
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="col-sm-4 control-label no-padding-right" for=" "> 调度表达式 </label>
+								<div class="col-sm-8" id='crontab_div'>
+									<input readonly type="text" id='crontab' name='crontab' class="field col-xs-10 col-sm-6" autocomplete="off"
+										value="$!{workflow.crontab}">
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="col-sm-4 control-label no-padding-right" for="timeout"> 超时时间(单位:分钟) </label>
+								<div class="col-sm-8">
+									<input readonly type="number" name='timeout' class="field col-xs-10 col-sm-6" autocomplete="off"
+										value="$!{workflow.timeout}">
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="col-sm-4 control-label no-padding-right" for="delay"> 团队延迟时间(单位:分钟) </label>
+								<div class="col-sm-8">
+									<input readonly type="number" name='delay' class="field col-xs-10 col-sm-6" autocomplete="off"
+										#if(${delay})
+										value="${delay}" #else value="0" #end>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="col-sm-4 control-label no-padding-right" for="description"> 描述 </label>
+								<div class="col-sm-8">
+									<textarea name='description' class="field autosize-transition col-xs-10 col-sm-6">$!{workflow.description}</textarea>
+								</div>
+							</div>
+						</div>
+
+						<div class="row" style="width: 80%">
+							<div class="col-xs-12">
+								<button style="display: none; float: right; margin-bottom: 5px;" onclick="addTask();"
+									class="btn_field btn btn-sm btn-info no-radius" type="button">
+									<i class="icon-plus"></i> 添加任务
+								</button>
+								<div class="table-responsive">
+									<table class="table table-striped table-bordered table-hover">
+										<thead>
+											<tr>
+												<th style="width: 246px;">任务</th>
+												<th style="width: 213px;" class="hidden-480">作业延迟时间(分钟)</th>
+												<th style="width: 213px;" class="hidden-480">自依赖</th>
+												<th style="width: 300px" class="hidden-480">依赖任务</th>
+												<th style="width: 30px"></th>
+											</tr>
+										</thead>
+										<tbody id="taskTable">
+
+											#foreach($item in $list)
+											<tr>
+												<td><select disabled name="taskId" class="width-20 single chosen-select" data-placeholder="选择任务">
+														#foreach($task in $tasks)
+														<option value="$task.value" #if($item.workflowDetail.taskId==$task.value) selected #end>$task.name</option>
+														#end
+												</select></td>
+												<td><input readonly type="number" name='taskDelay' class="field col-xs-10 col-sm-6"
+													value="$item.workflowDetail.delay"></td>
+												<td><label><input disabled taskCondition name="taskCondition_$!{velocityCount}"
+														class="ace ace-checkbox-1" type="radio" #if($item.workflowDetail.lastStatusDependency.id==1)
+														checked="checked" #end value="none"> <span class="lbl"></span> 允许并行</label> <label><input disabled
+														taskCondition name="taskCondition_$!{velocityCount}" class="ace ace-checkbox-1" type="radio"
+														#if($item.workflowDetail.lastStatusDependency.id==20) checked="checked" #end value="completed"> <span
+														class="lbl"></span> 完成即触发</label> <label><input disabled taskCondition
+														name="taskCondition_$!{velocityCount}" class="ace ace-checkbox-1" type="radio"
+														#if($item.workflowDetail.lastStatusDependency.id==10) checked="checked" #end value="success"> <span
+														class="lbl"></span> 成功才触发</label></td>
+												<td class="hidden-480"><select disabled multiple name="dependencyTaskId" class="width-20 chosen-select"
+													data-placeholder="选择依赖的任务"> #foreach($task in $dependencies)
+														<option value="$task.value" #if($item.dependencies.contains($task.value)) selected #end>$task.name</option>
+														#end
+												</select></td>
+												<td>
+													<button style="display: none;" class="btn_field btn btn-xs btn-danger" type="button"
+														onclick="removeTask(this)">
+														<i class="icon-trash bigger-120"></i>
+													</button>
+												</td>
+											</tr>
+											#end
+										</tbody>
+									</table>
+								</div>
+								<!-- /.table-responsive -->
+							</div>
+							<!-- /span -->
+						</div>
+						<div class="row" style="width: 90%">
+							<div class="clearfix form-actions">
+								<div class="col-md-offset-5 col-md-9">
+									<button id="updateBtn" class="btn btn-info" type="button" onclick="updateTask()" data-loading-text="提交中..">
+										<i class="icon-ok bigger-110"></i> 修改
+									</button>
+									<button id="cancelBtn" class="btn" type="button" onclick="window.location='${rc.contextPath}/common'">
+										<i class="icon-undo bigger-110"></i> 返回
+									</button>
+								</div>
+							</div>
+						</div>
+
+					</form>
+				</div>
+				<div id="topo" class="tab-pane">
+					<iframe src="" frameborder="0" marginheight="0" marginwidth="0" frameborder="0" scrolling="auto" id="ifm"
+						name="ifm" onload="javascript:dyniframesize('ifm');" width="100%"></iframe>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<script id="taskRow" type="text/html">
+	<tr>
+		<td><select name="taskId"
+			class="width-20 single chosen-select" data-placeholder="选择任务">
+				#foreach($task in $tasks)
+				<option value="$task.value">$task.name</option> #end
+		</select></td>
+		<td><input type="number" name='taskDelay'
+			class="field col-xs-10 col-sm-6" value="0"></td>
+		<td><label><input name="taskCondition_[index]" class="ace ace-checkbox-1" type="radio"
+											checked="checked" value="none"> <span class="lbl"></span> 允许并行</label> <label><input name="taskCondition_[index]" class="ace ace-checkbox-1" type="radio"
+											value="completed"> <span class="lbl"></span> 完成即触发</label> <label><input
+										    name="taskCondition_[index]" class="ace ace-checkbox-1" type="radio" value="success"> <span
+											class="lbl"></span> 成功才触发</label></td>
+		<td class="hidden-480"><select multiple name="dependencyTaskId"
+			class="width-20 chosen-select" data-placeholder="选择依赖的任务">
+				#foreach($task in $tasks)
+				<option value="$task.value">$task.name</option> #end
+		</select></td>
+		<td>
+			<button class="btn btn-xs btn-danger" type="button" onclick="removeTask(this)">
+				<i class="icon-trash bigger-120"></i>
+			</button>
+		</td>
+	</tr>
+</script>

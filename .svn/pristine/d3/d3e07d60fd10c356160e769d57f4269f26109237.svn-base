@@ -1,0 +1,85 @@
+package com.yeahmobi.yscheduler.web.controller.workflow;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.servlet.ModelAndView;
+
+import com.yeahmobi.yscheduler.model.service.AgentService;
+import com.yeahmobi.yscheduler.model.service.TaskAuthorityService;
+import com.yeahmobi.yscheduler.model.service.TaskDependencyService;
+import com.yeahmobi.yscheduler.model.service.TaskService;
+import com.yeahmobi.yscheduler.model.service.UserService;
+import com.yeahmobi.yscheduler.model.service.WorkflowAuthorityService;
+import com.yeahmobi.yscheduler.model.service.WorkflowDetailService;
+import com.yeahmobi.yscheduler.model.service.WorkflowService;
+import com.yeahmobi.yscheduler.web.controller.AbstractController;
+
+/**
+ * @author Ryan Sun
+ */
+@Controller
+@RequestMapping(value = { EditController.SCREEN_NAME })
+public class EditController extends AbstractController {
+
+    public static final String       SCREEN_NAME = "workflow/detail";
+
+    private static final Logger      LOGGER      = LoggerFactory.getLogger(EditController.class);
+
+    @Autowired
+    private TaskService              taskService;
+
+    @Autowired
+    private UserService              userService;
+
+    @Autowired
+    private AgentService             agentService;
+
+    @Autowired
+    private TaskDependencyService    taskDependencyService;
+
+    @Autowired
+    private TaskAuthorityService     taskAuthorityService;
+
+    @Autowired
+    private WorkflowDetailService    workflowDetailService;
+
+    @Autowired
+    private WorkflowService          workflowService;
+
+    @Autowired
+    private WorkflowAuthorityService workflowAuthorityService;
+
+    @RequestMapping(value = { "edit" }, method = RequestMethod.GET)
+    public ModelAndView edit(Long workflowId, Boolean edit) {
+        Map<String, Object> map = new HashMap<String, Object>();
+
+        // TODO 待完成
+        // detail
+        // Workflow workflow = this.workflowService.get(workflowId);
+        //
+        // if ((edit != null) && (edit == true)) {
+        // // edit
+        // map.put("edit", true);
+        // }
+        //
+        // map.put("workflow", workflow);
+        // User user = this.userService.get(workflow.getOwner());
+        // map.put("owner", user);
+        // map.put("readers", this.workflowAuthorityService.listReadonlyUser(workflowId));
+        // map.put("writers", this.workflowAuthorityService.listWritableUser(workflowId));
+        // map.put("followers", this.workflowAuthorityService.listFollowUser(workflowId));
+        //
+        // map.put("users", this.userService.list());
+        // map.put("agents", this.agentService.list());
+
+        return screen(map, SCREEN_NAME);
+    }
+
+}

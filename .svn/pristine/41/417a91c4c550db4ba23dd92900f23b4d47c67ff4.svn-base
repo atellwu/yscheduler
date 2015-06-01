@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- For assistance related to logback-translator or configuration -->
+<!-- files in general, please contact the logback user mailing list -->
+<!-- at http://www.qos.ch/mailman/listinfo/logback-user -->
+<!-- -->
+<!-- For professional support please see -->
+<!-- http://www.qos.ch/shop/products/professionalSupport -->
+<!-- -->
+<!--See http://logback.qos.ch/manual/appenders.html#RollingFileAppender -->
+<!--and http://logback.qos.ch/manual/appenders.html#TimeBasedRollingPolicy -->
+<!--for further documentation -->
+<configuration>
+    <appender name="fileAppender" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <File>/dianyi/log/yscheduler/app.log</File>
+        <Append>true</Append>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>/dianyi/log/yscheduler/app.log.%d{yyyy-MM-dd}.zip
+            </fileNamePattern>
+            <maxHistory>7</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>[%level] %d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %logger - %msg%n
+            </pattern>
+        </encoder>
+    </appender>
+    <logger name="com.yeahmobi.yscheduler" level="INFO"/>
+
+    <root level="ERROR">
+        <appender-ref ref="fileAppender"/>
+    </root>
+</configuration>

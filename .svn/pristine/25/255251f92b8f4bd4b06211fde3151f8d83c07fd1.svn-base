@@ -1,0 +1,101 @@
+package com.yeahmobi.yscheduler.web.topo.service;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.yeahmobi.yscheduler.model.TaskInstance;
+import com.yeahmobi.yscheduler.model.WorkflowDetail;
+import com.yeahmobi.yscheduler.model.WorkflowInstance;
+import com.yeahmobi.yscheduler.model.service.TaskInstanceService;
+import com.yeahmobi.yscheduler.model.service.TaskService;
+import com.yeahmobi.yscheduler.model.service.WorkflowDetailService;
+import com.yeahmobi.yscheduler.model.service.WorkflowInstanceService;
+import com.yeahmobi.yscheduler.web.controller.topo.TopoNode;
+import com.yeahmobi.yscheduler.web.vo.WorkflowDetailVO;
+
+@Service
+public class WorkflowTopoService {
+
+    @Autowired
+    private WorkflowInstanceService workflowInstanceService;
+
+    @Autowired
+    private WorkflowDetailService   detailService;
+
+    @Autowired
+    private TaskService             taskService;
+
+    @Autowired
+    private TaskInstanceService     taskInstanceService;
+
+    private List<WorkflowDetailVO> getWorkflowDetail(long workflowId) {
+        List<WorkflowDetailVO> raw = new ArrayList<WorkflowDetailVO>();
+        List<WorkflowDetail> details = this.detailService.list(workflowId);
+
+        for (WorkflowDetail detail : details) {
+            WorkflowDetailVO detailVO = new WorkflowDetailVO();
+            Long taskId = detail.getTaskId();
+            List<Long> dependencies = this.detailService.listDependencyTaskIds(workflowId, taskId);
+            detailVO.setWorkflowDetail(detail);
+            detailVO.setDependencies(dependencies);
+            detailVO.setTaskName(this.taskService.get(taskId).getName());
+            raw.add(detailVO);
+        }
+        return raw;
+    }
+
+    private Map<Long, TopoNode> buildTree(List<WorkflowDetailVO> raw) {
+        Map<Long, TopoNode> nodes = new HashMap<Long, TopoNode>();
+        for (WorkflowDetailVO detail : raw) {
+            Long taskId = detail.getWorkflowDetail().getTaskId();
+            TopoNode node = new TopoNode();
+            node.setName(detail.getTaskName());
+            node.setTaskId(taskId);
+            nodes.put(taskId, node);
+        }
+        for (WorkflowDetailVO detail : raw) {
+            TopoNode node = nodes.get(detail.getWorkflowDetail().getTaskId());
+            List<TopoNode> dependNodes = new ArrayList<TopoNode>();
+            node.setNodes(dependNodes);
+            for (Long taskId : detail.getDependencies()) {
+                dependNodes.add(nodes.get(taskId));
+            }
+        }
+        return nodes;
+    }
+
+    private void setStatus(Map<Long, TopoNode> tree, long workflowInstanceId) {
+        List<TaskInstance> instances = this.taskInstanceService.listByWorkflowInstanceId(workflowInstanceId);
+        for (TaskInstance instance : instances) {
+            long taskId = instance.getTaskId();
+            TopoNode node = tree.get(taskId);
+            if (node != null) {
+                node.setStatus(instance.getStatus());
+            }
+        }
+
+    }
+
+    public List<TopoNode> buildWorkflowTopoTree(List<WorkflowDetailVO> raw) {
+        return new ArrayList<TopoNode>(buildTree(raw).values());
+    }
+
+    public List<TopoNode> buildWorkflowTopoTree(long workflowId) {
+        List<WorkflowDetailVO> raw = getWorkflowDetail(workflowId);
+        return buildWorkflowTopoTree(raw);
+    }
+
+    public List<TopoNode> buildInstanceTopoTree(long workflowInstanceId) {
+        WorkflowInstance workflowInstance = this.workflowInstanceService.get(workflowInstanceId);
+        List<WorkflowDetailVO> raw = getWorkflowDetail(workflowInstance.getWorkflowId());
+        Map<Long, TopoNode> nodeMap = buildTree(raw);
+        setStatus(nodeMap, workflowInstanceId);
+        return new ArrayList<TopoNode>(nodeMap.values());
+    }
+
+}

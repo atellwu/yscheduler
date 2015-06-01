@@ -1,0 +1,28 @@
+package com.yeahmobi.yscheduler.notice;
+
+import java.util.Date;
+
+/**
+ * @author Ryan Sun
+ */
+public interface NoticeService {
+
+    public void alert(Message message);
+
+    public void workflowFail(long id);
+
+    public void workflowTimeout(long id);
+
+    public void workflowSkip(long id, Date scheduleTime);
+
+    public void workflowCanncel(long id);
+
+    public void taskFail(long id);
+
+    public void taskTimeout(long id);
+
+    public void taskSkip(long id, Date scheduleTime);
+
+    public void taskCanncel(long id);
+
+}

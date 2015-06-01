@@ -1,0 +1,136 @@
+<div id="alertMessageDiv" style="text-align: center;"></div>
+#if($!notice)
+<div id="alertContainer" class="container alert alert-danger">
+	<button type="button" class="close" data-dismiss="alert">&times;</button>
+	<strong>$notice</strong>
+</div>
+#end
+<div class="col-xs-12">
+	<form class="form-horizontal" id="form" action="${rc.contextPath}/task/create/update" method="post" role="form">
+		<input type="text" id="id" name="id" style="display: none" value="$!{task.id}">
+
+		<div class="form-group">
+			<label class="col-sm-3 control-label no-padding-right" for="name"> 任务名称 </label>
+			<div class="col-sm-9">
+				<input disabled type="text" name='name' class="field col-xs-10 col-sm-6" id="name" value="$!{task.name}">
+			</div>
+		</div>
+		<div class="form-group">
+			<label class="col-sm-3 control-label no-padding-right" for="owner">创建人</label>
+			<div class="col-sm-9">
+				<input disabled type="text" name="owner" class="field col-xs-10 col-sm-6" id="owner" value="$!{owner.name}">
+			</div>
+		</div>
+		<div class="form-group">
+			<label class="col-sm-3 control-label no-padding-right" for="type"> 任务类型 </label>
+			<div class="col-sm-9">
+				<select disabled name='type' class="field col-xs-10 col-sm-6" id="form-field-select-1" value="$!{task.type}">
+					<option value="SHELL">SHELL</option>
+				</select>
+			</div>
+		</div>
+
+		<div class="form-group">
+			<label class="col-sm-3 control-label no-padding-right" for="command"> 调度命令 </label>
+			<div class="col-sm-9">
+				<input readonly type="text" name='command' class="field col-xs-10 col-sm-6" id="command" value="$!{task.command}"
+					autocomplete='off'>
+			</div>
+		</div>
+		<div class="form-group">
+			<label for="agent" class="col-sm-3 control-label no-padding-right" for="agent">执行机器</label>
+			<div class="col-sm-9">
+				<select disabled id="agent" name="agent" class="single chosen-select" data-placeholder="选择执行作业的机器IP">
+					#foreach($agent in $agents)
+					<option value="$agent.id" #if($task.agentId== $agent.id)selected #end>$agent.name</option> #end
+				</select>
+			</div>
+		</div>
+
+		<div class="form-group">
+			<label class="col-sm-3 control-label no-padding-right" for="description"> 任务描述 </label>
+
+			<div class="col-sm-9">
+				<textarea readonly name='description' class="field autosize-transition col-xs-10 col-sm-6"
+					style="overflow: hidden; word-wrap: break-word; resize: horizontal; height: 52px;" autocomplete='off'>$!{task.description}</textarea>
+
+			</div>
+		</div>
+
+		<div class="form-group">
+			<label for="readers" class="col-sm-3 control-label no-padding-right" for="readers">只读用户</label>
+			<div class="col-sm-9">
+				<select multiple disabled id="readers" name="readers" class="multiple chosen-select form-control"
+					data-placeholder="选择有只读权限用户">
+					<option value=""></option> #foreach($user in $users)
+					<option value="$user.value" #if($readers.contains($user.value))selected #end>$user.name</option> #end
+				</select>
+			</div>
+		</div>
+
+		<div class="form-group">
+			<label for="writers" class="col-sm-3 control-label no-padding-right" for="writers">读写用户</label>
+			<div class="col-sm-9">
+				<select multiple disabled id="writers" name="writers" class="multiple chosen-select form-control"
+					data-placeholder="选择有读写权限用户"> #foreach($user in $users)
+					<option value="$user.value" #if($writers.contains($user.value))selected #end>$user.name</option> #end
+				</select>
+			</div>
+		</div>
+		<div class="form-group">
+			<label for="schedule" class="col-sm-3 control-label no-padding-right">调度</label>
+			<div class="col-sm-9">
+				<input  disabled class="field" type="radio" name="schedule" value="clock" #if("$!{task.status}"=="OPEN") checked #end onchange="schedule_changed()">定时调度 <input
+					 disabled class="field" type="radio" name="schedule" value="others" #if("$!{task.status}"=="PAUSED") checked #end onchange="schedule_changed()">暂停调度
+			</div>
+		</div>
+		<div id='schedule' #if("$!{task.status}"=="PAUSED")style='display: none' #end>
+
+			<div class="form-group">
+				<label class="col-sm-3 control-label no-padding-right" for="timeout"> 超时时间(单位:分钟) </label>
+				<div class="col-sm-9">
+					<input readonly type="number" name='timeout' class="field col-xs-2 col-sm-1" id="tomeout" value="$!{task.timeout}"
+						autocomplete='off'>
+				</div>
+			</div>
+			<div class="form-group">
+				<label class="col-sm-3 control-label no-padding-right" for="retryTimes"> 失败自动重试次数 </label>
+				<div class="col-sm-9">
+					<input readonly type="number" name='retryTimes' class="field col-xs-2 col-sm-1" id="retryTimes"
+						value="$!{task.retryTimes}" autocomplete='off'>
+				</div>
+			</div>
+
+			<div class="form-group">
+				<label class="col-sm-3 control-label no-padding-right" for="crontab"> 调度表达式 </label>
+				<div class="col-sm-9" id='crontab_div'>
+					<input readonly type="text" name='crontab' class="field col-xs-10 col-sm-6" id="crontab" value="$!{task.crontab}"
+						autocomplete='off'>
+				</div>
+			</div>
+
+			<div class="form-group">
+				<label for="notice" class="col-sm-3 control-label no-padding-right" for="followers">关注用户</label>
+				<div class="col-sm-9">
+					<select multiple disabled id="followers" name="followers" class="multiple chosen-select form-control"
+						data-placeholder="选择告警要通知的用户"> #foreach($user in $users)
+						<option value="$user.value" #if($followers.contains($user.value))selected #end>$user.name</option> #end
+					</select>
+				</div>
+			</div>
+		</div>
+
+		<div class="clearfix form-actions">
+			<div class="col-md-offset-5 col-md-9">
+				#if($canModify)
+				<button id="updateBtn" class="btn btn-info" type="button" data-loading-text="提交中..">
+					<i class="icon-ok bigger-110"></i>修改
+				</button>
+				#end &nbsp; &nbsp; &nbsp;
+				<button id="cancelBtn" class="btn" type="button" onclick="window.location='${rc.contextPath}/task'">
+					<i class="icon-undo bigger-110"></i> 返回
+				</button>
+			</div>
+		</div>
+	</form>
+</div>

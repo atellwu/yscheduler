@@ -1,0 +1,26 @@
+<script type="text/javascript">
+	function login(form){
+		app.clearAlertMessage();
+		$.ajax({
+			type : $(form).attr('method'),
+			url : $(form).attr('action'),
+			data : $(form).serialize(),
+			dataType : "json",
+			success : loginDone,
+			error : app.httpError
+		});
+		return false;
+	}
+	
+	function loginDone(data){
+		if (data.success == false) {
+			app.alertError(data.errorMsg);
+		} else {
+			if(!data.returnUrl){
+				window.location = window.contextPath + "/";
+			}else{
+				window.location = window.contextPath + data.returnUrl;
+			}
+		}
+	}
+</script>

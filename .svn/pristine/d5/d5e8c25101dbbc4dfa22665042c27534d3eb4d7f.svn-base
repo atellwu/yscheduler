@@ -1,0 +1,47 @@
+<!-- 手工执行 -->
+<div aria-hidden="false" role="dialog" data-backdrop="true" class="bootbox modal" id="triggerTaskModal"
+	style="margin: 0 0 0 0;">
+	<form style="" class="form-horizontal" action="${rc.contextPath}/schedule/task/trigger" role="form"
+		onsubmit="return app.triggerTask(this)" method="post">
+		<div class="modal-dialog" style="width: 600px;">
+			<div class="modal-content">
+				<div class="modal-header">
+					<button aria-hidden="true" data-dismiss="modal" class="close" type="button">×</button>
+					<h4 class="modal-title">手工触发执行</h4>
+				</div>
+				<div class="modal-body" style="text-align: center;">
+					<div alertMessage></div>
+					确定要马上运行此任务？
+					<div class="form-group">
+						<div class="col-sm-7">
+							<input hidden="true" taskId type="text" name="taskId" class="col-xs-10 col-sm-7">
+						</div>
+					</div>
+				</div>
+				<div class="modal-footer">
+					<button type="submit" class="btn btn-primary">确定</button>
+					<button type="button" data-dismiss="modal" class="btn">取消</button>
+				</div>
+			</div>
+		</div>
+	</form>
+</div>
+
+<!-- 删除task -->
+<div aria-hidden="false" role="dialog" data-backdrop="true" class="bootbox modal" id="confirm" style="margin: 0 0 0 0;">
+	<div class="modal-dialog" style="width: 600px;">
+		<div class="modal-content">
+			<div id="modal-header" class="modal-header">
+				<button aria-hidden="true" data-dismiss="modal" class="close" type="button">×</button>
+				<h4 class="modal-title"></h4>
+			</div>
+			<div id="modal-body" class="modal-body">
+				<p style="text-align: center;"></p>
+			</div>
+			<div id="modal-footer" class="modal-footer">
+				<button type="button" onclick="update()" class="btn btn-primary">确定</button>
+				<button type="button" data-dismiss="modal" class="btn">取消</button>
+			</div>
+		</div>
+	</div>
+</div>

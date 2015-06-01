@@ -1,0 +1,22 @@
+package com.yeahmobi.yscheduler.model.service;
+
+import java.util.List;
+
+import com.yeahmobi.yscheduler.common.Paginator;
+import com.yeahmobi.yscheduler.model.Agent;
+
+public interface AgentService {
+
+    Agent get(long id);
+
+    List<Agent> list(int pageNum, Paginator paginator);
+
+    List<Agent> list();
+
+    void add(Agent agent);
+
+    void remove(long agentId, String name);
+
+    void updateIp(long agentId, String ip);
+
+}

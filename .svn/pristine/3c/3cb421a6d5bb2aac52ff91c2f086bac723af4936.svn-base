@@ -1,0 +1,35 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:task="http://www.springframework.org/schema/task"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="
+			http://www.springframework.org/schema/beans 
+			http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+			http://www.springframework.org/schema/context
+            http://www.springframework.org/schema/context/spring-context-3.0.xsd
+            http://www.springframework.org/schema/task   
+    http://www.springframework.org/schema/task/spring-task-3.0.xsd">
+
+	<!-- annotation scan -->
+	<context:component-scan base-package="com.yeahmobi.yscheduler" />
+	
+	<bean class="com.yeahmobi.yscheduler.common.fileserver.impl.LocalFileBasedFileServer">
+		<property name="baseDir" value="/dianyi/fileServer/ut"/>
+		<property name="downloadPathBase" value="/ut/download/log"/>
+	</bean>
+	
+	<bean class="com.yeahmobi.yscheduler.condition.DefaultConditionChecker">
+		<property name="conditions">
+			<list>
+				<bean class="com.yeahmobi.yscheduler.condition.DelayCondition"/>
+				<bean class="com.yeahmobi.yscheduler.condition.DependencyCondition"/>
+			</list>
+		</property>
+	</bean>
+
+	<!-- Main spring IOC entrance -->
+	<import resource="applicationContext-database.xml" />
+	<import resource="applicationContext-notice.xml" />
+	<import resource="applicationContext-properties.xml" />
+
+</beans>

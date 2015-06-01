@@ -1,0 +1,13 @@
+<ul class="breadcrumb">
+#if($screen != "index")
+	<li><i class="icon-home home-icon"></i> <a href="${rc.contextPath}/">首页</a></li>
+	#if($page == "index")
+	  <li class="active">#screen("title.htm")</li>
+	#else
+	  <li> <a href="${rc.contextPath}/${screen}">#screen("title.htm")</a></li>
+	  <li class="active">#page("title.htm")</li>
+	#end
+#else
+    <li class="active"> <i class="icon-home home-icon"></i> 首页</li>
+#end
+</ul>

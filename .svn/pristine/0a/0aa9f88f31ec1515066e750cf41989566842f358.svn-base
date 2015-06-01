@@ -1,0 +1,163 @@
+<div class="container">
+	<div id="wizard">
+		<ul>
+			<li><a href="#tab1" data-toggle="tab"><span class="label">1</span>部署设置</a></li>
+			<li><a href="#tab2" data-toggle="tab"><span class="label">2</span>基本设置</a></li>
+			<li><a href="#tab3" data-toggle="tab"><span class="label">3</span>调度设置</a></li>
+		</ul>
+		<form id="form" role="form" action="/task/create" method="post" class="form-horizontal">
+			<div class="tab-content well">
+				<div class="tab-pane" id="tab1">
+					<fieldset>
+						<legend>部署设置</legend>
+						<div class="form-group">
+							<label for="type" class="col-sm-2">作业类型*</label>
+							<div class="col-sm-5">
+								<select id="type" name="type" onchange="app.changeType(this)" class="form-control"> #foreach($type in
+									$types)
+									<option value='$type.id'>$type.name</option> #end
+								</select>
+							</div>
+						</div>
+						<div class="form-group">
+							 <label for="type" class="col-sm-2">执行机器*</label>
+							<div class="col-sm-5">
+								<input type="radio" name="schedule" value="clock" checked onchange="schedule_changed()">单台执行 <input
+									type="radio" name="schedule" value="others" onchange="schedule_changed()">组内机器执行
+							</div>
+						</div>
+						
+						<div agent class="form-group">
+							<label for="agent" class="col-sm-2">指定执行机器</label>
+							<div class="col-sm-5">
+								<select name="agent" class="single chosen-select" data-placeholder="选择执行作业的机器IP"> #foreach($agent in
+									$agents)
+									<option value="$agent.id">${agent.name}(${agent.ip})</option> #end
+								</select>
+							</div>
+						</div>
+
+					</fieldset>
+				</div>
+				<div class="tab-pane" id="tab2">
+					<fieldset>
+						<legend>基本设置</legend>
+						<div class="form-group">
+							<label for="name" class="col-sm-2">名称*</label>
+							<div class="col-sm-5">
+								<input type="text" id="name" name="name" class="form-control" placeholder="作业的名称，可以作为被依赖的对象，不可修改">
+							</div>
+						</div>
+
+						<div httpCallout class="form-group" style="display: none">
+							<label class="col-sm-2">触发url*</label>
+							<div class="col-sm-5">
+								<input type="text" name="calloutUrl" class="form-control" placeholder="例如 http://"> <span
+									style="color: #6E6E6E" class="help-inline col-xs-12"> (填写您需要被调用的url，该url通常用来触发您的任务) </span>
+							</div>
+						</div>
+
+						<div httpCallout class="form-group" style="display: none">
+							<label class="col-sm-2">是否需要回调</label>
+							<div class="col-sm-5">
+								<input type="checkbox" name="needCallback"><span style="display: inline;"> 是 </span> &nbsp;&nbsp;<span
+									style="color: #6E6E6E; display: inline;" class="help-inline"> (如果是，任务会等待一个回调才能结束；否则，调用成功任务即结束)</span>
+							</div>
+						</div>
+
+						<div httpCallout class="form-group" style="display: none">
+							<label class="col-sm-2">取消url</label>
+							<div class="col-sm-5">
+								<input type="text" name="cancelUrl" class="form-control" placeholder="例如 http://"><span
+									style="color: #6E6E6E" class="help-inline col-xs-12"> (若您的任务支持取消，则填写该url，在人工取消任务时会调用该url)</span>
+							</div>
+						</div>
+
+						<div command class="form-group">
+							<label for="command" class="col-sm-2">命令*</label>
+							<div class="col-sm-5">
+								<input type="text" id="command" name="command" class="form-control" placeholder="作业执行的命令">
+							</div>
+						</div>
+
+						<div class="form-group">
+							<label for="description" class="col-sm-2">描述</label>
+							<div class="col-sm-5">
+								<input type="text" id="description" name="description" class="form-control" placeholder="作业的用途">
+							</div>
+						</div>
+						<input style="display: none" name="owner" id="owner" value="$!{userContext.getUserContext().id}" />
+					</fieldset>
+				</div>
+				<div class="tab-pane" id="tab3">
+					<fieldset>
+						<legend>调度设置</legend>
+						<div class="form-group">
+							<label for="timeout" class="col-sm-2">执行超时时间（分钟）</label>
+							<div class="col-sm-1">
+								<input type="number" id="timeout" name="timeout"
+									class="form-control" value="60">
+							</div>
+						</div>
+
+						<div class="form-group">
+							<label for="retryTimes" class="col-sm-2">重试次数</label>
+							<div class="col-sm-1">
+								<input type="number" id="retryTimes" name="retryTimes"
+									class="form-control" value='0'>
+							</div>
+						</div>
+
+						<div class="form-group">
+							<label for="schedule" class="col-sm-2">调度方式</label>
+							<div class="col-sm-8">
+								<input type="radio" name="schedule" value="clock" checked onchange="schedule_changed()">定时 <input
+									type="radio" name="schedule" value="others" onchange="schedule_changed()">非定时
+							</div>
+						</div>
+
+						<div id='schedule'>
+							<div class="form-group">
+								<label for="crontab" class="col-sm-2">调度表达式</label>
+								<div class="col-sm-5" id="crontab_div">
+									<input type="text" id="crontab" name="crontab" class="form-control" placeholder="0 0 * * *">
+								</div>
+							</div>
+
+							<div class="form-group">
+								<label for="canSkip" class="col-sm-2">允许跳过</label>
+								<div class="col-sm-1">
+									<label><input name="canSkip" class="ace ace-checkbox-1" type="checkbox" checked="checked" value="true">
+										<span class="lbl"></span> </label>
+								</div>
+							</div>
+							<div class="form-group">
+								<label for="concurrent" class="col-sm-2">允许并行</label>
+								<div class="col-sm-1">
+									<label><input name="concurrent" class="ace ace-checkbox-1" type="checkbox" checked="checked" disabled="disabled"
+										value="true"> <span class="lbl"></span> </label>
+								</div>
+							</div>
+							<div class="form-group">
+								<label for="condition" class="col-sm-2">触发条件</label>
+								<div class="col-sm-8">
+									<label><input  disabled="disabled" name="condition" type="radio" checked="checked" value="completed">
+										<span class="lbl"></span> 完成即触发</label> <label><input disabled="disabled" name="condition"
+										type="radio" value="success"> <span class="lbl"></span>成功才触发</label>
+								</div>
+							</div>
+						</div>
+					</fieldset>
+				</div>
+			</div>
+
+			<ul class="pager bwizard-buttons">
+				<li class="button-previous"><a href="#">← 上一步</a></li>
+				<li class="button-finish" style="cursor: pointer;" id="submit" data-loading-text="提交中.."><a class='CLICKABLE'>提交</a></li>
+				<li class="button-next"><a href="#">下一步 →</a></li>
+			</ul>
+		</form>
+
+	</div>
+</div>
+

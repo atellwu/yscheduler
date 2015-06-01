@@ -1,0 +1,142 @@
+package com.yeahmobi.yscheduler.agentframework.agent.task;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import org.apache.commons.io.IOUtils;
+import org.apache.hadoop.fs.FSDataOutputStream;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.scheduling.concurrent.CustomizableThreadFactory;
+
+import com.yeahmobi.yscheduler.common.log.impl.HdfsLogServiceImpl;
+
+public class LogTransfer {
+
+    private Logger                            LOGGER          = LoggerFactory.getLogger(LogTransfer.class);
+
+    private LinkedBlockingQueue<TransferTask> logQueue        = new LinkedBlockingQueue<TransferTask>();
+
+    private ExecutorService                   executorService = Executors.newCachedThreadPool(new CustomizableThreadFactory(
+                                                                                                                            "LogTransfer-worker-"));
+
+    private Thread                            controllerThread;
+
+    private AtomicBoolean                     closed          = new AtomicBoolean(false);
+
+    private HdfsLogServiceImpl                logService;
+
+    public void init() {
+        this.controllerThread = new Thread() {
+
+            @Override
+            public void run() {
+
+                while (!LogTransfer.this.closed.get()) {
+                    /*
+                     * 启动controller线程，负责扫描queue.
+                     * 查看pair.inputstream是否可读（未构建时，先构建inputstream和outputstream），可读则交给executor，否则放回去
+                     */
+                    try {
+                        TransferTask transferTask = LogTransfer.this.logQueue.take();
+                        if ((transferTask.inputStream != null) && (transferTask.inputStream.available() <= 0)) {
+                            LogTransfer.this.logQueue.put(transferTask);
+                        } else {
+                            LogTransfer.this.executorService.submit(transferTask);
+                        }
+                    } catch (IOException e) {
+                        // TODO log
+                        e.printStackTrace();
+                    } catch (InterruptedException e) {
+                    }
+                }
+            }
+        };
+
+        this.controllerThread.start();
+
+    }
+
+    public void submit(TaskTransaction<AgentTask> tx) {
+        // 放进queue
+        TransferTask transferTask = new TransferTask(tx, null, null);
+        try {
+            this.logQueue.put(transferTask);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void close() {
+        if (this.closed.compareAndSet(false, true)) {
+            this.controllerThread.interrupt();
+        }
+    }
+
+    class TransferTask implements Runnable {
+
+        public TransferTask(TaskTransaction<AgentTask> tx, InputStream inputStream, FSDataOutputStream outputStream) {
+            super();
+            this.tx = tx;
+            this.inputStream = inputStream;
+            this.outputStream = outputStream;
+        }
+
+        TaskTransaction<AgentTask> tx;
+        InputStream                inputStream;
+        FSDataOutputStream         outputStream;
+
+        public void run() {
+            try {
+                setup();
+
+                /**
+                 * <pre>
+                 * 如果tx状态已经结束，则读到-1（输出给outputstream），就结束
+                 * 否则，读到-1（输出给outputstream），就放回queue
+                 * </pre>
+                 */
+                IOUtils.copy(this.inputStream, this.outputStream);
+                this.outputStream.hflush();
+
+                if (this.tx.getMeta().getStatus().isCompleted()) {
+                    IOUtils.copy(this.inputStream, this.outputStream);
+                    this.outputStream.hflush();
+                    IOUtils.closeQuietly(this.inputStream);
+                    IOUtils.closeQuietly(this.outputStream);
+                    // TODO 等web不访问log和status之后，就可删除tx目录
+                    // this.tx.close();
+                } else {
+                    LogTransfer.this.logQueue.add(this);
+                }
+
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+
+        }
+
+        private void setup() throws IOException {
+            if (this.outputStream == null) {
+                long attemptId = this.tx.getTask().getAttemptId();
+                LogTransfer.this.LOGGER.info(String.format("Open output stream for attemptId(id:%s)", attemptId));
+                this.outputStream = LogTransfer.this.logService.getOutputStream(attemptId);
+            }
+            if (this.inputStream == null) {
+                // 从本地读取tx的log
+                LogTransfer.this.LOGGER.info(String.format("Open input stream from local tx(txId:%s)", this.tx.getId()));
+                this.inputStream = this.tx.getLogInputStream();
+            }
+        }
+    }
+
+    public void setLogService(HdfsLogServiceImpl logService) {
+        this.logService = logService;
+    }
+
+}

@@ -1,0 +1,94 @@
+package com.yeahmobi.yscheduler.web.service.impl;
+
+import java.util.Date;
+import java.util.List;
+
+import javax.annotation.PostConstruct;
+
+import org.apache.ibatis.session.RowBounds;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.yeahmobi.yscheduler.common.Paginator;
+import com.yeahmobi.yscheduler.model.Instance;
+import com.yeahmobi.yscheduler.model.InstanceExample;
+import com.yeahmobi.yscheduler.model.dao.InstanceDao;
+import com.yeahmobi.yscheduler.model.type.InstanceStatus;
+import com.yeahmobi.yscheduler.web.common.Constants;
+import com.yeahmobi.yscheduler.web.service.InstanceService;
+
+@Service
+public class InstanceServiceImpl implements InstanceService {
+
+    @Autowired
+    private InstanceDao instanceDao;
+
+    @PostConstruct
+    public void init() {
+    }
+
+    public Instance get(long id) {
+        return this.instanceDao.selectByPrimaryKey(id);
+    }
+
+    public List<Instance> list(long taskId, int pageNum, Paginator paginator) {
+        InstanceExample example = new InstanceExample();
+
+        example.createCriteria().andTaskIdEqualTo(taskId);
+
+        int count = this.instanceDao.countByExample(example);
+
+        paginator.setItemsPerPage(Constants.PAGE_SIZE);
+        paginator.setItems(count);
+        paginator.setPage(pageNum);
+
+        int offset = paginator.getBeginIndex() - 1;
+        int limit = Constants.PAGE_SIZE;
+
+        RowBounds rowBounds = new RowBounds(offset, limit);
+
+        example.setOrderByClause("create_time DESC");
+        List<Instance> instances = this.instanceDao.selectByExampleWithRowbounds(example, rowBounds);
+
+        return instances;
+    }
+
+    public List<Instance> listAll(long taskId) {
+        InstanceExample example = new InstanceExample();
+
+        example.createCriteria().andTaskIdEqualTo(taskId);
+        example.setOrderByClause("create_time DESC");
+
+        return this.instanceDao.selectByExample(example);
+    }
+
+    public void save(Instance instance) {
+        instance.setCreateTime(new Date());
+        this.instanceDao.insert(instance);
+    }
+
+    public InstanceDao getInstanceDao() {
+        return this.instanceDao;
+    }
+
+    public void setInstanceDao(InstanceDao instanceDao) {
+        this.instanceDao = instanceDao;
+    }
+
+    public List<Instance> getAllUncompleteds() {
+        InstanceExample example = new InstanceExample();
+        example.createCriteria().andStatusEqualTo(InstanceStatus.RUNNING);
+
+        return this.instanceDao.selectByExample(example);
+    }
+
+    public void updateStatus(Long instanceId, InstanceStatus status) {
+        Instance record = new Instance();
+        record.setId(instanceId);
+        record.setStatus(status);
+        record.setUpdateTime(new Date());
+
+        this.instanceDao.updateByPrimaryKeySelective(record);
+    }
+
+}

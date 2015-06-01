@@ -1,0 +1,53 @@
+package com.yeahmobi.yscheduler.notice;
+
+import java.util.List;
+
+/**
+ * @author Ryan Sun
+ */
+public class Message {
+
+    private String     subject;
+    private String     content;
+    private List<Long> toUserIds;
+    private boolean    needSms;
+
+    public String getSubject() {
+        return this.subject;
+    }
+
+    public void setSubject(String subject) {
+        this.subject = subject;
+    }
+
+    public String getContent() {
+        return this.content;
+    }
+
+    public void setContent(String content) {
+        this.content = content;
+    }
+
+    public List<Long> getToUserIds() {
+        return this.toUserIds;
+    }
+
+    public void setToUserIds(List<Long> toUserIds) {
+        this.toUserIds = toUserIds;
+    }
+
+    public boolean getNeedSms() {
+        return this.needSms;
+    }
+
+    public void setNeedSms(boolean needSms) {
+        this.needSms = needSms;
+    }
+
+    @Override
+    public String toString() {
+        return "Message [subject=" + this.subject + ", content=" + this.content + ", toUserIds=" + this.toUserIds
+               + ", needSms=" + this.needSms + "]";
+    }
+
+}

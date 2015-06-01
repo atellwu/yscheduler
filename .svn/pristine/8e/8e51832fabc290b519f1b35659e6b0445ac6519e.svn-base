@@ -1,0 +1,10 @@
+jdbc.driverClassName=com.mysql.jdbc.Driver
+jdbc.username=yscheduler
+jdbc.password=LwhScZPEUy3jZLe5
+jdbc.maxPoolSize=20
+jdbc.minPoolSize=5
+jdbc.initialPoolSize=5
+jdbc.idleConnectionTestPeriod=1800
+jdbc.maxIdleTime=3600
+jdbc.checkoutTimeout=5000
+jdbc.url=jdbc:mysql://yscheduler.cgs2bjzqxcxl.us-east-1.rds.amazonaws.com:3306/yscheduler?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&noAccessToProcedureBodies=true

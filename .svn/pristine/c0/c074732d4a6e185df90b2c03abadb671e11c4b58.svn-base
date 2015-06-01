@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- dbunit用于初始化数据的文件，每个ut方法都会执行一遍 -->
+<!-- 默认从以下路径尝试找setup.xml文件，找不到会便停止往下找： -->
+<!-- 1. <packageName>/<className>.<methodName>-setup.xml -->
+<!-- 2. <packageName>/<className>-setup.xml -->
+<!-- 3. <packageName>/setup.xml -->
+<!-- 4. <className>.<methodName>-setup.xml -->
+<!-- 5. <className>.setup.xml -->
+<!-- 6. setup.xml -->
+<dataset>
+	<Agent id="1" name="agent1" ip="10.0.0.1" alive="1" enable="1"
+		create_time="2014-11-26 17:38:00" update_time="2014-11-26 17:38:00" />
+	<Agent id="2" name="agent2" ip="10.0.0.2" alive="1" enable="1"
+		create_time="2014-11-26 17:38:00" update_time="2014-11-26 17:38:00" />
+	<Agent id="3" name="agent3" ip="10.0.0.3" alive="1" enable="1"
+		create_time="2014-11-26 17:38:00" update_time="2014-11-26 17:38:00" />
+	<Agent id="4" name="agent4" ip="10.0.0.4" alive="1" enable="1"
+		create_time="2014-11-26 17:38:00" update_time="2014-11-26 17:38:00" />
+	<Agent id="5" name="agent5" ip="10.0.0.5" alive="1" enable="1"
+		create_time="2014-11-26 17:38:00" update_time="2014-11-26 17:38:00" />
+	<Agent id="6" name="agent6" ip="10.0.0.6" alive="1" enable="1"
+		create_time="2014-11-26 17:38:00" update_time="2014-11-26 17:38:00" />
+	<Agent id="7" name="agent7" ip="10.0.0.7" alive="1" enable="1"
+		create_time="2014-11-26 17:38:00" update_time="2014-11-26 17:38:00" />
+	<Agent id="8" name="agent8" ip="10.0.0.8" alive="1" enable="1"
+		create_time="2014-11-26 17:38:00" update_time="2014-11-26 17:38:00" />
+	<Agent id="9" name="agent9" ip="10.0.0.9" alive="1" enable="1"
+		create_time="2014-11-26 17:38:00" update_time="2014-11-26 17:38:00" />
+	<Agent id="10" name="agent10" ip="10.0.0.10" alive="1" enable="1"
+		create_time="2014-11-26 17:38:00" update_time="2014-11-26 17:38:00" />
+	<Agent id="11" name="agent11" ip="10.0.0.11" alive="1" enable="1"
+		create_time="2014-11-26 17:38:00" update_time="2014-11-26 17:38:00" />
+
+	<Task id="1" name="test1" owner="1" type="1" crontab="0/5 * * * * ?"
+		command="echo test" agent_id="1" status="1" timeout="1" retry_times="1"
+		description="desc..." create_time="2009-09-09 00:00:00" update_time="2009-09-09 00:00:00" />
+</dataset> 

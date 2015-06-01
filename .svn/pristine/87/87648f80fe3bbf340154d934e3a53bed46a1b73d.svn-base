@@ -1,0 +1,50 @@
+<div class="col-xs-10">
+	<div id="alertMessageDiv" style="text-align: center;"></div>
+	<p style="text-align: right">
+		<button class="btn btn-sm btn-info" onclick="app.openCreateAgentModal()">添加Agent</button>
+	</p>
+	<div class="table-responsive">
+		<table class="table table-striped table-bordered table-hover" id="listTable">
+			<thead>
+				<tr>
+					<th>名称</th>
+					<th>IP</th>
+					<th>创建时间</th>
+					<th>所属团队</th>
+					<th>状态</th>
+					<th>操作</th>
+				</tr>
+			</thead>
+			<tbody>
+				#foreach($agent in $list)
+				<tr>
+					<td><b>$agent.name</b></td>
+					<td>$agent.ip</td>
+					<td>$!dateFormatUtils.format($agent.createTime,'yyyy年MM月dd日HH时mm分')</td>
+					<td> #foreach($team in
+									$teams)
+									#if($team.id == $agent.teamId)
+									$team.name
+									#end #end
+					</td>
+					#if(!$agent.enable)
+					<td><span class="label label-info">下线</span></td> #elseif ($agent.alive)
+					<td><span class="label label-success">正常</span></td> #else
+					<td><span class="label label-danger">异常</span></td>
+					#end
+					<td style="width: 300px"><a href="javascript:;" onclick="app.openRemoveAgentModal($agent.id,'$agent.name')"><span
+							class="label label-danger">&nbsp; 删除 </span></a> &nbsp;<a href="javascript:;"
+						onclick="app.openUpdateAgentIpModal($agent.id,'$agent.name','$agent.ip',$agent.teamId)"><span class="label label-info">修改</span></a>&nbsp;
+						 #if($agent.enable)&nbsp;<a href="javascript:;"
+						onclick="app.openEnableOrDisableAgentModal($agent.id,'$agent.name',false)">
+						<span class="label label-warning">下线</span></a> #else&nbsp;<a href="javascript:;"
+						onclick="app.openEnableOrDisableAgentModal($agent.id,'$agent.name',true)">
+						<span class="label label-success">上线</span></a> #end
+						</td>
+				</tr>
+				#end
+			</tbody>
+		</table>
+		#screen("paginator.htm")
+	</div>
+</div>

@@ -1,0 +1,29 @@
+#macro( screen $page)
+    #set($absolutePath = "screens/${path1}/")
+    #if($path2)
+       #set($absolutePath = "$absolutePath$path2/")
+    #end
+    #if($path3)
+       #set($absolutePath = "$absolutePath$path3/")
+    #end
+    #if($path4)
+       #set($absolutePath = "$absolutePath$path4/")
+    #end
+    #parse("$absolutePath$page")
+#end
+
+#macro( meta $path)
+    #parse("screens/$path/meta.htm")
+#end
+
+#macro( SHTML $value)
+  $stringEscapeUtils.escapeHtml($value)
+#end
+
+#macro( SJS $value)
+  $stringEscapeUtils.escapeJavaScript($value)
+#end
+
+#macro( SXML $value)
+  $stringEscapeUtils.escapeXml($value)
+#end

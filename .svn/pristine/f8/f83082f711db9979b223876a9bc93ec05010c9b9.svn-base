@@ -1,0 +1,70 @@
+package com.yeahmobi.yscheduler.workflow;
+
+import java.util.List;
+
+import javax.annotation.PostConstruct;
+
+import org.springframework.beans.factory.annotation.Autowired;
+
+import com.yeahmobi.yscheduler.model.TaskInstance;
+import com.yeahmobi.yscheduler.model.WorkflowDetail;
+import com.yeahmobi.yscheduler.model.WorkflowInstance;
+import com.yeahmobi.yscheduler.model.service.TaskInstanceService;
+import com.yeahmobi.yscheduler.model.service.WorkflowDetailService;
+import com.yeahmobi.yscheduler.model.service.WorkflowInstanceService;
+import com.yeahmobi.yscheduler.model.type.WorkflowInstanceStatus;
+
+/**
+ * @author Ryan Sun
+ */
+public class DefaultWorkflowExecutor implements WorkflowExecutor {
+
+    @Autowired
+    private WorkflowDetailService   workflowDetailService;
+
+    @Autowired
+    private WorkflowInstanceService workflowInstanceService;
+
+    @Autowired
+    private TaskInstanceService     taskInstanceService;
+
+    @Autowired
+    private DependencyCheckTask     dependencyCheckTask;
+
+    @Autowired
+    private WorkflowStatusCheckTask workflowStatusCheckTask;
+
+    @PostConstruct
+    public void init() {
+        List<WorkflowInstance> instances = this.workflowInstanceService.getAllInits();
+        for (WorkflowInstance instance : instances) {
+            submit(instance);
+        }
+        new Thread(this.dependencyCheckTask).start();
+        new Thread(this.workflowStatusCheckTask).start();
+
+    }
+
+    public void submit(WorkflowInstance workflowInstance) {
+        this.workflowStatusCheckTask.addRunningWorkflow(workflowInstance);
+        long workflowId = workflowInstance.getWorkflowId();
+        long instanceId = workflowInstance.getId();
+        this.taskInstanceService.deleteByWorkflow(instanceId);
+        List<WorkflowDetail> details = this.workflowDetailService.list(workflowId);
+        for (WorkflowDetail detail : details) {
+            long taskId = detail.getTaskId();
+            TaskInstance instance = new TaskInstance();
+            instance.setTaskId(taskId);
+            instance.setWorkflowInstanceId(instanceId);
+            this.taskInstanceService.save(instance);
+        }
+        workflowInstance.setStatus(WorkflowInstanceStatus.RUNNING);
+        this.workflowInstanceService.save(workflowInstance);
+    }
+
+    public boolean isRunning(long workflowInstanceId) {
+
+        return false;
+    }
+
+}

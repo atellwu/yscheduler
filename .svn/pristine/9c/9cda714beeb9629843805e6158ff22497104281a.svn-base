@@ -1,0 +1,52 @@
+package com.yeahmobi.yscheduler.notice;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.yeahmobi.yscheduler.model.Task;
+import com.yeahmobi.yscheduler.model.User;
+import com.yeahmobi.yscheduler.model.Workflow;
+import com.yeahmobi.yscheduler.model.service.TaskInstanceService;
+import com.yeahmobi.yscheduler.model.service.TaskService;
+import com.yeahmobi.yscheduler.model.service.UserService;
+import com.yeahmobi.yscheduler.model.service.WorkflowInstanceService;
+import com.yeahmobi.yscheduler.model.service.WorkflowService;
+
+/**
+ * @author Ryan Sun
+ */
+@Service
+public class ReceiverHelper {
+
+    @Autowired
+    private WorkflowService         workflowService;
+
+    @Autowired
+    private WorkflowInstanceService workflowInstanceService;
+
+    @Autowired
+    private TaskService             taskService;
+
+    @Autowired
+    private TaskInstanceService     taskInstanceService;
+
+    @Autowired
+    private UserService             userService;
+
+    public List<User> getReceivers(long id, NoticeType type) {
+        // TODO to be improved
+        List<User> users = new ArrayList<User>();
+        if (type == NoticeType.TASK) {
+            Task task = this.taskService.get(this.taskInstanceService.get(id).getTaskId());
+            users.add(this.userService.get(task.getOwner()));
+        } else if (type == NoticeType.WORKFLOW) {
+            Workflow workflow = this.workflowService.get(this.workflowInstanceService.get(id).getWorkflowId());
+            users.add(this.userService.get(workflow.getOwner()));
+        }
+        return users;
+
+    }
+}

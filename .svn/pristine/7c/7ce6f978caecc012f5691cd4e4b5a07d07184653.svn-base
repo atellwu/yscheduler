@@ -1,0 +1,159 @@
+<div class="page-header">
+	<h1>创建工作流</h1>
+</div>
+<div id="alertMessageDiv" style="text-align: center;"></div>
+<div class="widget-box transparent" id="recent-box">
+	<div class="widget-header">
+		<div class="widget-toolbar no-border">
+			<ul class="nav nav-tabs" id="recent-tab">
+				<li class="active"><a data-toggle="tab" href="#edit">编辑</a></li>
+				<li class=""><a data-toggle="tab" onclick="getTopo($('#form').get(0))" href="#topo">拓扑图</a></li>
+			</ul>
+		</div>
+	</div>
+	<div class="widget-body">
+		<div class="widget-main padding-4">
+			<div class="tab-content padding-8 overflow-visible">
+				<div id="edit" class="tab-pane active">
+					<form id="form" class="form-horizontal" onsubmit="return createTask(this);"
+						action="${rc.contextPath}/workflow/create" method="post" role="form">
+						<div class="row" style="width: 90%">
+							<div class="col-sm-7">
+								<div class="form-group">
+									<label class="col-sm-4 control-label no-padding-right" for="name"> 工作流名称 </label>
+									<div class="col-sm-8">
+										<input type="text" name='name' class="field col-xs-10 col-sm-6" autocomplete="off" value="">
+									</div>
+								</div>
+								<div class="form-group">
+									<label class="col-sm-4 control-label no-padding-right" for="crontab"> 调度表达式 </label>
+									<div class="col-sm-8" id='crontab_div'>
+										<input type="text" id='crontab' name='crontab' class="field col-xs-10 col-sm-6" autocomplete="off" value="">
+									</div>
+								</div>
+								<div class="form-group">
+									<label class="col-sm-4 control-label no-padding-right" for="timeout"> 超时时间(单位:分钟) </label>
+									<div class="col-sm-8">
+										<input type="number" name='timeout' class="field col-xs-10 col-sm-6" autocomplete="off" value="60">
+									</div>
+								</div>
+								<div class="form-group">
+									<label class="col-sm-4 control-label no-padding-right" for="description"> 描述 </label>
+									<div class="col-sm-8">
+										<textarea name='description' class="field autosize-transition col-xs-10 col-sm-6"
+											style="overflow: hidden; word-wrap: break-word; resize: horizontal; height: 52px;"></textarea>
+									</div>
+								</div>
+
+							</div>
+							<div class="col-sm-5">
+								<div class="form-group">
+									<label for="canSkip" class="col-sm-4 control-label no-padding-right">是否允许跳过</label>
+									<div class="col-sm-8">
+										<label><input name="canSkip" class="ace ace-checkbox-1" type="checkbox" checked="checked" value="true">
+											<span class="lbl"></span> </label>
+									</div>
+								</div>
+
+								<div class="form-group">
+									<label for="concurrent" class="col-sm-4 control-label no-padding-right">是否允许并行</label>
+									<div class="col-sm-8">
+										<label><input name="concurrent" class="ace ace-checkbox-1" type="checkbox" checked="checked"
+											disabled="disabled" value="true"> <span class="lbl"></span> </label>
+									</div>
+								</div>
+								<div class="form-group">
+									<label for="condition" class="col-sm-4 control-label no-padding-right">触发条件</label>
+									<div class="col-sm-8">
+										<label><input disabled="disabled" name="condition" class="ace ace-checkbox-1" type="radio"
+											checked="checked" value="true"> <span class="lbl"></span> 完成即触发</label> <label><input
+											disabled="disabled" name="condition" class="ace ace-checkbox-1" type="radio" value="true"> <span
+											class="lbl"></span>成功才触发</label>
+									</div>
+								</div>
+
+								<div class="form-group">
+									<label class="col-sm-4 control-label no-padding-right">启用调度</label>
+									<div class="col-sm-8">
+										<label> <input name="running" class="ace ace-checkbox-1" type="checkbox" checked="checked"> <span
+											class="lbl"></span>
+										</label>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="row" style="width: 80%">
+							<div class="col-xs-12">
+								<button style="float: right; margin-bottom: 5px;" onclick="addTask();" class="btn btn-sm btn-info no-radius"
+									type="button">
+									<i class="icon-plus"></i> 添加任务
+								</button>
+								<div class="table-responsive">
+									<table class="table table-striped table-bordered table-hover">
+										<thead>
+											<tr>
+												<th style="width: 246px;">任务</th>
+												<!-- <th style="width: 213px;"><i class="icon-time bigger-110 hidden-480"></i> 超时时间</th>
+												<th style="width: 213px;" class="hidden-480">失败重试次数</th> -->
+												<th style="width: 213px;" class="hidden-480">作业延迟时间</th>
+												<th style="width: 213px;" class="hidden-480">自依赖</th>
+												<th style="width: 300px" class="hidden-480">依赖任务</th>
+												<th style="width: 30px"></th>
+											</tr>
+										</thead>
+										<tbody id="taskTable">
+										</tbody>
+									</table>
+								</div>
+								<!-- /.table-responsive -->
+							</div>
+							<!-- /span -->
+						</div>
+						<div class="row" style="width: 80%">
+							<div class="clearfix form-actions">
+								<div class="col-md-offset-5 col-md-9">
+									<button class="btn btn-info" type="submit" data-loading-text="提交中..">
+										<i class="icon-ok bigger-110"></i> 确定
+									</button>
+									<button id="cancelBtn" class="btn" type="button" onclick="window.location='${rc.contextPath}/workflow'">
+										<i class="icon-undo bigger-110"></i> 返回
+									</button>
+								</div>
+							</div>
+						</div>
+
+					</form>
+				</div>
+				<div id="topo" class="tab-pane"></div>
+			</div>
+		</div>
+	</div>
+</div>
+
+
+<script id="taskRow" type="text/html">
+	<tr>
+		<td><select name="taskId"
+			class="width-20 single chosen-select" data-placeholder="选择任务">
+				#foreach($task in $tasks)
+				<option value="$task.value">$task.name</option> #end
+		</select></td>
+		<td><input type="number" name='taskDelay'
+			class="field col-xs-10 col-sm-6" value="0"></td>
+		<td><label><input name="taskCondition" class="ace ace-checkbox-1" type="radio"
+											checked="checked" value="none"> <span class="lbl"></span> 允许并行</label> <label><input name="taskCondition" class="ace ace-checkbox-1" type="radio"
+											checked="checked" value="completed"> <span class="lbl"></span> 完成即触发</label> <label><input
+										    name="taskCondition" class="ace ace-checkbox-1" type="radio" value="success"> <span
+											class="lbl"></span> 成功才触发</label></td>
+		<td class="hidden-480"><select multiple name="dependencyTaskId"
+			class="width-20 chosen-select" data-placeholder="选择依赖的任务">
+				#foreach($task in $tasks)
+				<option value="$task.value">$task.name</option> #end
+		</select></td>
+		<td>
+			<button class="btn btn-xs btn-danger" type="button" onclick="removeTask(this)">
+				<i class="icon-trash bigger-120"></i>
+			</button>
+		</td>
+	</tr>
+</script>

@@ -1,0 +1,23 @@
+package com.yeahmobi.yscheduler.web.controller;
+
+import java.util.Map;
+
+import org.springframework.web.servlet.ModelAndView;
+
+/**
+ * @author wukezhu
+ */
+public class AbstractController {
+
+    protected ModelAndView screen(Map<String, Object> map, String screen, String page) {
+        map.put("screen", screen);
+        map.put("page", page);
+        return new ModelAndView("screens/" + screen + "/" + page + "/main", map);
+    }
+
+    protected ModelAndView screen(Map<String, Object> map, String screen) {
+        map.put("screen", screen);
+        // map.put("page", page);
+        return new ModelAndView("screens/" + screen + "/main", map);
+    }
+}

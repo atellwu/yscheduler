@@ -1,0 +1,16 @@
+
+.y_searchform label{
+	margin-left:15px
+}
+
+.y_searchform button{
+	margin-left:20px
+}
+
+li[switch_on] > a:last-child{
+	display: none;
+}
+li[switch_off] > a:FIRST-CHILD{
+	display: none;
+}
+

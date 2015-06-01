@@ -1,0 +1,32 @@
+<link href="${rc.contextPath}/assets/css/bwizard.css" rel="stylesheet" />
+<link href="${rc.contextPath}/assets/css/autocomplete.css" rel="stylesheet" />
+<link href="${rc.contextPath}/assets/css/chosen.min.css" rel="stylesheet" />
+<link href="${rc.contextPath}/static/css/custom.css" rel="stylesheet" />
+
+
+<script src="${rc.contextPath}/assets/js/bwizard/jquery.bootstrap.wizard.js" type="text/javascript"></script>
+<script src="${rc.contextPath}/assets/js/jquery.autocomplete.js" type="text/javascript"></script>
+<script src="${rc.contextPath}/assets/js/chosen.jquery.min.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+
+	$(document).ready(function() {
+		
+		$('#wizard').bootstrapWizard({
+			'tabClass' : 'bwizard-steps',
+			'nextSelector' : '.button-next',
+			'previousSelector' : '.button-previous',
+			'finishSelector' : '.button-finish'
+		}); 
+
+		$(".single").chosen({width: "100%"}); 
+		$(".multiple").chosen({width: "150%"}); 
+
+		
+		$('#submit').click(function(e) {
+			$('#submit').button('loading');
+			$('#form').submit();
+		});
+
+	});
+</script>

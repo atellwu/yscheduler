@@ -1,0 +1,12 @@
+模型自动代码生成：
+ 1.进入model项目
+ 2.修改src/main/resources/generatorConfig.xml，为需要自动生成代码的表，添加<table>标签
+ 3.执行 mvn org.mybatis.generator:mybatis-generator-maven-plugin:1.3.2:generate
+ 4.修改modal项目下的 <tableName>Mapper.xml的第三行namespace的值，将Mapper类改为dao类。
+ 
+
+
+
+
+
+

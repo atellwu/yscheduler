@@ -1,0 +1,28 @@
+package com.yeahmobi.yscheduler.web.controller;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.servlet.ModelAndView;
+
+/**
+ * @author wukezhu
+ */
+@Controller
+@RequestMapping(value = { "/instance" })
+public class InstanceController extends AbstractController {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(InstanceController.class);
+
+    @RequestMapping(value = { "" })
+    public ModelAndView instance() {
+        Map<String, Object> map = new HashMap<String, Object>();
+
+        return screen(map, "instance", "list");
+    }
+
+}

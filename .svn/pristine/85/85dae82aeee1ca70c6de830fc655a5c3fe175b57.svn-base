@@ -1,0 +1,39 @@
+package com.yeahmobi.yscheduler.agentframework.agent.event.task;
+
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.FutureTask;
+
+import com.yeahmobi.yscheduler.agentframework.agent.task.BaseTaskExecutor;
+import com.yeahmobi.yscheduler.agentframework.agent.task.TaskTransaction;
+
+public abstract class AbstractAsyncTaskExecutor extends BaseTaskExecutor {
+
+    // txId,Pair
+    protected static ConcurrentHashMap<Long, Pair> holder = new ConcurrentHashMap<Long, Pair>();
+
+    private Map<String, String>                    params;
+
+    public Map<String, String> getParams() {
+        return this.params;
+    }
+
+    public void setParams(Map<String, String> params) {
+        this.params = params;
+    }
+
+    protected static class Pair {
+
+        public Pair(TaskTransaction tx, FutureTask task) {
+            super();
+            this.tx = tx;
+            this.task = task;
+        }
+
+        TaskTransaction tx;
+        FutureTask      task;
+    }
+
+    protected abstract void validate(Map<String, String> params);
+
+}

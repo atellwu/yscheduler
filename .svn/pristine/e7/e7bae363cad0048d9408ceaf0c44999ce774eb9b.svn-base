@@ -1,0 +1,12 @@
+$noticeType$name$noticeStatus了，
+#if($noticeLevel == 'info')
+请知晓。
+#elseif($noticeLevel == 'warning')
+请及时处理。
+#elseif($noticeLevel == 'error')
+请尽快处理。
+#end
+$noticeType详细信息，请查看$url
+-----------------------  
+      
+(这是一封自动产生的email，请勿回复。)  

@@ -1,0 +1,62 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:task="http://www.springframework.org/schema/task"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:util="http://www.springframework.org/schema/util" xmlns:hdp="http://www.springframework.org/schema/hadoop"
+	xsi:schemaLocation="
+			http://www.springframework.org/schema/beans 
+			http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+			http://www.springframework.org/schema/context
+            http://www.springframework.org/schema/context/spring-context-3.0.xsd
+            http://www.springframework.org/schema/task   
+    http://www.springframework.org/schema/task/spring-task-3.0.xsd
+    http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-3.0.xsd
+   http://www.springframework.org/schema/hadoop 
+    http://www.springframework.org/schema/hadoop/spring-hadoop.xsd">
+
+	<bean
+		class="com.yeahmobi.yscheduler.common.fileserver.impl.LocalFileBasedFileServer">
+		<property name="baseDir" value="/dianyi/fileServer" />
+		<property name="downloadPathBase" value="/download/log" />
+	</bean>
+
+	<bean id="scheduleTimeHandler" class="com.yeahmobi.yscheduler.variable.ScheduleTimeHandler">
+	</bean>
+
+	<bean class="com.yeahmobi.yscheduler.common.variable.VariableManager">
+		<property name="variableHandlers">
+			<map>
+				<entry value-ref="scheduleTimeHandler">
+					<key>
+						<util:constant
+							static-field="com.yeahmobi.yscheduler.variable.ScheduleTimeHandler.VARIABLE_NAME" />
+					</key>
+				</entry>
+			</map>
+		</property>
+	</bean>
+
+	<bean class="com.yeahmobi.yscheduler.condition.DefaultConditionChecker">
+		<property name="conditions">
+			<list>
+				<bean class="com.yeahmobi.yscheduler.condition.DelayCondition" />
+				<bean class="com.yeahmobi.yscheduler.condition.DependencyCondition" />
+				<bean
+					class="com.yeahmobi.yscheduler.condition.TaskSelfDependencyCondition" />
+				<bean
+					class="com.yeahmobi.yscheduler.condition.WorkflowSelfDependencyCondition" />
+
+			</list>
+		</property>
+	</bean>
+
+	<hdp:configuration id="configuration"
+		properties-location="classpath:/conf/hdfs.properties" />
+
+	<bean id="hdfsLogService"
+		class="com.yeahmobi.yscheduler.common.log.impl.HdfsLogServiceImpl"
+		init-method="init" destroy-method="close">
+		<property name="configuration" ref="configuration" />
+	</bean>
+
+</beans>

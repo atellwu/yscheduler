@@ -1,0 +1,15 @@
+package com.yeahmobi.yscheduler.agentframework.agent.task;
+
+import com.yeahmobi.yscheduler.agentframework.exception.TaskNotFoundException;
+import com.yeahmobi.yscheduler.agentframework.exception.TaskTransactionCreationException;
+
+/**
+ * @author Leo.Liang
+ */
+public interface TaskTransactionManager {
+
+    public TaskTransaction createTransaction(TaskExecutor taskExecutor) throws TaskTransactionCreationException;
+
+    public TaskTransaction getTransaction(long transactionId) throws TaskNotFoundException;
+
+}

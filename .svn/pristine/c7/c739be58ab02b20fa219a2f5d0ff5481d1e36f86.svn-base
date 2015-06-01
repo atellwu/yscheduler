@@ -1,0 +1,27 @@
+package com.yeahmobi.yscheduler.model.service;
+
+import java.util.List;
+
+import com.yeahmobi.yscheduler.common.Paginator;
+import com.yeahmobi.yscheduler.model.Task;
+import com.yeahmobi.yscheduler.model.common.NameValuePair;
+import com.yeahmobi.yscheduler.model.type.TaskStatus;
+
+public interface TaskService {
+
+    void add(Task task);
+
+    void update(Task task);
+
+    Task get(long id);
+
+    List<Task> list(int pageNum, Paginator paginator, long userId);
+
+    List<NameValuePair> list(long userId);
+
+    List<Task> listAll(TaskStatus status);
+
+    boolean canModify(long taskId, long userId);
+
+    boolean nameExist(String name);
+}

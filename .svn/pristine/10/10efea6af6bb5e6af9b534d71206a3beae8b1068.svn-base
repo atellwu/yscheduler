@@ -1,0 +1,22 @@
+package com.yeahmobi.yscheduler.common;
+
+import org.apache.commons.lang.StringUtils;
+import org.springframework.scheduling.support.CronTrigger;
+
+public class CrontabUtils {
+
+    /**
+     * 兼容linux crontab，把5位的crontab表达式补全到6位
+     */
+    public static String normalize(String crontab) {
+        if (StringUtils.split(crontab).length == 5) {
+            crontab = "0 " + crontab;
+        }
+        try {
+            new CronTrigger(crontab);
+        } catch (Exception e) {
+            throw new IllegalArgumentException("错误的调度时间表达式:\n" + e.getMessage());
+        }
+        return crontab;
+    }
+}

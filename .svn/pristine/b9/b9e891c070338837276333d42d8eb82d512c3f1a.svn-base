@@ -1,0 +1,29 @@
+package com.yeahmobi.yscheduler.web.service;
+
+import java.util.List;
+
+import com.yeahmobi.yscheduler.model.Authority;
+
+/**
+ * @author Ryan Sun
+ */
+public interface AuthorityService {
+
+    List<Authority> listByTask(long taskId);
+
+    List<Authority> listByUser(long userId);
+
+    public List<Long> listReadableTask(long userId);
+
+    public List<Long> listReadUser(long taskId);
+
+    public List<Long> listWriteUser(long taskId);
+
+    public List<Long> listFollowUser(long taskId);
+
+    public boolean writable(long taskId, long userId);
+
+    void add(List<Long> readableUsers, List<Long> writableUsers, List<Long> followingUsers, long taskId);
+
+    void update(List<Long> readableUsers, List<Long> writableUsers, List<Long> followingUsers, long taskId);
+}

@@ -1,0 +1,72 @@
+$.validator.setDefaults({
+	highlight : function(element) {
+		$(element).closest('.form-group').addClass('has-error');
+	},
+	unhighlight : function(element) {
+		$(element).closest('.form-group').removeClass('has-error');
+	},
+	errorElement : 'span',
+	errorClass : 'help-block',
+	errorPlacement : function(error, element) {
+		if (element.parent('.input-group').length) {
+			error.insertAfter(element.parent());
+		} else {
+			error.insertAfter(element);
+		}
+	}
+});
+
+$.validator.addMethod("taskNameTest", function(value, element, params) {
+	var p = /^[0-9a-zA-Z|_|\.|\-|(|)]*$/;
+	if (p.test(value))
+		return true;
+	return false;
+}, "名称中可使用的字符包括：数字、字母、下划线、横线、点和括号");
+
+$.validator.addMethod("validName", function(value, element, params) {
+	var result = false;
+	$.ajax({
+		url : '/task/name_exist?name=' + $("#name").val(),
+		type : 'get',
+		success : function(data) {
+			if (data.exist == true) {
+				result = false;
+			} else {
+				result = true;
+			}
+		},
+		error : function(data) {
+			result = false;
+		},
+		dataType : "json",
+		async : false
+	});
+
+	return result;
+}, "该名字已经存在！");
+
+$.validator.addMethod("isNormalInteger", function(value, element, params) {
+	return /^\+?(0|[1-9]\d*)$/.test(value);
+}, "必须为非负整数");
+
+$('#form').validate({
+	rules : {
+		name : {
+			minlength : 2,
+			required : true,
+			taskNameTest : true,
+			validName : true
+		},
+		command : {
+			required : true
+		},
+		timeout : {
+			required : true,
+			isNormalInteger : true
+		},
+		retryTimes : {
+			required : true,
+			isNormalInteger : true
+		}
+	}
+});

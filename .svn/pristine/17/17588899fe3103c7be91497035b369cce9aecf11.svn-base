@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE generatorConfiguration
+  PUBLIC "-//mybatis.org//DTD MyBatis Generator Configuration 1.0//EN"
+  "http://mybatis.org/dtd/mybatis-generator-config_1_1.dtd">
+
+<generatorConfiguration>
+	<classPathEntry
+		location="/Users/sunryuan/.m2/repository/mysql/mysql-connector-java/5.1.18/mysql-connector-java-5.1.18.jar" />
+
+	<context id="yscheduler" targetRuntime="MyBatis3">
+		<plugin type="org.mybatis.generator.plugins.RowBoundsPlugin"></plugin>
+		<plugin type="org.mybatis.generator.plugins.ToStringPlugin"></plugin>
+		<plugin type="org.mybatis.generator.plugins.EqualsHashCodePlugin"></plugin>
+		<commentGenerator>
+			<property name="suppressDate" value="true" />
+		</commentGenerator>
+		<jdbcConnection driverClass="com.mysql.jdbc.Driver"
+			connectionURL="jdbc:mysql://172.20.0.100:3306/yscheduler?useUnicode=true&amp;characterEncoding=utf8&amp;zeroDateTimeBehavior=convertToNull&amp;noAccessToProcedureBodies=true"
+			userId="root" password="root">
+		</jdbcConnection>
+		<javaTypeResolver>
+			<property name="forceBigDecimals" value="false" />
+		</javaTypeResolver>
+		<javaModelGenerator targetPackage="com.yeahmobi.yscheduler.model"
+			targetProject="./src/main/java">
+			<property name="enableSubPackages" value="true" />
+			<property name="trimStrings" value="true" />
+		</javaModelGenerator>
+		<sqlMapGenerator targetPackage="com.yeahmobi.yscheduler.model.dao"
+			targetProject="./src/main/resources">
+			<property name="enableSubPackages" value="true" />
+		</sqlMapGenerator>
+		<javaClientGenerator type="XMLMAPPER"
+			targetPackage="com.yeahmobi.yscheduler.model.dao.mapper"
+			targetProject="./src/main/java">
+			<property name="enableSubPackages" value="true" />
+		</javaClientGenerator>
+		
+		<!-- <table tableName="user">
+          <generatedKey column="id" sqlStatement="MySql" identity="true" />
+        </table>
+		<table tableName="agent">
+          <generatedKey column="id" sqlStatement="MySql" identity="true" />
+        </table>
+        <table tableName="attempt">
+          <generatedKey column="id" sqlStatement="MySql" identity="true" />
+            <columnOverride column="status" javaType="com.yeahmobi.yscheduler.model.type.AttemptStatus" typeHandler="com.yeahmobi.yscheduler.model.type.AttemptStatusHandler"/>
+        </table>
+        <table tableName="task_authority">
+          <generatedKey column="id" sqlStatement="MySql" identity="true" />
+          <columnOverride column="mode" javaType="com.yeahmobi.yscheduler.model.type.AuthorityMode" typeHandler="com.yeahmobi.yscheduler.model.type.AuthorityModeHandler"/>
+        </table>
+        <table tableName="task_dependency">
+          <generatedKey column="id" sqlStatement="MySql" identity="true" />
+        </table>
+        <table tableName="task_instance">
+          <generatedKey column="id" sqlStatement="MySql" identity="true" />
+            <columnOverride column="status" javaType="com.yeahmobi.yscheduler.model.type.TaskInstanceStatus" typeHandler="com.yeahmobi.yscheduler.model.type.TaskInstanceStatusHandler"/>
+        </table> 
+         <table tableName="task">
+          <generatedKey column="id" sqlStatement="MySql" identity="true" />
+            <columnOverride column="type" javaType="com.yeahmobi.yscheduler.model.type.TaskType" typeHandler="com.yeahmobi.yscheduler.model.type.TaskTypeHandler"/>
+            <columnOverride column="status" javaType="com.yeahmobi.yscheduler.model.type.TaskStatus" typeHandler="com.yeahmobi.yscheduler.model.type.TaskStatusHandler"/>
+        </table>
+        
+        <table tableName="workflow_authority">
+          <generatedKey column="id" sqlStatement="MySql" identity="true" />
+          <columnOverride column="mode" javaType="com.yeahmobi.yscheduler.model.type.AuthorityMode" typeHandler="com.yeahmobi.yscheduler.model.type.AuthorityModeHandler"/>
+        </table>
+        <table tableName="workflow_detail">
+          <generatedKey column="id" sqlStatement="MySql" identity="true" />
+        </table>
+        <table tableName="workflow_instance">
+          <generatedKey column="id" sqlStatement="MySql" identity="true" />
+            <columnOverride column="status" javaType="com.yeahmobi.yscheduler.model.type.WorkflowInstanceStatus" typeHandler="com.yeahmobi.yscheduler.model.type.WorkflowInstanceStatusHandler"/>
+        </table> 
+         <table tableName="workflow">
+          <generatedKey column="id" sqlStatement="MySql" identity="true" />
+            <columnOverride column="status" javaType="com.yeahmobi.yscheduler.model.type.WorkflowStatus" typeHandler="com.yeahmobi.yscheduler.model.type.WorkflowStatusHandler"/>
+        </table> 
+        <table tableName="workflow_task_dependency">
+          <generatedKey column="id" sqlStatement="MySql" identity="true" />
+        </table>
+        
+        <table tableName="schedule_progress">
+          <generatedKey column="id" sqlStatement="MySql" identity="true" />
+        </table>
+        -->
+        
+        <!-- <table tableName="workflow_detail">
+          <generatedKey column="id" sqlStatement="MySql" identity="true" />
+        </table>
+        <table tableName="workflow_task_dependency">
+          <generatedKey column="id" sqlStatement="MySql" identity="true" />
+        </table> -->
+		
+		
+		<table tableName="workflow">
+          <generatedKey column="id" sqlStatement="MySql" identity="true" />
+            <columnOverride column="status" javaType="com.yeahmobi.yscheduler.model.type.WorkflowStatus" typeHandler="com.yeahmobi.yscheduler.model.type.WorkflowStatusHandler"/>
+        </table> 
+        
+        <table tableName="task">
+          <generatedKey column="id" sqlStatement="MySql" identity="true" />
+            <columnOverride column="type" javaType="com.yeahmobi.yscheduler.model.type.TaskType" typeHandler="com.yeahmobi.yscheduler.model.type.TaskTypeHandler"/>
+            <columnOverride column="status" javaType="com.yeahmobi.yscheduler.model.type.TaskStatus" typeHandler="com.yeahmobi.yscheduler.model.type.TaskStatusHandler"/>
+        </table>
+	</context>
+
+</generatorConfiguration>

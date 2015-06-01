@@ -1,0 +1,18 @@
+package com.yeahmobi.yscheduler.common;
+
+import java.util.regex.Pattern;
+
+public class Constants {
+
+    public static final String  AGENT_CONTEXT                = "yscheduler";
+
+    public static final String  EVENT_TYPE_TASK_STATUS       = "TASK_STATUS";
+    public static final String  EVENT_TYPE_TASK_LOG          = "TASK_LOG";
+    public static final String  EVENT_TYPE_TASK_CANCLE       = "TASK_CANCLE";
+    public static final String  EVENT_TYPE_SHELL_TASK_SUBMIT = "SHELL_TASK_SUBMIT";
+
+    public static final Pattern USER_NAME_PATTERN            = Pattern.compile("^[a-zA-Z][a-zA-Z0-9_.]{2,29}$");
+    public static final Pattern USER_TELEPHONE_PATTERN       = Pattern.compile("^((13[0-9])|(15[^4,\\D])|(18[0,5-9]))\\d{8}$");
+    public static final String  USER_EMAIL_suffix            = "@ndpmedia.com";
+
+}

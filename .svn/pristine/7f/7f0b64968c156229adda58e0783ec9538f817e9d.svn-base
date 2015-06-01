@@ -1,0 +1,30 @@
+package com.yeahmobi.yscheduler.agentframework.utils;
+
+import java.io.IOException;
+import java.io.PrintStream;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
+import org.apache.commons.io.IOUtils;
+
+import com.yeahmobi.yscheduler.agentframework.agent.task.TaskTransaction;
+
+public class LogUtil {
+
+    private static final String DATE_FORMAT = "yyyy-MM-dd HH:mm:ss";
+
+    public static void info(TaskTransaction taskTransaction, String msg) throws IOException {
+        SimpleDateFormat sdf = new SimpleDateFormat(DATE_FORMAT);
+        IOUtils.write(String.format("[INFO][%s] %s", sdf.format(new Date()), msg), taskTransaction.getOutputStream());
+        IOUtils.write(IOUtils.LINE_SEPARATOR, taskTransaction.getOutputStream());
+    }
+
+    public static void error(TaskTransaction taskTransaction, String errorMsg, Throwable t) throws IOException {
+        SimpleDateFormat sdf = new SimpleDateFormat(DATE_FORMAT);
+        IOUtils.write(String.format("[ERROR][%s] %s", sdf.format(new Date()), errorMsg),
+                      taskTransaction.getOutputStream());
+        IOUtils.write(IOUtils.LINE_SEPARATOR, taskTransaction.getOutputStream());
+        t.printStackTrace(new PrintStream(taskTransaction.getOutputStream()));
+        IOUtils.write(IOUtils.LINE_SEPARATOR, taskTransaction.getOutputStream());
+    }
+}

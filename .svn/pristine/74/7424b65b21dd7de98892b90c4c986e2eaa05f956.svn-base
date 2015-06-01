@@ -1,0 +1,188 @@
+<!--TODO validate -->
+<div class="container">
+	<div id="wizard">
+		<ul>
+			<li><a href="#tab1" data-toggle="tab"><span class="label">1</span>部署设置</a></li>
+			<li><a href="#tab2" data-toggle="tab"><span class="label">2</span>基本设置</a></li>
+			<li><a href="#tab3" data-toggle="tab"><span class="label">3</span>调度设置</a></li>
+		</ul>
+		<form id="form" role="form" action="/task/create" method="post"
+			class="form-horizontal">
+			<div class="tab-content well">
+				<div class="tab-pane" id="tab1">
+					<fieldset>
+						<legend>部署设置</legend>
+						<div class="form-group">
+							<label for="type" class="col-sm-2">作业类型*</label>
+							<div class="col-sm-5">
+								<select id="type" name="type" onchange="app.changeType(this)"
+									class="form-control"> #foreach($type in $types)
+									<option value='$type.id'>$type.name</option> #end
+								</select>
+							</div>
+						</div>
+						<div agent class="form-group">
+							<label for="agent" class="col-sm-2">执行机器</label>
+							<div class="col-sm-5">
+								<select name="agent" class="single chosen-select"
+									data-placeholder="选择执行作业的机器IP"> #foreach($agent in
+									$agents)
+									<option value="$agent.id">${agent.name}(${agent.ip})</option>
+									#end
+								</select>
+							</div>
+						</div>
+
+					</fieldset>
+				</div>
+				<div class="tab-pane" id="tab2">
+					<fieldset>
+						<legend>基本设置</legend>
+						<div class="form-group">
+							<label for="name" class="col-sm-2">名称*</label>
+							<div class="col-sm-5">
+								<input type="text" id="name" name="name" class="form-control"
+									placeholder="作业的名称，可以作为被依赖的对象，不可修改">
+							</div>
+						</div>
+
+						<div httpCallout class="form-group" style="display: none">
+							<label class="col-sm-2">调用url*</label>
+							<div class="col-sm-5">
+								<input type="text" name="calloutUrl" class="form-control"
+									placeholder="例如 http://">
+							</div>
+						</div>
+						
+						<div httpCallout class="form-group" style="display: none">
+                            <label class="col-sm-2">取消url(可选)</label>
+                            <div class="col-sm-5">
+                                <input type="text" name="cancelUrl" class="form-control"
+                                    placeholder="例如 http://">
+                            </div>
+                        </div>
+
+						<div httpCallout class="form-group" style="display: none">
+							<label class="col-sm-2">是否需要回调</label>
+							<div class="col-sm-8">
+								<input type="checkbox" name="needCallback">是
+							</div>
+						</div>
+						
+						<div command class="form-group">
+							<label for="command" class="col-sm-2">命令*</label>
+							<div class="col-sm-5">
+								<input type="text" id="command" name="command"
+									class="form-control" placeholder="作业执行的命令">
+							</div>
+						</div>
+
+						<div class="form-group">
+							<label for="description" class="col-sm-2">描述</label>
+							<div class="col-sm-5">
+								<input type="text" id="description" name="description"
+									class="form-control" placeholder="作业的用途">
+							</div>
+						</div>
+						<div class="form-group">
+							<label for="readers" class="col-sm-2">只读用户</label>
+							<div class="col-sm-5">
+								<select multiple name="readers" id="readers"
+									class="multiple chosen-select form-control"
+									data-placeholder="选择只读权限用户">
+									<option value=""></option> #foreach($user in $users)
+									<option value="$user.value">$user.name</option> #end
+								</select>
+							</div>
+						</div>
+
+						<div class="form-group">
+							<label for="writers" class="col-sm-2">读写用户</label>
+							<div class="col-sm-5">
+								<select multiple name="writers" id="writers"
+									class="multiple chosen-select form-control"
+									data-placeholder="选择读写权限用户"> #foreach($user in $users)
+									<option value="$user.value">$user.name</option> #end
+								</select>
+							</div>
+						</div>
+						<input style="display: none" name="owner" id="owner"
+							value="$!{userContext.getUserContext().id}" />
+					</fieldset>
+				</div>
+				<div class="tab-pane" id="tab3">
+					<fieldset>
+						<legend>调度设置</legend>
+						<!-- 	<div class="form-group">
+							<label for="dependency" class="col-sm-2">依赖任务</label>
+							<div class="col-sm-5">
+								<select multiple id="dependency" name="dependency" class="multiple chosen-select form-control"
+									data-placeholder="选择依赖的任务名称"> #foreach($task in $tasks)
+									<option value="$task.value">$task.name</option> #end
+								</select>
+							</div>
+						</div>
+ 						-->
+
+						<div class="form-group">
+							<label for="schedule" class="col-sm-2">调度方式</label>
+							<div class="col-sm-8">
+								<input type="radio" name="schedule" value="clock" checked
+									onchange="schedule_changed()">定时 <input type="radio"
+									name="schedule" value="others" onchange="schedule_changed()">非定时
+							</div>
+						</div>
+
+						<div id='schedule'>
+							<div class="form-group">
+								<label for="timeout" class="col-sm-2">执行超时时间（分钟）</label>
+								<div class="col-sm-1">
+									<input type="number" id="timeout" name="timeout"
+										class="form-control" value="60">
+								</div>
+							</div>
+
+							<div class="form-group">
+								<label for="retryTimes" class="col-sm-2">重试次数</label>
+								<div class="col-sm-1">
+									<input type="number" id="retryTimes" name="retryTimes"
+										class="form-control" value='0'>
+								</div>
+							</div>
+
+							<div class="form-group">
+								<label for="crontab" class="col-sm-2">调度表达式</label>
+								<div class="col-sm-5" id="crontab_div">
+									<input type="text" id="crontab" name="crontab"
+										class="form-control" placeholder="0 0 0 * * *">
+								</div>
+							</div>
+
+							<div class="form-group" id='followers-group'>
+								<label for="notice" class="col-sm-2">告警通知用户</label>
+								<div class="col-sm-5">
+									<select multiple name="followers" id="followers"
+										class="multiple chosen-select form-control"
+										data-placeholder="选择告警要通知的用户"> #foreach($user in
+										$users)
+										<option value="$user.value">$user.name</option> #end
+									</select>
+								</div>
+							</div>
+
+						</div>
+					</fieldset>
+				</div>
+			</div>
+
+			<ul class="pager bwizard-buttons">
+				<li class="button-previous"><a href="#">← 上一步</a></li>
+				<li class="button-finish" style="cursor: pointer;" id="submit"
+					data-loading-text="提交中.."><a class='CLICKABLE'>提交</a></li>
+				<li class="button-next"><a href="#">下一步 →</a></li>
+			</ul>
+		</form>
+
+	</div>
+</div>
+

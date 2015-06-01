@@ -1,0 +1,71 @@
+#!/usr/bin/expect
+cd /tmp/yscheduler
+set AGENT_HOST [lindex $argv 0]
+set USER [lindex $argv 1]
+set PASSWORD [lindex $argv 2]
+set DATE [lindex $argv 3]
+set VERSION [lindex $argv 4]
+set WEB_HOST [lindex $argv 5]
+set timeout -1
+
+   #scp
+   spawn scp deploy/target/yagent-${VERSION}.zip $USER@${AGENT_HOST}:/dianyi/
+   expect "password:" {
+      send "${PASSWORD}\r"
+   }
+   expect "100%"
+   #login
+   spawn ssh $USER@$AGENT_HOST
+   expect "(yes/no)?" {
+         send "yes\r"
+         expect "password:" {
+             send "$PASSWORD\r"
+         }
+   } "password:" {
+         send "$PASSWORD\r"
+   }
+   expect "*]*"
+   #stop
+   send "/dianyi/yagent/bin/jetty.sh stop\r"
+   expect "*]*"
+   #backup,unzip
+   send "rm backup/yagent* -rf\r"
+   send "mv /dianyi/yagent /dianyi/backup/yagent.${DATE}\r"
+   expect "*]*"
+   send "unzip -q /dianyi/yagent-${VERSION}.zip -d /dianyi/\r"
+   expect "*]*"
+   #start
+   send "/dianyi/yagent/bin/jetty.sh restart\r"
+   expect "*]*"
+
+send "exit\r"
+expect eof
+
+##put agent.zip to $WEB_HOST for download
+
+   #scp
+   spawn scp deploy/target/yagent-${VERSION}.zip $USER@${WEB_HOST}:/dianyi/download/
+   expect "password:" {
+      send "${PASSWORD}\r"
+   }
+   expect "*]*"
+   #login
+   spawn ssh $USER@$WEB_HOST
+   expect "(yes/no)?" {
+         send "yes\r"
+         expect "password:" {
+             send "$PASSWORD\r"
+         }
+   } "password:" {
+         send "$PASSWORD\r"
+   }
+   expect "*]*"
+   #ln -s
+   send "rm -rf /dianyi/download/agent.zip\r"
+   send "ln -s /dianyi/download/yagent-${VERSION}.zip /dianyi/download/agent.zip\r"
+   expect "*]*"
+
+send "exit\r"
+expect eof
+
+exit

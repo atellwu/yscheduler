@@ -1,0 +1,19 @@
+#macro( screen $page)
+    #set($absolutePath = "screens/${path1}/")
+    #if($path2)
+       #set($absolutePath = "$absolutePath$path2/")
+    #end
+    #if($path3)
+       #set($absolutePath = "$absolutePath$path3/")
+    #end
+    #if($path4)
+       #set($absolutePath = "$absolutePath$path4/")
+    #end
+    #parse("$absolutePath$page")
+#end
+
+#macro( title $path)
+    #parse("screens/$path/meta.htm")
+#end
+
+pathQuery

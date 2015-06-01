@@ -1,0 +1,166 @@
+package com.yeahmobi.yscheduler.model.service.impl;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.List;
+
+import org.junit.Assert;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.TestExecutionListeners;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.test.context.support.DependencyInjectionTestExecutionListener;
+
+import com.yeahmobi.yscheduler.common.Paginator;
+import com.yeahmobi.yscheduler.model.Agent;
+import com.yeahmobi.yscheduler.model.Task;
+import com.yeahmobi.yscheduler.model.service.AgentService;
+import com.yeahmobi.yscheduler.model.service.TaskService;
+import com.yeahmobi.yscheduler.model.type.TaskStatus;
+import com.yeahmobi.yscheduler.model.type.TaskType;
+import com.yeahmobi.yunit.DbUnitTestExecutionListener;
+import com.yeahmobi.yunit.annotation.DatabaseSetup;
+
+/**
+ * 本示例的场景是：PersonService依赖了dao(PersonMapper)，因此对PersonService的单元测试，可以将PersonMapper进行mock。
+ */
+@RunWith(SpringJUnit4ClassRunner.class)
+@ContextConfiguration(locations = { "classpath:applicationContext-test.xml" })
+@TestExecutionListeners({ DependencyInjectionTestExecutionListener.class, DbUnitTestExecutionListener.class })
+public class AgentServiceImplTest {
+
+    @Autowired
+    private AgentService     agentService;
+
+    @Autowired
+    private TaskService      taskService;
+
+    private SimpleDateFormat sdf          = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    private String           DEFAULT_TIME = "2014-11-26 17:38:00";
+
+    @Test
+    @DatabaseSetup
+    public void testGet() throws Exception {
+        Agent agent = this.agentService.get(1);
+
+        assertAgent(agent, 1L);
+    }
+
+    private void assertAgent(Agent agent, Long id) {
+        assertAgent(agent, id, "agent" + id, true, true, "10.0.0." + id, this.DEFAULT_TIME, this.DEFAULT_TIME);
+    }
+
+    private void assertAgent(Agent agent, Long id, String name, boolean alive, boolean enable, String ip,
+                             String createTime, String updateTime) {
+        Assert.assertEquals(id, agent.getId());
+        Assert.assertEquals(name, agent.getName());
+        Assert.assertEquals(alive, agent.getAlive());
+        Assert.assertEquals(enable, agent.getEnable());
+        Assert.assertEquals(ip, agent.getIp());
+        Assert.assertEquals(createTime, this.sdf.format(agent.getCreateTime()));
+        Assert.assertEquals(updateTime, this.sdf.format(agent.getUpdateTime()));
+    }
+
+    @Test
+    @DatabaseSetup
+    public void testList() throws Exception {
+        List<Agent> agents = this.agentService.list();
+        Assert.assertEquals(11, agents.size());
+        for (int i = 0; i < agents.size(); i++) {
+            Agent agent = agents.get(i);
+            assertAgent(agent, (long) (i + 1));
+        }
+    }
+
+    @Test
+    @DatabaseSetup
+    public void testListWithPagination() throws Exception {
+        Paginator paginator = new Paginator();
+        List<Agent> agents = this.agentService.list(2, paginator);
+        Assert.assertEquals(1, agents.size());
+        assertAgent(agents.get(0), 1L);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    @DatabaseSetup
+    public void testAddWithNameExists() throws Exception {
+        Agent agent = new Agent();
+        agent.setName("agent1");
+        agent.setIp("1.1.1.1");
+        this.agentService.add(agent);
+    }
+
+    @Test()
+    @DatabaseSetup
+    public void testAdd() throws Exception {
+        Agent agent = new Agent();
+        agent.setName("agent100");
+        agent.setIp("1.1.1.1");
+        this.agentService.add(agent);
+
+        Date now = new Date();
+
+        Long id = agent.getId();
+        Assert.assertNotNull(id);
+
+        Agent actual = this.agentService.get(id);
+
+        Assert.assertEquals(agent.getName(), actual.getName());
+        Assert.assertEquals(agent.getIp(), actual.getIp());
+        Assert.assertEquals(true, actual.getAlive());
+        Assert.assertEquals(true, actual.getEnable());
+        Assert.assertEquals(this.sdf.format(now), this.sdf.format(actual.getCreateTime()));
+        Assert.assertEquals(this.sdf.format(now), this.sdf.format(actual.getUpdateTime()));
+
+        List<Task> tasks = this.taskService.listAll(TaskStatus.OPEN);
+        Task heartbeatTask = null;
+        for (Task task : tasks) {
+            if ((TaskService.HEARTBEAT_TASK_NAME_PREFIX + agent.getName()).equals(task.getName())) {
+                heartbeatTask = task;
+                break;
+            }
+        }
+        Assert.assertNotNull(heartbeatTask);
+        Assert.assertEquals(id, heartbeatTask.getAgentId());
+        Assert.assertEquals(TaskService.HEARTBEAT_TASK_NAME_PREFIX + agent.getName(), heartbeatTask.getName());
+        Assert.assertEquals("0 * * * * *", heartbeatTask.getCrontab());
+        Assert.assertEquals("echo 1", heartbeatTask.getCommand());
+        Assert.assertEquals(this.sdf.format(now), this.sdf.format(heartbeatTask.getCreateTime()));
+        Assert.assertEquals(this.sdf.format(now), this.sdf.format(heartbeatTask.getUpdateTime()));
+        Assert.assertEquals(this.sdf.format(now), this.sdf.format(heartbeatTask.getLastScheduleTime()));
+        Assert.assertEquals(Long.valueOf(2), heartbeatTask.getOwner());
+        Assert.assertEquals(Integer.valueOf(0), heartbeatTask.getRetryTimes());
+        Assert.assertEquals(TaskStatus.OPEN, heartbeatTask.getStatus());
+        Assert.assertEquals(TaskType.SHELL, heartbeatTask.getType());
+    }
+
+    @Test
+    @DatabaseSetup
+    public void testUpdateIp() throws Exception {
+        this.agentService.updateIp(1, "1.1.1.1");
+
+        Agent agent = this.agentService.get(1);
+        assertAgent(agent, 1L, "agent1", true, true, "1.1.1.1", this.DEFAULT_TIME, this.sdf.format(new Date()));
+    }
+
+    @Test
+    @DatabaseSetup
+    public void testListInPlatform() throws Exception {
+        List<Agent> platformAgents = this.agentService.listInPlatform();
+
+        Assert.assertEquals(0, platformAgents.size());
+
+        Agent platformAgent = new Agent();
+        platformAgent.setIp("1.1.1.1");
+        platformAgent.setName("platform11");
+
+        this.agentService.add(platformAgent);
+
+        platformAgents = this.agentService.listInPlatform();
+        Assert.assertEquals(1, platformAgents.size());
+        String now = this.sdf.format(new Date());
+        assertAgent(platformAgents.get(0), 12L, "platform11", true, true, "1.1.1.1", now, now);
+    }
+}

@@ -1,0 +1,14 @@
+package com.yeahmobi.yscheduler.executor;
+
+import com.yeahmobi.yscheduler.model.TaskInstance;
+
+/**
+ * @author atell
+ */
+public interface TaskInstanceExecutor {
+
+    void submit(TaskInstance instance);
+
+    boolean isRunning(long instanceId);
+
+}

@@ -1,0 +1,11 @@
+package com.yeahmobi.yscheduler.common;
+
+public class Constants {
+
+    public static final String AGENT_CONTEXT                = "yscheduler";
+
+    public static final String EVENT_TYPE_TASK_STATUS       = "TASK_STATUS";
+    public static final String EVENT_TYPE_TASK_LOG          = "TASK_LOG";
+    public static final String EVENT_TYPE_TASK_CANCLE       = "TASK_CANCLE";
+    public static final String EVENT_TYPE_SHELL_TASK_SUBMIT = "SHELL_TASK_SUBMIT";
+}

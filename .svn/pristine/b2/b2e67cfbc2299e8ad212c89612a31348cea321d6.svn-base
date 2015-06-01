@@ -1,0 +1,14 @@
+package com.yeahmobi.yscheduler.workflow;
+
+import com.yeahmobi.yscheduler.model.WorkflowInstance;
+
+/**
+ * @author Ryan Sun
+ */
+public interface WorkflowExecutor {
+
+    public void submit(WorkflowInstance workflowInstance);
+
+    public void cancel(long workflowInstanceId);
+
+}

@@ -1,0 +1,4 @@
+serverDomain=127.0.0.1:8080
+attachmentServerUri=http://127.0.0.1:7070/download
+#upload task file path
+uploadPath=http://127.0.0.1:7070/upload

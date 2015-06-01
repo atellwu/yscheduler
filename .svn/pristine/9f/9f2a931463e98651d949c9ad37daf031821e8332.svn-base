@@ -1,0 +1,20 @@
+package com.yeahmobi.yscheduler.web.service;
+
+import java.util.List;
+
+import com.yeahmobi.yscheduler.model.Dependency;
+
+/**
+ * @author Ryan Sun
+ */
+public interface DependencyService {
+
+    List<Dependency> listDependBy(long taskId);
+
+    List<Dependency> listDependOn(long taskId);
+
+    void add(List<Long> tasks, long taskId);
+
+    void update(List<Long> tasks, long taskId);
+
+}

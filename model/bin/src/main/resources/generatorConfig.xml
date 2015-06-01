@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE generatorConfiguration
+  PUBLIC "-//mybatis.org//DTD MyBatis Generator Configuration 1.0//EN"
+  "http://mybatis.org/dtd/mybatis-generator-config_1_1.dtd">
+
+<generatorConfiguration>
+	<classPathEntry
+		location="/home/atell/.m2/repository/mysql/mysql-connector-java/5.1.18/mysql-connector-java-5.1.18.jar" />
+
+	<context id="yscheduler" targetRuntime="MyBatis3">
+		<plugin type="org.mybatis.generator.plugins.RowBoundsPlugin"></plugin>
+		<commentGenerator>
+			<property name="suppressDate" value="true" />
+		</commentGenerator>
+		<jdbcConnection driverClass="com.mysql.jdbc.Driver"
+			connectionURL="jdbc:mysql://172.20.0.100:3306/yscheduler?useUnicode=true&amp;characterEncoding=utf8&amp;zeroDateTimeBehavior=convertToNull&amp;noAccessToProcedureBodies=true"
+			userId="root" password="root">
+		</jdbcConnection>
+		<javaTypeResolver>
+			<property name="forceBigDecimals" value="false" />
+		</javaTypeResolver>
+		<javaModelGenerator targetPackage="com.yeahmobi.yscheduler.model"
+			targetProject="./src/main/java">
+			<property name="enableSubPackages" value="true" />
+			<property name="trimStrings" value="true" />
+		</javaModelGenerator>
+		<sqlMapGenerator targetPackage="com.yeahmobi.yscheduler.model.dao"
+			targetProject="./src/main/resources">
+			<property name="enableSubPackages" value="true" />
+		</sqlMapGenerator>
+		<javaClientGenerator type="XMLMAPPER"
+			targetPackage="com.yeahmobi.yscheduler.model.dao.mapper"
+			targetProject="./src/main/java">
+			<property name="enableSubPackages" value="true" />
+		</javaClientGenerator>
+		<table tableName="agent">
+		</table>
+		<table tableName="attempt">
+			<columnOverride column="status" javaType="java.lang.Integer" />
+		</table>
+		<table tableName="authority">
+		</table>
+		<table tableName="dependency">
+		</table>
+		<table tableName="instance">
+			<columnOverride column="status" javaType="java.lang.Integer" />
+		</table>
+		<table tableName="task">
+		</table>
+		<table tableName="user">
+		</table>
+	</context>
+
+</generatorConfiguration>

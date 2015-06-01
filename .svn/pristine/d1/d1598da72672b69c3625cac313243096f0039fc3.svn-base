@@ -1,0 +1,53 @@
+package com.yeahmobi.yscheduler.notice;
+
+import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.httpclient.NameValuePair;
+import org.apache.commons.httpclient.methods.PostMethod;
+import org.apache.commons.httpclient.params.HttpMethodParams;
+import org.apache.commons.lang.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.springframework.stereotype.Service;
+
+/**
+ * @author Ryan Sun
+ */
+@Service
+public class DefaultEmailSender implements EmailSender {
+
+    private static final Log LOGGER      = LogFactory.getLog(DefaultEmailSender.class);
+
+    private String           mailService = "http://ips.ymtech.info/notify/api/email";
+
+    public boolean send(Message email) {
+        try {
+            HttpClient client = new HttpClient();
+            PostMethod postMethod = new PostMethod(this.mailService);
+            NameValuePair[] parameters = new NameValuePair[3];
+            String to = "";
+            for (String emailAddress : email.getTo()) {
+                if (StringUtils.isNotBlank(to)) {
+                    to += ",";
+                }
+                to += emailAddress;
+            }
+            parameters[0] = new NameValuePair("to", to);
+            parameters[1] = new NameValuePair("subject", email.getSubject());
+            parameters[2] = new NameValuePair("body", email.getContent());
+            postMethod.addParameters(parameters);
+            postMethod.getParams().setParameter(HttpMethodParams.HTTP_CONTENT_CHARSET, "utf-8");
+
+            client.executeMethod(postMethod);
+
+            String response = postMethod.getResponseBodyAsString();
+            if (response.contains("\"code\":0")) {
+                return true;
+            } else {
+                return false;
+            }
+        } catch (Exception e) {
+            LOGGER.error(e, e);
+            return false;
+        }
+    }
+}

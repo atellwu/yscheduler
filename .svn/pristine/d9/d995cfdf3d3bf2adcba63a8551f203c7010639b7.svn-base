@@ -1,0 +1,62 @@
+package com.yeahmobi.yscheduler.web.controller.workflow;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.servlet.ModelAndView;
+
+import com.yeahmobi.yscheduler.common.Paginator;
+import com.yeahmobi.yscheduler.model.WorkflowInstance;
+import com.yeahmobi.yscheduler.model.service.WorkflowInstanceService;
+import com.yeahmobi.yscheduler.model.service.WorkflowService;
+import com.yeahmobi.yscheduler.model.type.WorkflowInstanceStatus;
+import com.yeahmobi.yscheduler.web.controller.AbstractController;
+
+/**
+ * @author Leo.Liang
+ */
+@Controller
+@RequestMapping(value = { WorkflowInstanceController.SCREEN_NAME })
+public class WorkflowInstanceController extends AbstractController {
+
+    public static final String      SCREEN_NAME = "workflow/instance";
+
+    @Autowired
+    private WorkflowService         workflowService;
+
+    @Autowired
+    private WorkflowInstanceService instanceService;
+
+    @RequestMapping(value = { "" })
+    public ModelAndView index(Integer pageNum, long workflowId) {
+        Map<String, Object> map = new HashMap<String, Object>();
+
+        Paginator paginator = new Paginator();
+        pageNum = ((pageNum == null) || (pageNum < 0)) ? 0 : pageNum;
+
+        List<WorkflowInstance> instances = this.instanceService.list(workflowId, pageNum, paginator);
+
+        int successCount = 0;
+        int totalRunCount = 0;
+        for (WorkflowInstance workflowInstance : instances) {
+            if (workflowInstance.getStatus().isCompleted()) {
+                totalRunCount++;
+                if (workflowInstance.getStatus() == WorkflowInstanceStatus.SUCCESS) {
+                    successCount++;
+                }
+            }
+        }
+
+        map.put("workflow", this.workflowService.get(workflowId));
+        map.put("list", instances);
+        map.put("paginator", paginator);
+        map.put("successRate", (int) ((successCount * 100.00d) / totalRunCount));
+        map.put("totalRunCount", totalRunCount);
+
+        return screen(map, SCREEN_NAME);
+    }
+}

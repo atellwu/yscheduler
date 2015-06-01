@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yeahmobi.yscheduler.model.dao.ScheduleProgressDao">
+
+	<insert id="insertOnDuplicateKeyUpdate" parameterType="com.yeahmobi.yscheduler.model.ScheduleProgress">
+		insert into schedule_progress
+		<trim prefix="(" suffix=")" suffixOverrides=",">
+			<if test="id != null">
+				id,
+			</if>
+			<if test="currentScheduleTime != null">
+				current_schedule_time,
+			</if>
+			<if test="createTime != null">
+				create_time,
+			</if>
+			<if test="updateTime != null">
+				update_time,
+			</if>
+		</trim>
+		<trim prefix="values (" suffix=")" suffixOverrides=",">
+			<if test="id != null">
+				#{id,jdbcType=INTEGER},
+			</if>
+			<if test="currentScheduleTime != null">
+				#{currentScheduleTime,jdbcType=TIMESTAMP},
+			</if>
+			<if test="createTime != null">
+				#{createTime,jdbcType=TIMESTAMP},
+			</if>
+			<if test="updateTime != null">
+				#{updateTime,jdbcType=TIMESTAMP},
+			</if>
+		</trim>
+		ON DUPLICATE KEY UPDATE
+		<if test="currentScheduleTime != null">
+			current_schedule_time =
+			#{currentScheduleTime,jdbcType=TIMESTAMP},
+		</if>
+		<if test="updateTime != null">
+			update_time = #{updateTime,jdbcType=TIMESTAMP},
+		</if>
+	</insert>
+
+</mapper>

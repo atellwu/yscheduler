@@ -1,0 +1,72 @@
+package com.yeahmobi.yscheduler.agent.handler;
+
+import java.util.Map;
+
+import org.apache.commons.lang.StringUtils;
+
+import com.yeahmobi.yscheduler.agentframework.agent.event.HandlerResult;
+import com.yeahmobi.yscheduler.agentframework.agent.event.TaskSubmitionEventHandler;
+import com.yeahmobi.yscheduler.agentframework.agent.task.AgentTask;
+import com.yeahmobi.yscheduler.common.Constants;
+
+public class JavaTaskSubmitionEventHandler extends TaskSubmitionEventHandler {
+
+    private Map<String, String> executorMapping;
+
+    /**
+     * @param executorMapping the executorMapping to set
+     */
+    public void setExecutorMapping(Map<String, String> executorMapping) {
+        this.executorMapping = executorMapping;
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    protected AgentTask beforeSubmit(Map<String, String> params, HandlerResult handlerResult) {
+        String handlerType = params.get(Constants.PARAM_JAVA_TASK_HANDLER_TYPE);
+
+        if (StringUtils.isBlank(handlerType)) {
+            handlerResult.setSuccess(false);
+            handlerResult.setErrorMsg(String.format("Parameter %s can not be empty or null.",
+                                                    Constants.PARAM_JAVA_TASK_HANDLER_TYPE));
+            return null;
+        }
+
+        if ((this.executorMapping == null) || !this.executorMapping.containsKey(handlerType)) {
+            handlerResult.setSuccess(false);
+            handlerResult.setErrorMsg(String.format("No Java task handler found for type %s", handlerType));
+            return null;
+        }
+
+        String handlerClazzStr = this.executorMapping.get(handlerType);
+
+        try {
+            Class handlerClazz = Class.forName(handlerClazzStr);
+            if (!JavaTaskHandler.class.isAssignableFrom(handlerClazz)) {
+                handlerResult.setSuccess(false);
+                handlerResult.setErrorMsg(String.format("Java task handler class %s for type %s doesn't implement com.yeahmobi.yscheduler.agent.handler.JavaTaskExecutor interface.",
+                                                        handlerClazzStr, handlerType));
+                return null;
+            }
+
+            handlerClazz.getConstructor(Map.class);
+
+            return new JavaAgentTask(handlerClazz, params);
+        } catch (ClassNotFoundException e) {
+            handlerResult.setSuccess(false);
+            handlerResult.setErrorMsg(String.format("Java task handler class not found(%s).", handlerClazzStr));
+            return null;
+        } catch (NoSuchMethodException e) {
+            handlerResult.setSuccess(false);
+            handlerResult.setErrorMsg(String.format("Java task handler class %s doesn't have constructor with Map parameter.",
+                                                    handlerClazzStr));
+            return null;
+        } catch (SecurityException e) {
+            handlerResult.setSuccess(false);
+            handlerResult.setErrorMsg(String.format("Java task handler class %s doesn't have constructor with Map parameter.",
+                                                    handlerClazzStr));
+            return null;
+        }
+
+    }
+}

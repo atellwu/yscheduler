@@ -1,0 +1,10 @@
+package com.yeahmobi.yscheduler.notice;
+
+/**
+ * @author Ryan Sun
+ */
+public interface EmailSender {
+
+    boolean send(Message email);
+
+}

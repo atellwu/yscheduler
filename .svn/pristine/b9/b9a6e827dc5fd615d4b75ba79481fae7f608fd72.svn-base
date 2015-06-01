@@ -1,0 +1,12 @@
+package com.yeahmobi.yscheduler.web.executor;
+
+import com.yeahmobi.yscheduler.model.Instance;
+
+/**
+ * @author atell
+ */
+public interface InstanceExecutor {
+
+    void submit(Instance instance);
+
+}

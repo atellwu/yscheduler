@@ -1,0 +1,105 @@
+
+<script type="text/javascript" src="${rc.contextPath}/assets/js/jquery.dataTables.min.js"></script>
+<script type="text/javascript" src="${rc.contextPath}/assets/js/jquery.dataTables.bootstrap.js"></script>
+<script src="${rc.contextPath}/assets/js/bootbox.min.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+	var workflowID, workflowName, action, action_chinese;
+
+	function showConfirm(id, name, a, ac) {
+		workflowID = id;
+		workflowName = name;
+		action = a;
+		action_chinese = ac;
+		if (action_chinese == '删除') {
+			$("#modal-header").html("删除");
+			$("#modal-body").html("确定要删除工作流<strong>" + workflowName + "吗？</strong>");
+		} else if (action_chinese == '暂停') {
+			$("#modal-header").html("暂停");
+			$("#modal-body").html("确定要暂停工作流<strong>" + workflowName + "吗？</strong>");
+		} else if (action_chinese == '执行') {
+			$("#modal-header").html("执行");
+			$("#modal-body").html("确定要执行工作流<strong>" + workflowName + "吗？</strong>");
+		} else if (action_chinese == '恢复') {
+			$("#modal-header").html("恢复");
+			$("#modal-body").html("确定要恢复工作流<strong>" + workflowName + "吗？</strong>");
+		}
+		$("#confirm").modal('show');
+	};
+
+	
+	function post(path, params) {
+	    var form = document.createElement("form");
+	    form.setAttribute("method", "POST");
+	    form.setAttribute("action", path);
+
+	    for(var key in params) {
+	        if(params.hasOwnProperty(key)) {
+	            var hiddenField = document.createElement("input");
+	            hiddenField.setAttribute("type", "hidden");
+	            hiddenField.setAttribute("name", key);
+	            hiddenField.setAttribute("value", params[key]);
+
+	            form.appendChild(hiddenField);
+	         }
+	    }
+
+	    document.body.appendChild(form);
+	    $.ajax({
+			type :$(form).attr('method'),
+			url : $(form).attr('action'),
+			data : $(form).serialize(),
+			dataType : "json",
+			success : function(data) {
+				if (data.success == false) {
+					bootbox.alert({
+						message : data.notice,
+						title : "操作失败！"
+					});
+				} else {
+					bootbox.alert(data.notice, function(result) {
+						window.location.href = data.target;
+					});
+				}
+			},
+			error : function(data) {
+				app.httpError
+			}
+		});
+	}
+	
+	function update() {
+		post("workflow",{
+			action : action,
+			id : workflowID,
+			actionChinese : action_chinese
+		});
+		$("#confirm").modal('hide');
+	};
+
+	$("[rel=tooltip]").tooltip();
+	$(document).ready(function() {
+		$('#workflowListTable').dataTable({
+			"bPaginate" : false,
+			"bLengthChange" : false,
+			"bInfo" : false,
+			"bFilter" : false,
+			"aoColumns" : [ {
+				"bSortable" : false
+			}, {
+				"bSortable" : false
+			}, {
+				"bSortable" : false
+			}, {
+				"bSortable" : false
+			}, {
+				"bSortable" : true
+			}, {
+				"bSortable" : false
+			}  ],
+			"aaSorting" : []
+		});
+
+	});
+</script>
+

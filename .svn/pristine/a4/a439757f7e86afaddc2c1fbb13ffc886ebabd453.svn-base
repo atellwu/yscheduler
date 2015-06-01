@@ -1,0 +1,116 @@
+package com.yeahmobi.yscheduler.web.service.impl;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.apache.ibatis.session.RowBounds;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.yeahmobi.yscheduler.common.Paginator;
+import com.yeahmobi.yscheduler.model.Task;
+import com.yeahmobi.yscheduler.model.TaskExample;
+import com.yeahmobi.yscheduler.model.dao.TaskDao;
+import com.yeahmobi.yscheduler.model.type.TaskStatus;
+import com.yeahmobi.yscheduler.web.common.Constants;
+import com.yeahmobi.yscheduler.web.common.NameValuePair;
+import com.yeahmobi.yscheduler.web.service.TaskService;
+
+@Service
+public class TaskServiceImpl implements TaskService {
+
+    @Autowired
+    private TaskDao taskDao;
+
+    private Log     LOGGER = LogFactory.getLog(TaskServiceImpl.class);
+
+    public Task get(long id) {
+        return this.taskDao.selectByPrimaryKey(id);
+    }
+
+    public List<Task> list(int pageNum, Paginator paginator) {
+        TaskExample example = new TaskExample();
+
+        example.setOrderByClause("create_time DESC");
+        example.or().andStatusNotEqualTo(TaskStatus.REMOVED);
+        int count = this.taskDao.countByExample(example);
+
+        paginator.setItemsPerPage(Constants.PAGE_SIZE);
+        paginator.setItems(count);
+        paginator.setPage(pageNum);
+
+        int offset = paginator.getBeginIndex() - 1;
+        int limit = Constants.PAGE_SIZE;
+
+        RowBounds rowBounds = new RowBounds(offset, limit);
+
+        List<Task> list = this.taskDao.selectByExampleWithRowbounds(example, rowBounds);
+
+        return list;
+    }
+
+    public TaskDao getTaskDao() {
+        return this.taskDao;
+    }
+
+    public void setTaskDao(TaskDao taskDao) {
+        this.taskDao = taskDao;
+    }
+
+    public boolean add(Task task) {
+        try {
+            // Date time = new Date();
+            // task.setCreateTime(time);
+            // task.setUpdateTime(time);
+            this.taskDao.insertSelective(task);
+            return true;
+        } catch (Exception e) {
+            this.LOGGER.error(e, e);
+            return false;
+        }
+    }
+
+    public boolean nameExists(String name) {
+        TaskExample example = new TaskExample();
+        example.or().andNameEqualTo(name);
+        if (this.taskDao.countByExample(example) > 0) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    public List<String> listName() {
+        TaskExample example = new TaskExample();
+        List<Task> tasks = this.taskDao.selectByExample(example);
+        List<String> result = new ArrayList<String>();
+        for (Task task : tasks) {
+            result.add(task.getName());
+        }
+        return result;
+    }
+
+    public List<NameValuePair> list() {
+        TaskExample example = new TaskExample();
+        List<Task> tasks = this.taskDao.selectByExample(example);
+        List<NameValuePair> result = new ArrayList<NameValuePair>();
+        for (Task task : tasks) {
+            NameValuePair pair = new NameValuePair();
+            pair.setValue(task.getId());
+            pair.setName(task.getName());
+            result.add(pair);
+        }
+        return result;
+    }
+
+    public boolean update(Task task) {
+        Date time = new Date();
+        task.setUpdateTime(time);
+        this.taskDao.updateByPrimaryKeySelective(task);
+        return true;
+    }
+
+}

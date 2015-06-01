@@ -1,0 +1,23 @@
+package com.yeahmobi.yscheduler.model.service;
+
+import java.util.List;
+
+import com.yeahmobi.yscheduler.common.Paginator;
+import com.yeahmobi.yscheduler.model.Workflow;
+
+public interface WorkflowService {
+
+    void add(Workflow workflow);
+
+    void update(Workflow workflow);
+
+    Workflow get(long id);
+
+    List<Workflow> list(int pageNum, Paginator paginator, long userId);
+
+    List<Workflow> listAll();
+
+    boolean canModify(long workflowId, long userId);
+
+    boolean nameExist(String name);
+}

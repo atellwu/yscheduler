@@ -1,0 +1,50 @@
+package com.yeahmobi.yscheduler.common.log.impl;
+
+import java.io.IOException;
+
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FSDataInputStream;
+import org.apache.hadoop.fs.FSDataOutputStream;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
+
+import com.yeahmobi.yscheduler.common.log.HdfsLogService;
+
+public class HdfsLogServiceImpl implements HdfsLogService {
+
+    private static final String LOG_PATH = "/log";
+
+    private Configuration       configuration;
+    private String              baseDir;          // 尾部包括'/'
+
+    private FileSystem          fs;
+
+    public void init() throws IOException {
+        this.fs = FileSystem.get(this.configuration);
+        this.baseDir = this.configuration.get("yscheduler.baseDir", "/yscheduler/attemptLog/");
+    }
+
+    public FSDataOutputStream create(long attemptId) throws IOException {
+        Path path = new Path(this.baseDir + attemptId + LOG_PATH);
+        return this.fs.create(path, true);
+    }
+
+    public FSDataInputStream open(long attemptId) throws IOException {
+        Path path = new Path(this.baseDir + attemptId + LOG_PATH);
+        return this.fs.open(path);
+    }
+
+    public void setConfiguration(Configuration configuration) {
+        this.configuration = configuration;
+    }
+
+    public static void main(String[] args) throws IOException {
+        ApplicationContext context = new ClassPathXmlApplicationContext("/applicationContext.xml");
+        HdfsLogServiceImpl logService = context.getBean(HdfsLogServiceImpl.class);
+
+        long attemptId = 2;
+        logService.create(attemptId);
+    }
+}

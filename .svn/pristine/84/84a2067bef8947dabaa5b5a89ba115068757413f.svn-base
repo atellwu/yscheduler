@@ -1,0 +1,38 @@
+package com.yeahmobi.yscheduler.model.service.impl;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.TestExecutionListeners;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.test.context.support.DependencyInjectionTestExecutionListener;
+
+import com.yeahmobi.yunit.DbUnitTestExecutionListener;
+import com.yeahmobi.yunit.annotation.DatabaseSetup;
+
+/**
+ * Ryan Sun
+ */
+@RunWith(SpringJUnit4ClassRunner.class)
+@ContextConfiguration(locations = { "classpath:applicationContext-test.xml" })
+@TestExecutionListeners({ DependencyInjectionTestExecutionListener.class, DbUnitTestExecutionListener.class })
+public class WorkflowDetailServiceTest {
+
+    @Test
+    @DatabaseSetup
+    void save() {
+
+    }
+
+    @Test
+    @DatabaseSetup
+    void list() {
+
+    }
+
+    @Test
+    @DatabaseSetup
+    void listDependencyTaskIds() {
+
+    }
+}

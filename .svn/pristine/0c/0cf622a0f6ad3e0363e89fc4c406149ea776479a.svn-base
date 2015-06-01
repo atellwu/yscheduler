@@ -1,0 +1,80 @@
+<link href="${rc.contextPath}/assets/css/autocomplete.css" rel="stylesheet" />
+<link href="${rc.contextPath}/assets/css/chosen.min.css" rel="stylesheet" />
+<link href="${rc.contextPath}/assets/css/custom.css" rel="stylesheet" />
+
+<script type="text/javascript" src="${rc.contextPath}/assets/js/jquery.dataTables.min.js"></script>
+<script type="text/javascript" src="${rc.contextPath}/assets/js/jquery.dataTables.bootstrap.js"></script>
+<script src="${rc.contextPath}/assets/js/jquery.autocomplete.js" type="text/javascript"></script>
+<script src="${rc.contextPath}/assets/js/chosen.jquery.min.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+	$("[rel=tooltip]").tooltip();
+	$(document).ready(function() {
+		$(".chosen-select").chosen(); 
+
+		$('#taskListTable').dataTable({
+			"bPaginate" : false,
+			"bLengthChange" : false,
+			"bInfo" : false,
+			"bFilter": true,
+			"aoColumns" : [ {
+				"bSortable" : false
+			}, {
+				"bSortable" : true
+			}, {
+                "bSortable" : false
+            } , {
+                "bSortable" : true
+            }, {
+                "bSortable" : true
+            }, {
+                "bSortable" : false
+            } ],
+			"aaSorting" : [ ]
+		});
+		
+		$('#updateBtn').click(function(e) {
+			var btn = $('#updateBtn');
+			if(btn.text().trim() == "修改"){
+				btn.html("保存");
+				 $('#cancelBtn').html("取消");
+				$('.field').removeAttr("readonly");
+				$('#agent').autocomplete({
+			        lookup: ${agents},
+			        onSelect: function(suggestion){$('#agent-rel').val(suggestion.data)}
+			      });
+				
+				$('#owner').autocomplete({
+			        lookup: ${users},
+			        onSelect: function(suggestion){$('#owner-rel').val(suggestion.data)}
+			      });
+				
+				$('#dependency').autocomplete({
+			        lookup: ${tasks},
+			        delimiter: /(,|;)\s*/,
+				    onSelect: function(suggestion){$('#dependency-rel').val(suggestion.data)}
+			      });
+				$('#reader').autocomplete({
+			        lookup: ${users},
+			        delimiter: /(,|;)\s*/,
+			        onSelect: function(suggestion){$('#reader-rel').val(suggestion.data)}
+			      });
+				$('#writer').autocomplete({
+			        lookup: ${users},
+			        delimiter: /(,|;)\s*/,
+			        onSelect: function(suggestion){$('#writer-rel').val(suggestion.data)}
+			      });
+				$('#notice').autocomplete({
+			        lookup: ${users},
+			        delimiter: /(,|;)\s*/,
+			        onSelect: function(suggestion){$('#notice-rel').val(suggestion.data)}
+			      });
+				
+			} else {
+				$('#updateBtn').button('loading');
+				$('#form').submit();
+	 		}
+		});
+	});
+</script>
+

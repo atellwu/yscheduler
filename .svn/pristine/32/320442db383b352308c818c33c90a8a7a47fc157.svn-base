@@ -1,0 +1,79 @@
+package com.yeahmobi.yscheduler.agent.handler.sample;
+
+import java.util.Map;
+
+import org.apache.commons.lang.StringUtils;
+
+import com.yeahmobi.yscheduler.agentframework.agent.event.HandlerResult;
+import com.yeahmobi.yscheduler.agentframework.agent.event.TaskSubmitionEventHandler;
+import com.yeahmobi.yscheduler.agentframework.agent.task.AgentTask;
+import com.yeahmobi.yscheduler.agentframework.agent.task.BaseTaskExecutor;
+import com.yeahmobi.yscheduler.agentframework.agent.task.TaskExecutor;
+import com.yeahmobi.yscheduler.agentframework.agent.task.TaskTransaction;
+
+/**
+ * @author Leo.Liang
+ */
+public class ExecuteJavaTaskSampleEventHandler extends TaskSubmitionEventHandler {
+
+    @Override
+    protected AgentTask beforeSubmit(Map<String, String> params, HandlerResult handlerResult) {
+        String timesStr = params.get("times");
+        if (StringUtils.isNumeric(timesStr)) {
+            return new ExecuteJavaTaskSampleAgentTask(Integer.valueOf(timesStr));
+        } else {
+            handlerResult.setSuccess(false);
+            handlerResult.setErrorMsg("Parameter times invalid.");
+            return null;
+        }
+    }
+
+    private static final class ExecuteJavaTaskSampleAgentTask implements AgentTask {
+
+        private int times;
+
+        public ExecuteJavaTaskSampleAgentTask(int times) {
+            this.times = times;
+        }
+
+        public TaskExecutor getTaskExecutor() {
+            return new ExecuteJavaTaskSampleTaskExecutor(this.times);
+        }
+    }
+
+    private static final class ExecuteJavaTaskSampleTaskExecutor extends BaseTaskExecutor {
+
+        private volatile boolean cancel  = false;
+        private int              times;
+        private final String     padding = "1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111";
+
+        public ExecuteJavaTaskSampleTaskExecutor(int times) {
+            this.times = times;
+        }
+
+        public void execute(TaskTransaction taskTransaction) {
+            int i = 0;
+
+            while (!this.cancel && (i < this.times)) {
+                try {
+                    String log = String.valueOf(i++) + " ";
+                    for (int j = 0; j < 10; j++) {
+                        log += this.padding;
+                    }
+                    info(taskTransaction, log);
+                    Thread.sleep(10);
+                } catch (Throwable e) {
+                    taskTransaction.endWithFail(null);
+                    return;
+                }
+            }
+            taskTransaction.endWithSuccess(0);
+        }
+
+        public void cancel() {
+            this.cancel = true;
+        }
+
+    }
+
+}

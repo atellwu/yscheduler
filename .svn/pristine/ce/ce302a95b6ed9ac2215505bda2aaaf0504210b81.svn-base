@@ -1,0 +1,35 @@
+package com.yeahmobi.yscheduler.agentframework.agent.task;
+
+import java.io.IOException;
+import java.io.OutputStream;
+
+/**
+ * @author Leo.Liang
+ */
+public interface TaskTransaction {
+
+    public void cancel();
+
+    public void close();
+
+    public void endWithFail(Integer returnValue);
+
+    public void endWithSuccess(Integer returnValue);
+
+    public void endWithUnknownStatus();
+
+    public void execute();
+
+    public long getDuration();
+
+    public long getId();
+
+    public String getLog();
+
+    public OutputStream getOutputStream() throws IOException;
+
+    public TaskTransactionStatus getStatus();
+
+    public Integer getReturnValue();
+
+}

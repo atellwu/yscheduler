@@ -1,0 +1,14 @@
+package com.yeahmobi.yscheduler.model.service.impl;
+
+import org.junit.runner.RunWith;
+import org.junit.runners.Suite;
+import org.junit.runners.Suite.SuiteClasses;
+
+@RunWith(value = Suite.class)
+@SuiteClasses(value = { AgentServiceImplTest.class,//
+                       TaskServiceImplTest.class,//
+                       TaskInstanceServiceImplTest.class,//
+})
+public class ServiceImplTestSuite {
+
+}

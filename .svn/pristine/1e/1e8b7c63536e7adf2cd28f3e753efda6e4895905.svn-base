@@ -1,0 +1,10 @@
+
+<script type="text/javascript"
+	src="${rc.contextPath}/assets/js/jquery.dataTables.min.js"></script>
+<script type="text/javascript"
+	src="${rc.contextPath}/assets/js/jquery.dataTables.bootstrap.js"></script>
+
+<script type="text/javascript">
+	$("[rel=tooltip]").tooltip();
+</script>
+

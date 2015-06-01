@@ -1,0 +1,127 @@
+package com.yeahmobi.yscheduler.scheduler;
+
+import java.util.Date;
+import java.util.List;
+import java.util.TimeZone;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.LockSupport;
+
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DuplicateKeyException;
+import org.springframework.scheduling.support.CronSequenceGenerator;
+
+import com.yeahmobi.yscheduler.model.Workflow;
+import com.yeahmobi.yscheduler.model.WorkflowInstance;
+import com.yeahmobi.yscheduler.model.service.ScheduleProgressService;
+import com.yeahmobi.yscheduler.model.service.WorkflowInstanceService;
+import com.yeahmobi.yscheduler.model.service.WorkflowService;
+import com.yeahmobi.yscheduler.model.type.WorkflowInstanceStatus;
+import com.yeahmobi.yscheduler.workflow.WorkflowExecutor;
+
+public class DefaultSchedulerExecutor implements SchedulerExecutor {
+
+    private static final long       INTERVAL = 10 * 1000;
+
+    private static final TimeZone   TIMEZONE = TimeZone.getTimeZone("GMT+8:00");
+
+    private AtomicBoolean           closed   = new AtomicBoolean(false);
+
+    private ScheduleThread          controllerThread;
+
+    private long                    currentScheduleTime;
+
+    @Autowired
+    private ScheduleProgressService scheduleProgressService;
+
+    @Autowired
+    private WorkflowExecutor        workflowExecutor;
+
+    @Autowired
+    private WorkflowService         workflowService;
+
+    @Autowired
+    private WorkflowInstanceService workflowInstanceService;
+
+    @PostConstruct
+    public void init() {
+        boolean recover = Boolean.parseBoolean(System.getProperty("ysheduler.schedule.recover", "true"));
+
+        if (recover) {
+            this.currentScheduleTime = this.scheduleProgressService.getCurrentScheduleTime() != null ? this.scheduleProgressService.getCurrentScheduleTime() : System.currentTimeMillis();
+        } else {
+            this.currentScheduleTime = System.currentTimeMillis();
+        }
+
+        // 启动后台执行线程
+        this.controllerThread = new ScheduleThread();
+        this.controllerThread.setName("scheduler");
+        this.controllerThread.setDaemon(true);
+        this.controllerThread.start();
+    }
+
+    @PreDestroy
+    public void close() {
+        if (this.closed.compareAndSet(false, true)) {
+            this.controllerThread.interrupt();
+        }
+    }
+
+    private class ScheduleThread extends Thread {
+
+        @Override
+        public void run() {
+
+            while (!DefaultSchedulerExecutor.this.closed.get()) {
+                List<Workflow> list = DefaultSchedulerExecutor.this.workflowService.listAll();
+                if (list != null) {
+                    // 当前调度时间
+                    Date curDate = new Date(DefaultSchedulerExecutor.this.currentScheduleTime);
+
+                    for (Workflow workflow : list) {
+                        CronSequenceGenerator generator = new CronSequenceGenerator(workflow.getCrontab(), TIMEZONE);
+                        // 预期调度时间
+                        Date scheduleTime = generator.next(curDate);
+
+                        // 如果预期调度时间-当前调度时间<=INTERVAL,则触发调度
+                        if ((scheduleTime.getTime() - curDate.getTime()) <= INTERVAL) {
+                            WorkflowInstance instance = new WorkflowInstance();
+                            instance.setScheduleTime(scheduleTime);
+                            instance.setStatus(WorkflowInstanceStatus.INITED);
+                            instance.setWorkflowId(workflow.getId());
+                            try {
+                                DefaultSchedulerExecutor.this.workflowInstanceService.save(instance);
+                                DefaultSchedulerExecutor.this.workflowExecutor.submit(instance);
+                            } catch (DuplicateKeyException e) {
+                                // ignored
+                            }
+                        }
+                    }
+                }
+
+                // 每隔 INTERVAL 时间调度一次
+                DefaultSchedulerExecutor.this.currentScheduleTime += INTERVAL;
+                // 持久化进度
+                DefaultSchedulerExecutor.this.scheduleProgressService.saveCurrentScheduleTime(DefaultSchedulerExecutor.this.currentScheduleTime);
+
+                try {
+                    parkUntil(DefaultSchedulerExecutor.this.currentScheduleTime);
+                } catch (InterruptedException e) {
+                    // ignored. maybe will close.
+                }
+            }
+        }
+    }
+
+    private void parkUntil(long absTime) throws InterruptedException {
+        while (System.currentTimeMillis() < absTime) {
+            LockSupport.parkUntil(absTime);
+            if (Thread.currentThread().isInterrupted()) {
+                throw new InterruptedException();
+            }
+        }
+    }
+
+}

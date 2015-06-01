@@ -1,0 +1,4 @@
+serverDomain=qa.yscheduler.dy
+#upload/download task file path
+attachmentServerUri=http://172.20.0.180:8080/yscheduler-storage-qa/download
+uploadPath=http://172.20.0.180:8080/yscheduler-storage-qa/upload

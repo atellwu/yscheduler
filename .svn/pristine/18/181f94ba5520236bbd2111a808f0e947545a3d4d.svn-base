@@ -1,0 +1,19 @@
+package com.yeahmobi.yscheduler.notice;
+
+/**
+ * @author Ryan Sun
+ */
+public enum NoticeType {
+    TASK("任务"), //
+    WORKFLOW("工作流");
+
+    private String value;
+
+    NoticeType(String value) {
+        this.value = value;
+    }
+
+    public String value() {
+        return this.value;
+    }
+}

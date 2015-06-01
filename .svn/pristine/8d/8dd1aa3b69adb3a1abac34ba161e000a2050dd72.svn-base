@@ -1,0 +1,6 @@
+package com.yeahmobi.yscheduler.common.log;
+
+
+public interface HdfsLogService {
+
+}

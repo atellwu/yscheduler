@@ -1,0 +1,51 @@
+package com.yeahmobi.yscheduler.common.variable;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import org.apache.commons.lang.StringUtils;
+
+public class VariableManager {
+
+    private static final String          VARIABLE_START   = "${";
+
+    private static final String          VARIABLE_END     = "}";
+
+    static final String                  VARIABLE_SPLIT   = ":";
+
+    private Map<String, VariableHandler> variableHandlers = new HashMap<String, VariableHandler>();
+
+    public void setVariableHandlers(Map<String, VariableHandler> variableHandlers) {
+        this.variableHandlers = variableHandlers;
+    }
+
+    public String process(String command, VariableContext context) throws VariableException {
+        while (true) {
+            int start = command.indexOf(VARIABLE_START);
+            if (start < 0) {
+                return command;
+            }
+            int end = command.indexOf(VARIABLE_END, start);
+            if (end < 0) {
+                return command;
+            }
+            String variable = command.substring(start + VARIABLE_START.length(), end);
+            String variableName = variable;
+            String variableParam = "";
+            int split = variable.indexOf(VARIABLE_SPLIT);
+            if (split >= 0) {
+                variableName = variable.substring(0, split);
+                if (split < variable.length()) {
+                    variableParam = variable.substring(split + 1);
+                }
+            }
+            VariableHandler handler = this.variableHandlers.get(variableName);
+            if (handler == null) {
+                throw new VariableException(String.format("变量名(%s)不存在", variableName));
+            }
+            String[] params = StringUtils.splitPreserveAllTokens(variableParam, ':');
+            String value = handler.process(params, context);
+            command = command.substring(0, start) + value + command.substring(end + 1);
+        }
+    }
+}

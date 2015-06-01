@@ -1,0 +1,71 @@
+package com.yeahmobi.yscheduler.web.service.impl;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.yeahmobi.yscheduler.model.Dependency;
+import com.yeahmobi.yscheduler.model.DependencyExample;
+import com.yeahmobi.yscheduler.model.dao.DependencyDao;
+import com.yeahmobi.yscheduler.web.service.DependencyService;
+
+/**
+ * @author Ryan Sun
+ */
+@Service
+public class DependencyServiceImpl implements DependencyService {
+
+    @Autowired
+    private DependencyDao    dependencyDao;
+
+    @SuppressWarnings("unused")
+    private static final Log LOGGER = LogFactory.getLog(DependencyServiceImpl.class);
+
+    public List<Long> listDependBy(long taskId) {
+        List<Long> result = new ArrayList<Long>();
+        DependencyExample example = new DependencyExample();
+        example.or().andTaskIdEqualTo(taskId);
+        for (Dependency dependency : this.dependencyDao.selectByExample(example)) {
+            result.add(dependency.getOnTaskId());
+        }
+        return result;
+    }
+
+    public List<Long> listDependOn(long taskId) {
+        List<Long> result = new ArrayList<Long>();
+        DependencyExample example = new DependencyExample();
+        example.or().andOnTaskIdEqualTo(taskId);
+        for (Dependency dependency : this.dependencyDao.selectByExample(example)) {
+            result.add(dependency.getTaskId());
+        }
+        return result;
+    }
+
+    @Transactional
+    public void add(List<Long> tasks, long taskId) {
+        for (long onTaskId : tasks) {
+            Dependency dependency = new Dependency();
+            dependency.setOnTaskId(onTaskId);
+            dependency.setTaskId(taskId);
+            Date time = new Date();
+            dependency.setCreateTime(time);
+            dependency.setUpdateTime(time);
+            this.dependencyDao.insert(dependency);
+        }
+    }
+
+    @Transactional
+    public void update(List<Long> tasks, long taskId) {
+        DependencyExample example = new DependencyExample();
+        example.or().andTaskIdEqualTo(taskId);
+        this.dependencyDao.deleteByExample(example);
+        add(tasks, taskId);
+    }
+
+}

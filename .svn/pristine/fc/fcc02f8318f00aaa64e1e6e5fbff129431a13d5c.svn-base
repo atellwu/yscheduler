@@ -1,0 +1,30 @@
+package com.yeahmobi.yscheduler.condition;
+
+import java.util.Map;
+
+import com.yeahmobi.yscheduler.model.TaskInstance;
+import com.yeahmobi.yscheduler.workflow.TaskInstanceWithDependency;
+
+public class ConditionContext {
+
+    private TaskInstanceWithDependency taskInstance;
+
+    private Map<Long, TaskInstance>    dependencyTaskInstances;
+
+    public TaskInstanceWithDependency getTaskInstance() {
+        return this.taskInstance;
+    }
+
+    public void setTaskInstance(TaskInstanceWithDependency taskInstance) {
+        this.taskInstance = taskInstance;
+    }
+
+    public Map<Long, TaskInstance> getDependencyTaskInstances() {
+        return this.dependencyTaskInstances;
+    }
+
+    public void setDependencyTaskInstances(Map<Long, TaskInstance> dependencyTaskInstances) {
+        this.dependencyTaskInstances = dependencyTaskInstances;
+    }
+
+}

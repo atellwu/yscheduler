@@ -1,0 +1,84 @@
+package com.yeahmobi.yscheduler.model.service.impl;
+
+import java.util.Date;
+import java.util.List;
+
+import javax.annotation.PostConstruct;
+
+import org.apache.ibatis.session.RowBounds;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.yeahmobi.yscheduler.common.Paginator;
+import com.yeahmobi.yscheduler.model.WorkflowInstance;
+import com.yeahmobi.yscheduler.model.WorkflowInstanceExample;
+import com.yeahmobi.yscheduler.model.common.Constants;
+import com.yeahmobi.yscheduler.model.dao.WorkflowInstanceDao;
+import com.yeahmobi.yscheduler.model.service.WorkflowInstanceService;
+import com.yeahmobi.yscheduler.model.type.WorkflowInstanceStatus;
+
+@Service
+public class WorkflowInstanceServiceImpl implements WorkflowInstanceService {
+
+    @Autowired
+    private WorkflowInstanceDao workflowInstanceDao;
+
+    @PostConstruct
+    public void init() {
+    }
+
+    public WorkflowInstance get(long id) {
+        return this.workflowInstanceDao.selectByPrimaryKey(id);
+    }
+
+    public List<WorkflowInstance> list(long workflowId, int pageNum, Paginator paginator) {
+        WorkflowInstanceExample example = new WorkflowInstanceExample();
+
+        example.createCriteria().andWorkflowIdEqualTo(workflowId);
+
+        int count = this.workflowInstanceDao.countByExample(example);
+
+        paginator.setItemsPerPage(Constants.PAGE_SIZE);
+        paginator.setItems(count);
+        paginator.setPage(pageNum);
+
+        int offset = paginator.getBeginIndex() - 1;
+        int limit = Constants.PAGE_SIZE;
+
+        RowBounds rowBounds = new RowBounds(offset, limit);
+
+        example.setOrderByClause("create_time DESC");
+        return this.workflowInstanceDao.selectByExampleWithRowbounds(example, rowBounds);
+    }
+
+    public List<WorkflowInstance> listAll(long workflowId) {
+        WorkflowInstanceExample example = new WorkflowInstanceExample();
+
+        example.createCriteria().andWorkflowIdEqualTo(workflowId);
+        example.setOrderByClause("create_time DESC");
+
+        return this.workflowInstanceDao.selectByExample(example);
+    }
+
+    public void save(WorkflowInstance instance) {
+        instance.setCreateTime(new Date());
+        this.workflowInstanceDao.insert(instance);
+    }
+
+    public List<WorkflowInstance> getAllUncompleteds() {
+        WorkflowInstanceExample example = new WorkflowInstanceExample();
+        example.createCriteria().andStatusEqualTo(WorkflowInstanceStatus.RUNNING);
+
+        return this.workflowInstanceDao.selectByExample(example);
+    }
+
+    public void updateStatus(Long instanceId, WorkflowInstanceStatus status) {
+        WorkflowInstance record = new WorkflowInstance();
+        record.setId(instanceId);
+        record.setStatus(status);
+        record.setUpdateTime(new Date());
+
+        this.workflowInstanceDao.updateByPrimaryKeySelective(record);
+    }
+
+}

@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- dbunit用于初始化数据的文件，每个ut方法都会执行一遍 -->
+<!-- 默认从以下路径尝试找setup.xml文件，找到会便停止往下找： -->
+<!-- 1. <packageName>.<className>.<methodName>.setup.xml -->
+<!-- 2. <packageName>.<className>.setup.xml -->
+<!-- 3. <packageName>.setup.xml -->
+<!-- 4. <className>.<methodName>.setup.xml -->
+<!-- 5. <className>.setup.xml -->
+<!-- 6. setup.xml -->
+<dataset>
+	<Task id="1" name="test1" owner="1" type="1" crontab="0/5 * * * * ?"
+		command="echo test" agent_id="1" status="1" timeout="1" retry_times="1"
+		description="desc..." create_time="2009-09-09 00:00:00" update_time="2009-09-09 00:00:00" />
+	<Task id="2" name="test2" owner="1" type="1" crontab="0/5 * * * * ?"
+		command="echo test" agent_id="1" status="1" timeout="1" retry_times="1"
+		description="desc..." create_time="2009-09-09 00:00:00" update_time="2009-09-09 00:00:00" />
+	<Task id="3" name="test3" owner="1" type="1" crontab="0/5 * * * * ?"
+		command="echo test" agent_id="1" status="1" timeout="1" retry_times="1"
+		description="desc..." create_time="2009-09-09 00:00:00" update_time="2009-09-09 00:00:00" />
+	<Task id="4" name="test4" owner="1" type="1" crontab="0/5 * * * * ?"
+		command="echo test" agent_id="1" status="1" timeout="1" retry_times="1"
+		description="desc..." create_time="2009-09-09 00:00:00" update_time="2009-09-09 00:00:00" />
+	<Task id="5" name="test5" owner="1" type="1" crontab="0/5 * * * * ?"
+		command="echo test" agent_id="1" status="1" timeout="1" retry_times="1"
+		description="desc..." create_time="2009-09-09 00:00:00" update_time="2009-09-09 00:00:00" />
+	<Task id="6" name="test6" owner="1" type="1" crontab="0/5 * * * * ?"
+		command="echo test" agent_id="1" status="1" timeout="1" retry_times="1"
+		description="desc..." create_time="2009-09-09 00:00:00" update_time="2009-09-09 00:00:00" />
+	<Task id="7" name="test7" owner="1" type="1" crontab="0/5 * * * * ?"
+		command="echo test" agent_id="1" status="1" timeout="1" retry_times="1"
+		description="desc..." create_time="2009-09-09 00:00:00" update_time="2009-09-09 00:00:00" />
+	<Task id="8" name="test8" owner="1" type="1" crontab="0/5 * * * * ?"
+		command="echo test" agent_id="1" status="1" timeout="1" retry_times="1"
+		description="desc..." create_time="2009-09-09 00:00:00" update_time="2009-09-09 00:00:00" />
+	<Task id="9" name="test9" owner="1" type="1" crontab="0/5 * * * * ?"
+		command="echo test" agent_id="1" status="1" timeout="1" retry_times="1"
+		description="desc..." create_time="2009-09-09 00:00:00" update_time="2009-09-09 00:00:00" />
+	<Task id="10" name="test10" owner="1" type="1" crontab="0/5 * * * * ?"
+		command="echo test" agent_id="1" status="1" timeout="1" retry_times="1"
+		description="desc..." create_time="2009-09-09 00:00:00" update_time="2009-09-09 00:00:00" />
+	<Task id="11" name="test11" owner="1" type="1" crontab="0/5 * * * * ?"
+		command="echo test" agent_id="1" status="1" timeout="1" retry_times="1"
+		description="desc..." create_time="2009-09-09 00:00:00" update_time="2009-09-09 00:00:00" />
+	<Task id="12" name="test12" owner="1" type="1" crontab="0/5 * * * * ?"
+		command="echo test" agent_id="1" status="1" timeout="1" retry_times="1"
+		description="desc..." create_time="2009-09-09 00:00:00" update_time="2009-09-09 00:00:00" />
+
+	<Attempt id="1" task_id="1" instance_id="1" agent_id="1"
+		status="1" return_value="1" output="echo test" start_time="2009-09-09 00:00:00"
+		end_time="2009-09-09 00:00:10" create_time="2009-09-09 00:00:00"
+		update_time="2009-09-09 00:00:00" />
+	<Attempt id="2" task_id="1" instance_id="1" agent_id="1"
+		status="1" return_value="1" output="echo test" start_time="2009-09-09 00:00:00"
+		end_time="2009-09-09 00:00:10" create_time="2009-09-09 00:00:00"
+		update_time="2009-09-09 00:00:00" />
+	<Attempt id="3" task_id="2" instance_id="2" agent_id="1"
+		status="1" return_value="1" output="echo test" start_time="2009-09-09 00:00:00"
+		end_time="2009-09-09 00:00:10" create_time="2009-09-09 00:00:00"
+		update_time="2009-09-09 00:00:00" />
+	<Attempt id="4" task_id="2" instance_id="3" agent_id="1"
+		status="1" return_value="1" output="echo test" start_time="2009-09-09 00:00:00"
+		end_time="2009-09-09 00:00:10" create_time="2009-09-09 00:00:00"
+		update_time="2009-09-09 00:00:00" />
+	<Attempt id="5" task_id="3" instance_id="4" agent_id="1"
+		status="1" return_value="1" output="echo test" start_time="2009-09-09 00:00:00"
+		end_time="2009-09-09 00:00:10" create_time="2009-09-09 00:00:00"
+		update_time="2009-09-09 00:00:00" />
+
+	<Agent id="1" name="agent1" ip="10.0.0.1" alive="1" enable="1"
+		create_time="2009-09-09 00:00:00" update_time="2009-09-09 00:00:00" />
+	<Agent id="2" name="agent2" ip="10.0.0.1" alive="1" enable="1"
+		create_time="2009-09-09 00:00:00" update_time="2009-09-09 00:00:00" />
+
+	<Instance id="1" task_id="1" status="1" schedule_time="2009-09-09 00:00:00"
+		create_time="2009-09-09 00:00:00" update_time="2009-09-09 00:00:00" />
+	<Instance id="2" task_id="1" status="1" schedule_time="2009-09-09 00:00:00"
+		create_time="2009-09-09 00:00:00" update_time="2009-09-09 00:00:00" />
+		
+	<User id="1" name="user1" password="123456" email="user1@xx.com" telephone="13928756473"
+		create_time="2009-09-09 00:00:00" update_time="2009-09-09 00:00:00" />
+	<User id="2" name="user2" password="123456" email="user1@xx.com" telephone="13928756473"
+		create_time="2009-09-09 00:00:00" update_time="2009-09-09 00:00:00" />
+
+</dataset> 

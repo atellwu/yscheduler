@@ -1,0 +1,118 @@
+package com.yeahmobi.yscheduler.web.controller.topo;
+
+import java.util.List;
+
+import com.yeahmobi.yscheduler.model.type.TaskInstanceStatus;
+
+public class TopoNode {
+
+    /** task name */
+    private String             name;
+
+    private int                row;
+
+    private int                column;
+
+    private String             url;
+
+    private List<TopoNode>     nodes;
+
+    private long               taskId;
+
+    private int                counter    = -1;
+
+    private TaskInstanceStatus status     = null;
+
+    private Long               teamId;
+
+    private boolean            dottedLine = false;
+
+    public String getName() {
+        return this.name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public int getRow() {
+        return this.row;
+    }
+
+    public void setRow(int row) {
+        this.row = row;
+    }
+
+    public int getColumn() {
+        return this.column;
+    }
+
+    public void setColumn(int column) {
+        this.counter = column;
+        this.column = column;
+    }
+
+    public String getUrl() {
+        return this.url;
+    }
+
+    public void setUrl(String url) {
+        this.url = url;
+    }
+
+    public List<TopoNode> getNodes() {
+        return this.nodes;
+    }
+
+    public void setNodes(List<TopoNode> nodes) {
+        this.nodes = nodes;
+    }
+
+    public TaskInstanceStatus getStatus() {
+        return this.status;
+    }
+
+    public void setStatus(TaskInstanceStatus status) {
+        this.status = status;
+    }
+
+    public long getTaskId() {
+        return this.taskId;
+    }
+
+    public void setTaskId(long taskId) {
+        this.taskId = taskId;
+    }
+
+    public int getCounter() {
+        return this.counter;
+    }
+
+    public int counterIncreaseAndGet() {
+        return ++this.counter;
+    }
+
+    public Long getTeamId() {
+        return this.teamId;
+    }
+
+    public void setTeamId(Long teamId) {
+        this.teamId = teamId;
+    }
+
+    public boolean getDottedLine() {
+        return this.dottedLine;
+    }
+
+    public void setDottedLine(boolean dottedLine) {
+        this.dottedLine = dottedLine;
+    }
+
+    @Override
+    public String toString() {
+        return String.format("TopoNode [name=%s, row=%s, column=%s, url=%s, nodes=%s, taskId=%s, counter=%s, status=%s, teamId=%s, dottedLine=%s]",
+                             this.name, this.row, this.column, this.url, this.nodes, this.taskId, this.counter,
+                             this.status, this.teamId, this.dottedLine);
+    }
+
+}

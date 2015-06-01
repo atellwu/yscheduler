@@ -1,0 +1,73 @@
+package com.yeahmobi.yscheduler.notice;
+
+import java.util.Date;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+/**
+ * @author Ryan Sun
+ */
+public class DefaultNoticeService implements NoticeService {
+
+    public Log LOGGER = LogFactory.getLog(DefaultNoticeService.class);
+
+    public void alert(Message message) {
+        this.LOGGER.info("alert:" + message.toString());
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see com.yeahmobi.yscheduler.notice.NoticeService#workflowFail(long)
+     */
+    public void workflowFail(long id) {
+        // TODO Auto-generated method stub
+
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see com.yeahmobi.yscheduler.notice.NoticeService#workflowTimeout(long)
+     */
+    public void workflowTimeout(long id) {
+        // TODO Auto-generated method stub
+
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see com.yeahmobi.yscheduler.notice.NoticeService#workflowSkip(long, java.util.Date)
+     */
+    public void workflowSkip(long id, Date scheduleTime) {
+        // TODO Auto-generated method stub
+
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see com.yeahmobi.yscheduler.notice.NoticeService#taskFail(long)
+     */
+    public void taskFail(long id) {
+        // TODO Auto-generated method stub
+
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see com.yeahmobi.yscheduler.notice.NoticeService#taskTimeout(long)
+     */
+    public void taskTimeout(long id) {
+        // TODO Auto-generated method stub
+
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see com.yeahmobi.yscheduler.notice.NoticeService#taskSkip(long, java.util.Date)
+     */
+    public void taskSkip(long id, Date scheduleTime) {
+        // TODO Auto-generated method stub
+
+    }
+
+}

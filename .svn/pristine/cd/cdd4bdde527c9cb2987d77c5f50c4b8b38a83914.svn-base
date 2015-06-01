@@ -1,0 +1,105 @@
+<div id="alertMessageDiv" style="text-align: center;"></div>
+#if($!notice)
+<div id="alertContainer" class="container alert alert-danger">
+	<button type="button" class="close" data-dismiss="alert">&times;</button>
+	<strong>$notice</strong>
+</div>
+#end
+<div class="col-xs-12">
+	<form class="form-horizontal" id="form" action="${rc.contextPath}/task/update" method="post" role="form">
+		<input type="text" id="id" name="id" style="display: none" value="$!{task.id}">
+
+		<div class="form-group">
+			<label class="col-sm-3 control-label no-padding-right" for="form-input-readonly"> 任务名称 </label>
+			<div class="col-sm-9">
+				<input disabled type="text" name='name' class="field col-xs-10 col-sm-5" id="name" value="$!{task.name}">
+			</div>
+		</div>
+		<div class="form-group">
+			<label class="col-sm-3 control-label no-padding-right" for="form-input-readonly">创建人</label>
+			<div class="col-sm-9">
+				<input readonly type="text" class="field col-xs-10 col-sm-5" id="owner" value="$!{owner.name}"> <input
+					type="text" id="owner-rel" name="owner" style="display: none" value="$!{owner.id}">
+			</div>
+		</div>
+		<div class="form-group">
+			<label class="col-sm-3 control-label no-padding-right" for="form-input-readonly"> 任务类型 </label>
+			<div class="col-sm-9">
+				<select disabled name='type' class="field col-xs-10 col-sm-5" id="form-field-select-1" value="$!{task.type}">
+					<option value="SHELL">SHELL</option>
+				</select>
+			</div>
+		</div>
+		<div class="form-group">
+			<label class="col-sm-3 control-label no-padding-right" for="form-input-readonly"> 调度表达式 </label>
+			<div class="col-sm-9">
+				<input readonly type="text" name='crontab' class="field col-xs-10 col-sm-5" id="form-input-readonly"
+					value="$!{task.crontab}">
+			</div>
+		</div>
+		<div class="form-group">
+			<label class="col-sm-3 control-label no-padding-right" for="form-input-readonly"> 调度命令 </label>
+			<div class="col-sm-9">
+				<input readonly type="text" name='command' class="field col-xs-10 col-sm-5" id="form-input-readonly"
+					value="$!{task.command}">
+			</div>
+		</div>
+		<div class="form-group">
+			<label class="col-sm-3 control-label no-padding-right" for="form-input-readonly"> 执行机器 </label>
+			<div class="col-sm-9">
+				<input readonly type="text" class="field col-xs-10 col-sm-5" id="agent" value="$!{agent.ip}"> <input
+					style="display: none" type="text" name='agent' id="agent-rel" value="$!{agent.id}">
+			</div>
+		</div>
+		<div class="form-group">
+			<label class="col-sm-3 control-label no-padding-right" for="form-input-readonly"> 超时时间(单位:分钟) </label>
+			<div class="col-sm-9">
+				<input readonly type="text" name='timeout' class="field col-xs-10 col-sm-5" id="form-input-readonly"
+					value="$!{task.timeout}">
+			</div>
+		</div>
+		<div class="form-group">
+			<label class="col-sm-3 control-label no-padding-right" for="form-input-readonly"> 失败自动重试次数 </label>
+			<div class="col-sm-9">
+				<input readonly type="text" name='retryTimes' class="field col-xs-10 col-sm-5" id="form-input-readonly"
+					value="$!{task.retryTimes}">
+			</div>
+		</div>
+		<div class="form-group">
+			<label class="col-sm-3 control-label no-padding-right" for="form-input-readonly"> 任务描述 </label>
+
+			<div class="col-sm-9">
+				<textarea readonly name='description' class="field autosize-transition col-xs-10 col-sm-5"
+					style="overflow: hidden; word-wrap: break-word; resize: horizontal; height: 52px;">${task.description}</textarea>
+
+			</div>
+		</div>
+		<!-- div class="form-group">
+			<label class="col-sm-3 control-label no-padding-right" for="form-input-readonly"> 依赖任务 </label>
+			<div class="col-sm-9">
+				<input readonly type="text" class="field col-xs-10 col-sm-5" id="dependency" value="${dependencies}"> <input
+					style="display: none" type="text" name='agent' id="agent-rel" value="${agent.id}">
+			</div>
+		</div>
+
+		<div class="form-group">
+			<label class="col-sm-3 control-label no-padding-right" for="form-input-readonly"> 需要通知 </label>
+			<div class="col-sm-9">
+				<input readonly type="text" class="field col-xs-10 col-sm-5" id="notice" value="${agent.ip}"> <input
+					style="display: none" type="text" name='agent' id="agent-rel" value="${agent.id}">
+			</div>
+		</div> -->
+		<div class="clearfix form-actions">
+			<div class="col-md-offset-3 col-md-9">
+				<button id="updateBtn" class="btn btn-info" type="button" data-loading-text="提交中..">
+					<i class="icon-ok bigger-110"></i>修改
+				</button>
+
+				&nbsp; &nbsp; &nbsp;
+				<button id="cancelBtn" class="btn" type="button" onclick="window.location='${rc.contextPath}/mytask'">
+					<i class="icon-undo bigger-110"></i> 返回
+				</button>
+			</div>
+		</div>
+	</form>
+</div>

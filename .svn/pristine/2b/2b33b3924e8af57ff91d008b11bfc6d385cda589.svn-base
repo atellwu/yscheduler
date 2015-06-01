@@ -1,0 +1,419 @@
+package com.yeahmobi.yscheduler.executor.impl;
+
+import java.io.ByteArrayOutputStream;
+import java.io.PrintWriter;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
+
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.concurrent.CustomizableThreadFactory;
+import org.springframework.stereotype.Service;
+
+import com.yeahmobi.yscheduler.agentframework.AgentRequest;
+import com.yeahmobi.yscheduler.agentframework.AgentResponse;
+import com.yeahmobi.yscheduler.agentframework.AgentResponseCode;
+import com.yeahmobi.yscheduler.agentframework.agent.task.TaskStatus;
+import com.yeahmobi.yscheduler.agentframework.agent.task.TaskTransactionStatus;
+import com.yeahmobi.yscheduler.agentframework.client.DefaultAgentClient;
+import com.yeahmobi.yscheduler.agentframework.exception.AgentClientException;
+import com.yeahmobi.yscheduler.common.Constants;
+import com.yeahmobi.yscheduler.executor.AttemptExecutor;
+import com.yeahmobi.yscheduler.model.Agent;
+import com.yeahmobi.yscheduler.model.Attempt;
+import com.yeahmobi.yscheduler.model.Task;
+import com.yeahmobi.yscheduler.model.TaskInstance;
+import com.yeahmobi.yscheduler.model.Workflow;
+import com.yeahmobi.yscheduler.model.WorkflowInstance;
+import com.yeahmobi.yscheduler.model.service.AgentService;
+import com.yeahmobi.yscheduler.model.service.AttemptService;
+import com.yeahmobi.yscheduler.model.service.TaskInstanceService;
+import com.yeahmobi.yscheduler.model.service.TaskService;
+import com.yeahmobi.yscheduler.model.service.WorkflowInstanceService;
+import com.yeahmobi.yscheduler.model.service.WorkflowService;
+import com.yeahmobi.yscheduler.model.type.AttemptStatus;
+import com.yeahmobi.yscheduler.variable.VariableContext;
+import com.yeahmobi.yscheduler.variable.VariableException;
+import com.yeahmobi.yscheduler.variable.VariableManager;
+
+@Service
+public class DefaultAttemptExecutor implements AttemptExecutor {
+
+    private static final Logger     LOGGER          = LoggerFactory.getLogger(DefaultAttemptExecutor.class);
+
+    ExecutorService                 executorService = Executors.newCachedThreadPool(new CustomizableThreadFactory(
+                                                                                                                  "attempt-pool-"));
+
+    /** 以<instanceId,Pair>键值对在内存中存放运行中的Attempt，便于InstanceExecutor查询Attempt状态 */
+    private Map<Long, Pair>         attemptMap      = new ConcurrentHashMap<Long, Pair>();
+
+    @Autowired
+    private TaskService             taskService;
+
+    @Autowired
+    private TaskInstanceService     taskInstanceService;
+
+    @Autowired
+    private AttemptService          attemptService;
+
+    @Autowired
+    private WorkflowService         workflowService;
+
+    @Autowired
+    private WorkflowInstanceService workflowInstanceService;
+
+    @Autowired
+    private AgentService            agentService;
+
+    @Autowired
+    private VariableManager         variableManager;
+
+    private AtomicBoolean           closed          = new AtomicBoolean(false);
+
+    @PostConstruct
+    public void init() {
+        // 从db中加载上次未结束的attempt
+        List<Attempt> attemptList = this.attemptService.getAllUncompleteds();
+        for (Attempt attempt : attemptList) {
+            Pair pair = buildPair(attempt);
+            if (pair != null) {
+                putPair(pair);
+                this.executorService.submit(new InnerTask(pair));
+            }
+        }
+    }
+
+    private String getOutput(Pair pair) throws AgentClientException {
+        DefaultAgentClient agentClient = pair.agentClient;
+        String host = pair.host;
+        long txId = pair.txId;
+
+        Map<String, String> params = new HashMap<String, String>();
+        params.put("txId", String.valueOf(txId));
+
+        AgentResponse<String> res = agentClient.call(host, new AgentRequest(Constants.EVENT_TYPE_TASK_LOG, params));
+
+        if (AgentResponseCode.SUCCESS.equals(res.getResponseCode())) {
+            String log = res.getResponseData();
+            return log;
+        } else {
+            throw new AgentClientException("Agent return failed when get log, response code is "
+                                           + res.getResponseCode() + ", errorMsg is " + res.getErrorMsg());
+        }
+    }
+
+    private TaskStatus checkStatus(Pair pair) throws AgentClientException {
+        DefaultAgentClient agentClient = pair.agentClient;
+        String host = pair.host;
+        long txId = pair.txId;
+
+        Map<String, String> params = new HashMap<String, String>();
+        params.put("txId", String.valueOf(txId));
+
+        AgentResponse<TaskStatus> res = agentClient.call(host, new AgentRequest(Constants.EVENT_TYPE_TASK_STATUS,
+                                                                                params));
+
+        if (AgentResponseCode.SUCCESS.equals(res.getResponseCode())) {
+            TaskStatus taskStatus = res.getResponseData();
+            return taskStatus;
+        } else {
+            throw new AgentClientException("Agent return failed when check status, response code is "
+                                           + res.getResponseCode() + ", errorMsg is " + res.getErrorMsg());
+        }
+    }
+
+    private long submitToAgent(Pair pair, Map<String, String> params) throws AgentClientException {
+        DefaultAgentClient agentClient = pair.agentClient;
+        String host = pair.host;
+
+        String eventType = getEventType(pair.task);
+        AgentResponse<Long> res = agentClient.call(host, new AgentRequest(eventType, params));
+
+        if (AgentResponseCode.SUCCESS.equals(res.getResponseCode())) {
+            long txId = res.getResponseData();
+            return txId;
+        } else {
+            throw new AgentClientException("Agent return failed when submit shellcmd, response code is "
+                                           + res.getResponseCode() + ", errorMsg is " + res.getErrorMsg());
+        }
+
+    }
+
+    private String getEventType(Task task) {
+        switch (task.getType()) {
+            case HTTP:
+                return Constants.EVENT_TYPE_HTTP_CALLOUT;
+            case SHELL:
+            default:
+                return Constants.EVENT_TYPE_SHELL_TASK_SUBMIT;
+        }
+    }
+
+    private Map<String, String> getParams(Pair pair) throws VariableException {
+        Map<String, String> params = new HashMap<String, String>();
+        String command = pair.task.getCommand();
+        VariableContext context = this.variableManager.createContext(pair.task, pair.instance, pair.workflow,
+                                                                     pair.workflowInstance);
+        command = this.variableManager.process(command, context);
+        switch (pair.task.getType()) {
+            case HTTP:
+                // calloutUrl;needCallback;cancelUrl
+                // 含calloutUrl,needCallback,agentHost,cancelUrl
+                String[] splits = StringUtils.split(command, ';');
+                String calloutUrl = splits[0];
+                params.put("calloutUrl", calloutUrl);
+                if (splits.length > 1) {
+                    String needCallback = splits[1];
+                    params.put("needCallback", needCallback);
+                }
+                if (splits.length > 2) {
+                    String cancelUrl = splits[2];
+                    params.put("cancelUrl", cancelUrl);
+                }
+                String host = (StringUtils.contains(pair.host, ':')) ? pair.host : pair.host + ":24368";
+                params.put("agentHost", host);
+                if (pair.workflow != null) {
+                    params.put("workflowName", pair.workflow.getName());
+                }
+                params.put("taskName", pair.task.getName());
+            case SHELL:
+            default:
+                params.put("shellCmd", command);
+        }
+
+        return params;
+    }
+
+    @PreDestroy
+    public void close() {
+        if (this.closed.compareAndSet(false, true)) {
+            this.executorService.shutdownNow();
+        }
+    }
+
+    private Pair buildPair(Attempt attempt) {
+        long instanceId = attempt.getInstanceId();
+        long taskId = attempt.getTaskId();
+        TaskInstance instance = this.taskInstanceService.get(instanceId);
+        Task task = this.taskService.get(taskId);
+
+        // 有可能这个attempt对应的task已经删除
+        if (task == null) {
+            return null;
+        }
+
+        Workflow workflow = null;
+        WorkflowInstance workflowInstance = null;
+        if (instance.getWorkflowInstanceId() != null) {
+            workflowInstance = this.workflowInstanceService.get(instance.getWorkflowInstanceId());
+            workflow = this.workflowService.get(workflowInstance.getWorkflowId());
+        }
+
+        Agent agent = DefaultAttemptExecutor.this.agentService.get(attempt.getAgentId());
+        String ip = agent.getIp();
+        String[] split = StringUtils.split(ip, ':');
+        String host = split[0];
+        int port = -1;
+        if (split.length > 1) {
+            port = Integer.parseInt(split[1]);
+        }
+        DefaultAgentClient agentClient = new DefaultAgentClient(port, Constants.AGENT_CONTEXT);
+        if (port > 0) {
+            agentClient = new DefaultAgentClient(port, Constants.AGENT_CONTEXT);
+        } else {
+            agentClient = new DefaultAgentClient(Constants.AGENT_CONTEXT);
+        }
+
+        Pair pair = new Pair(task, instance, attempt, workflow, workflowInstance, agentClient, host);
+        return pair;
+    }
+
+    private void putPair(Pair pair) {
+        TaskInstance instance = pair.instance;
+        this.attemptMap.put(instance.getId(), pair);
+    }
+
+    public void submit(final Attempt attempt) {
+        this.attemptService.save(attempt);
+        Pair pair = buildPair(attempt);
+        if (pair != null) {
+            putPair(pair);
+            this.executorService.submit(new InnerTask(pair));
+        }
+    }
+
+    private static class Pair {
+
+        Task               task;
+        Attempt            attempt;
+        TaskInstance       instance;
+        Workflow           workflow;
+        WorkflowInstance   workflowInstance;
+        DefaultAgentClient agentClient;
+        String             host;
+        long               txId;
+
+        public Pair(Task task, TaskInstance instance, Attempt attempt, Workflow workflow,
+                    WorkflowInstance workflowInstance, DefaultAgentClient agentClient, String host) {
+            super();
+            this.task = task;
+            this.instance = instance;
+            this.attempt = attempt;
+            this.workflow = workflow;
+            this.workflowInstance = workflowInstance;
+            this.agentClient = agentClient;
+            this.host = host;
+        }
+    }
+
+    public boolean isRunning(long instanceId) {
+        Pair pair = this.attemptMap.get(instanceId);
+        return (pair != null) && (pair.attempt.getStatus() == AttemptStatus.RUNNING);
+    }
+
+    /**
+     * 负责执行一个attempt
+     */
+    private class InnerTask implements Runnable {
+
+        private static final int FETCH_INTERVAL = 1000;
+        private Pair             pair;
+
+        public InnerTask(Pair pair) {
+            this.pair = pair;
+        }
+
+        public void run() {
+            try {
+                // 执行attempt
+                Attempt attempt = this.pair.attempt;
+
+                try {
+                    if (attempt.getTransactionId() == null) {
+                        // 没有txId，说明是新提交(不是从db load的attempt)，需要提交
+                        Map<String, String> params = getParams(this.pair);
+
+                        attempt.setTransactionId(submitToAgent(this.pair, params));
+                        DefaultAttemptExecutor.this.attemptService.update(attempt);
+                    }
+                    this.pair.txId = attempt.getTransactionId();
+
+                    TaskStatus agentStatus = null;
+
+                    // 提交任务之后delay一下再去checkStatus
+                    TimeUnit.SECONDS.sleep(1);
+
+                    long failedStartTime = -1;
+                    do {
+                        try {
+                            agentStatus = checkStatus(this.pair);
+
+                            attempt.setOutput(getOutput(this.pair));
+                            attempt.setDuration(agentStatus.getDuration());
+                            DefaultAttemptExecutor.this.attemptService.update(attempt);
+                            failedStartTime = -1;
+                        } catch (AgentClientException e) {
+                            if (failedStartTime == -1) {
+                                failedStartTime = System.currentTimeMillis();
+                            } else {
+                                if ((System.currentTimeMillis() - failedStartTime) > (5 * 60 * 1000L)) {
+                                    throw new AgentClientException("Get status from agent failed for 5 minutes.", e);
+                                }
+                            }
+                        } finally {
+                            // sleep park
+                            if ((agentStatus != null) && !agentStatus.getStatus().isCompleted()) {
+                                TimeUnit.MILLISECONDS.sleep(FETCH_INTERVAL);
+                            }
+                        }
+
+                    } while ((agentStatus != null) && !agentStatus.getStatus().isCompleted());
+
+                    // 正常结束
+                    attempt.setStatus(tranformStatus(agentStatus.getStatus()));
+                    attempt.setReturnValue(agentStatus.getReturnValue());
+
+                } catch (VariableException e) {
+                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                    e.printStackTrace(new PrintWriter(baos));
+                    attempt.setOutput(StringUtils.trimToEmpty(attempt.getOutput()) + IOUtils.LINE_SEPARATOR
+                                      + StringUtils.trimToEmpty(e.getMessage()) + IOUtils.LINE_SEPARATOR
+                                      + baos.toString());
+                    attempt.setStatus(AttemptStatus.COMPLETE_WITH_UNKNOWN_STATUS);
+                } catch (AgentClientException e) {
+                    // 异常结束
+                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                    e.printStackTrace(new PrintWriter(baos));
+                    attempt.setOutput(StringUtils.trimToEmpty(attempt.getOutput()) + IOUtils.LINE_SEPARATOR
+                                      + StringUtils.trimToEmpty(e.getMessage()) + IOUtils.LINE_SEPARATOR
+                                      + baos.toString());
+                    attempt.setStatus(AttemptStatus.COMPLETE_WITH_UNKNOWN_STATUS);
+                } finally {
+                    attempt.setEndTime(new Date());
+                }
+
+                // 将结果写回db
+                DefaultAttemptExecutor.this.attemptService.update(attempt);
+                // 移除
+                DefaultAttemptExecutor.this.attemptMap.remove(attempt.getInstanceId());
+
+            } catch (InterruptedException e) {
+                // 一般是关闭程序时才会关闭线程池，才会中断，故不做任何事情，让线程结束
+            }
+        }
+    }
+
+    public void cancel(long instanceId) {
+        Pair pair = this.attemptMap.get(instanceId);
+
+        DefaultAgentClient agentClient = pair.agentClient;
+        String host = pair.host;
+        long txId = pair.txId;
+
+        Map<String, String> params = new HashMap<String, String>();
+        params.put("txId", String.valueOf(txId));
+
+        AgentResponse<TaskStatus> res;
+        try {
+            res = agentClient.call(host, new AgentRequest(Constants.EVENT_TYPE_TASK_CANCLE, params));
+            if (!AgentResponseCode.SUCCESS.equals(res.getResponseCode())) {
+                throw new AgentClientException("Agent return failed when cancel, response code is "
+                                               + res.getResponseCode() + ", errorMsg is " + res.getErrorMsg());
+            }
+        } catch (AgentClientException e) {
+            // 网络异常
+            LOGGER.error("Error when cancelling agent", e);
+        }
+
+    }
+
+    public AttemptStatus tranformStatus(TaskTransactionStatus status) {
+        switch (status) {
+            case CANCEL:
+                return AttemptStatus.CANCELLED;
+            case SUCCESS:
+                return AttemptStatus.SUCCESS;
+            case FAIL:
+                return AttemptStatus.FAILED;
+            case COMPLETE_WITH_UNKNOWN_STATUS:
+                return AttemptStatus.COMPLETE_WITH_UNKNOWN_STATUS;
+            case RUNNING:
+                return AttemptStatus.RUNNING;
+            default:
+                return AttemptStatus.RUNNING;
+        }
+    }
+}

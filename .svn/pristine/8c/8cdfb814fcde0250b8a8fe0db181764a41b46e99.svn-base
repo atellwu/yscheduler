@@ -1,0 +1,85 @@
+CREATE TABLE AGENT (
+  id bigint ,
+  name varchar(100),
+  ip varchar(100),
+  alive tinyint,
+  enable tinyint,
+  create_time datetime,
+  update_time datetime,
+  PRIMARY KEY (id)
+);
+
+CREATE TABLE ATTEMPT (
+  id bigint ,
+  task_id bigint,
+  instance_id bigint,
+  agent_id bigint DEFAULT NULL,
+  status tinyint,
+  return_value int,
+  output varchar(1024),
+  start_time datetime,
+  end_time datetime,
+  create_time datetime,
+  update_time datetime,
+  PRIMARY KEY (id)
+);
+
+CREATE TABLE authority (
+  id int ,
+  user_id bigint,
+  task_id bigint,
+  readable tinyint,
+  writeable tinyint,
+  follow tinyint,
+  create_time datetime,
+  update_time datetime,
+  PRIMARY KEY (id)
+);
+
+CREATE TABLE dependency (
+  id bigint ,
+  task_id bigint,
+  on_task_id bigint,
+  create_time datetime,
+  update_time datetime,
+  PRIMARY KEY (id)
+);
+
+CREATE TABLE instance (
+  id bigint ,
+  task_id bigint,
+  status tinyint,
+  schedule_time datetime,
+  create_time datetime,
+  update_time datetime,
+  PRIMARY KEY (id)
+);
+
+CREATE TABLE user (
+  id bigint ,
+  name varchar(100),
+  password varchar(100),
+  email varchar(255),
+  telephone varchar(32),
+  create_time datetime,
+  update_time datetime,
+  PRIMARY KEY (id)
+);
+
+CREATE TABLE task (
+  id bigint ,
+  name varchar(100),
+  owner bigint,
+  type tinyint,
+  crontab varchar(100),
+  command varchar(1024),
+  agent_id bigint,
+  status tinyint,
+  timeout int,
+  retry_times int,
+  description varchar(1024),
+  create_time datetime,
+  update_time datetime,
+  PRIMARY KEY (id),
+);
+

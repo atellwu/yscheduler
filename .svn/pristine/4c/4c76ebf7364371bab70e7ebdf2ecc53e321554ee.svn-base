@@ -1,0 +1,38 @@
+package com.yeahmobi.yscheduler.notice;
+
+import org.springframework.stereotype.Service;
+
+/**
+ * @author Ryan Sun
+ */
+@Service
+public class DefaultEmailSender implements EmailSender {
+
+    private String mailService = "http://ips.ymtech.info/notify/api/email";
+
+    public void send(Message email) {
+        // try {
+        // HttpClient client = new HttpClient();
+        // PostMethod postMethod = new PostMethod(this.mailService);
+        // NameValuePair[] parameters = new NameValuePair[3];
+        // parameters[0] = new NameValuePair("to", to);
+        // parameters[1] = new NameValuePair("subject", subject);
+        // parameters[2] = new NameValuePair("body", content);
+        // postMethod.addParameters(parameters);
+        // postMethod.getParams().setParameter(HttpMethodParams.HTTP_CONTENT_CHARSET, "utf-8");
+        //
+        // client.executeMethod(postMethod);
+        //
+        // String response = postMethod.getResponseBodyAsString();
+        // if (response.contains("\"code\":0")) {
+        // return true;
+        // } else {
+        // return false;
+        // }
+        // } catch (Exception e) {
+        // LOGGER.error(e, e);
+        // return false;
+        // }
+    }
+
+}

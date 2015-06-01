@@ -1,0 +1,73 @@
+<link href="${rc.contextPath}/assets/css/bwizard.css" rel="stylesheet" />
+<link href="${rc.contextPath}/assets/css/autocomplete.css" rel="stylesheet" />
+<link href="${rc.contextPath}/assets/css/chosen.min.css" rel="stylesheet" />
+<link href="${rc.contextPath}/static/css/custom.css" rel="stylesheet" />
+
+
+<script src="${rc.contextPath}/assets/js/bwizard/jquery.bootstrap.wizard.js" type="text/javascript"></script>
+<script src="${rc.contextPath}/assets/js/jquery.autocomplete.js" type="text/javascript"></script>
+<script src="${rc.contextPath}/assets/js/chosen.jquery.min.js" type="text/javascript"></script>
+<script src="${rc.contextPath}/assets/js/bootbox.min.js" type="text/javascript"></script>
+<script src="${rc.contextPath}/assets/js/jquery.validate.min.js" type="text/javascript"></script>
+<script src="${rc.contextPath}/static/js/validate.js" type="text/javascript"></script>
+
+
+<script type="text/javascript">
+	function schedule_changed() {
+		var value = $("input[name='schedule']:checked").val();
+		if(value=='clock'){
+			$('#schedule').show();
+		} else {
+			$('#schedule').hide();
+		}
+	}
+	$(document).ready(function() {
+
+		$('#wizard').bootstrapWizard({
+			'onNext' : function(tab, navigation, index) {
+				return $('.tab-pane.active').validate().form();
+			},
+			'tabClass' : 'bwizard-steps',
+			'nextSelector' : '.button-next',
+			'previousSelector' : '.button-previous',
+			'finishSelector' : '.button-finish'
+		});
+
+		$(".single").chosen({
+			width : "100%"
+		});
+		$(".multiple").chosen({
+			width : "150%"
+		});
+
+		$('#submit').click(function(e) {
+			if (!$('#form').validate().form()) {
+				return false;
+			}
+			$('#submit').button('loading');
+			$.ajax({
+				type : $('#form').attr('method'),
+				url : $('#form').attr('action'),
+				data : $('#form').serialize(),
+				dataType : "json",
+				success : function(data) {
+					$('#submit').button('reset');
+					if (data.success == false) {
+						bootbox.alert({
+							message : data.notice,
+							title : "新加任务失败！"
+						});
+					} else {
+						bootbox.alert("新加任务成功！", function(result) {
+							window.location.href = '/task';
+						});
+					}
+				},
+				error : function(data) {
+					app.httpError
+				}
+			});
+		});
+
+	});
+</script>

@@ -1,0 +1,107 @@
+package com.yeahmobi.yscheduler.model.service.impl;
+
+import java.util.Date;
+
+import org.junit.Assert;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.TestExecutionListeners;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.test.context.support.DependencyInjectionTestExecutionListener;
+
+import com.yeahmobi.yscheduler.common.Paginator;
+import com.yeahmobi.yscheduler.model.WorkflowInstance;
+import com.yeahmobi.yscheduler.model.service.WorkflowInstanceService;
+import com.yeahmobi.yscheduler.model.type.WorkflowInstanceStatus;
+import com.yeahmobi.yunit.DbUnitTestExecutionListener;
+import com.yeahmobi.yunit.annotation.DatabaseSetup;
+
+/**
+ * Ryan Sun
+ */
+@RunWith(SpringJUnit4ClassRunner.class)
+@ContextConfiguration(locations = { "classpath:applicationContext-test.xml" })
+@TestExecutionListeners({ DependencyInjectionTestExecutionListener.class, DbUnitTestExecutionListener.class })
+public class WorkflowInstanceServiceImplTest {
+
+    @Autowired
+    private WorkflowInstanceService workflowInstanceService;
+
+    private WorkflowInstance buildInstance() {
+        WorkflowInstance instance = new WorkflowInstance();
+        Date time = TestUtils.DEFAULT_TIME;
+
+        instance.setWorkflowId(1l);
+        instance.setStatus(WorkflowInstanceStatus.INITED);
+        instance.setEndTime(time);
+        instance.setScheduleTime(time);
+        instance.setStartTime(time);
+        return instance;
+    }
+
+    @Test
+    @DatabaseSetup
+    public void testList() {
+        Paginator paginator = new Paginator();
+        Assert.assertEquals(1, this.workflowInstanceService.list(1, 1, paginator).size());
+        Assert.assertEquals(1, this.workflowInstanceService.listAll(1).size());
+        Assert.assertEquals(2, this.workflowInstanceService.getAllRunning().size());
+        Assert.assertEquals(2, this.workflowInstanceService.getAllInits().size());
+
+    }
+
+    @Test
+    @DatabaseSetup
+    public void testSave() {
+        WorkflowInstance instance = buildInstance();
+        this.workflowInstanceService.save(instance);
+
+        Long id = instance.getId();
+        Assert.assertNotNull(id);
+        assertInstanceEquals(instance, this.workflowInstanceService.get(id));
+    }
+
+    private void assertInstanceEquals(WorkflowInstance expected, WorkflowInstance actual) {
+        Assert.assertEquals(expected.getId(), actual.getId());
+        Assert.assertEquals(expected.getScheduleTime(), actual.getScheduleTime());
+        Assert.assertEquals(expected.getStatus(), actual.getStatus());
+        Assert.assertEquals(expected.getStartTime(), actual.getStartTime());
+        Assert.assertEquals(expected.getEndTime(), actual.getEndTime());
+        Assert.assertEquals(expected.getWorkflowId(), actual.getWorkflowId());
+        TestUtils.generallyEquals(new Date(), actual.getCreateTime());
+        TestUtils.generallyEquals(new Date(), actual.getUpdateTime());
+    }
+
+    @Test
+    @DatabaseSetup
+    public void updateStatus() {
+        Long instanceId = 1l;
+        WorkflowInstanceStatus status = WorkflowInstanceStatus.CANCELLED;
+        this.workflowInstanceService.updateStatus(instanceId, status);
+        WorkflowInstance instance = this.workflowInstanceService.get(instanceId);
+        Assert.assertEquals(status, instance.getStatus());
+        TestUtils.generallyEquals(new Date(), instance.getEndTime());
+
+        status = WorkflowInstanceStatus.RUNNING;
+        this.workflowInstanceService.updateStatus(instanceId, status);
+        instance = this.workflowInstanceService.get(instanceId);
+        Assert.assertEquals(status, instance.getStatus());
+        TestUtils.generallyEquals(new Date(), instance.getStartTime());
+
+        status = WorkflowInstanceStatus.SKIPPED;
+        this.workflowInstanceService.updateStatus(instanceId, status);
+        instance = this.workflowInstanceService.get(instanceId);
+        Assert.assertEquals(status, instance.getStatus());
+    }
+
+    @Test
+    @DatabaseSetup
+    public void testExistUncompleted() {
+        Assert.assertTrue(this.workflowInstanceService.existUncompleted(1l));
+        Assert.assertFalse(this.workflowInstanceService.existUncompleted(7l));
+
+    }
+
+}

@@ -1,0 +1,68 @@
+package com.yeahmobi.yscheduler.model.service.impl;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.yeahmobi.yscheduler.model.WorkflowDetail;
+import com.yeahmobi.yscheduler.model.WorkflowDetailExample;
+import com.yeahmobi.yscheduler.model.WorkflowTaskDependency;
+import com.yeahmobi.yscheduler.model.dao.WorkflowDetailDao;
+import com.yeahmobi.yscheduler.model.service.WorkflowDetailService;
+import com.yeahmobi.yscheduler.model.service.WorkflowTaskDependencyService;
+
+@Service
+public class WorkflowDetailServiceImpl implements WorkflowDetailService {
+
+    @Autowired
+    private WorkflowDetailDao             workflowDetailDao;
+
+    @Autowired
+    private WorkflowTaskDependencyService workflowTaskDependencyService;
+
+    @Transactional
+    public void save(long workflowId, List<WorkflowDetail> workflowDetails, List<List<Long>> dependencyList) {
+
+        WorkflowDetailExample example = new WorkflowDetailExample();
+        example.createCriteria().andWorkflowIdEqualTo(workflowId);
+        List<WorkflowDetail> oldWorkflowDetails = this.workflowDetailDao.selectByExample(example);
+
+        for (WorkflowDetail detail : oldWorkflowDetails) {
+            this.workflowTaskDependencyService.deleteByWorkflowDetailId(detail.getId());
+        }
+
+        this.workflowDetailDao.deleteByExample(example);
+        for (int i = 0; i < workflowDetails.size(); i++) {
+            WorkflowDetail detail = workflowDetails.get(i);
+            List<Long> dependencyTasks = dependencyList.get(i);
+            detail.setWorkflowId(workflowId);
+            this.workflowDetailDao.insertSelective(detail);
+            this.workflowTaskDependencyService.addDependencyTasks(detail.getId(), dependencyTasks);
+        }
+    }
+
+    public List<WorkflowDetail> list(long workflowId) {
+        WorkflowDetailExample example = new WorkflowDetailExample();
+        example.createCriteria().andWorkflowIdEqualTo(workflowId);
+        return this.workflowDetailDao.selectByExample(example);
+    }
+
+    public List<Long> listDependencyTaskIds(long workflowId, long taskId) {
+        List<Long> result = new ArrayList<Long>();
+        WorkflowDetailExample example = new WorkflowDetailExample();
+        example.createCriteria().andWorkflowIdEqualTo(workflowId).andTaskIdEqualTo(taskId);
+        List<WorkflowDetail> workflowDetails = this.workflowDetailDao.selectByExample(example);
+        if (workflowDetails.size() != 0) {
+            long workflowDetailId = workflowDetails.get(0).getId();
+            List<WorkflowTaskDependency> dependencies = this.workflowTaskDependencyService.listByWorkflowDetailId(workflowDetailId);
+
+            for (WorkflowTaskDependency dependency : dependencies) {
+                result.add(dependency.getDependencyTaskId());
+            }
+        }
+        return result;
+    }
+}

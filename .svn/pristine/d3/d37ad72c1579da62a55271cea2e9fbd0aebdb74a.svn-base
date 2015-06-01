@@ -1,0 +1,16 @@
+<!-- 
+----跨域代理页面
+----跨域提交文件并获取返回值的流程如下：（假设在A站点的页面Pa上传文件到B站点）
+----1.Pa页面要插入一个隐藏的iframe,并将form表单的target属性指向该iframe的name属性值，同时Pa上还要有一个JS函数FUN(param)，供以后调用，然后提交表单
+----2.文件在B站点后台处理后，重定向到A站点下的一个静态代理页面并把处理后的参数信息带过去,该静态页面在iframe中显示
+----3.代理页面把B站点返回的参数值封装为JSON格式的对象，调用Pa页面的JS函数FUN(param)进行后续的处理
+---->
+<script type="text/javascript">
+	var params = window.location.search.split('?').slice(1);
+	//格式为"success=true&version=123456&filename=xx.zip"
+	var jsonParam1= params.toString().replace(/=/g,'":"');
+	var jsonParam2=jsonParam1.replace(/&/g,'","');
+	var jsons = '{"'+jsonParam2+'"}';
+	var jsonObj = eval('(' + jsons + ')');
+	window.parent.getIframeVal(jsonObj);
+</script>

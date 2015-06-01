@@ -1,0 +1,13 @@
+package com.yeahmobi.yscheduler.agentframework.agent.task.async;
+
+import com.yeahmobi.yscheduler.agentframework.agent.event.task.CallbackTaskExecutor;
+
+public class CallbackAgentTask extends AsyncAgentTask {
+
+    private CallbackTaskExecutor executor = new CallbackTaskExecutor();
+
+    @Override
+    public CallbackTaskExecutor getTaskExecutor() {
+        return this.executor;
+    }
+}

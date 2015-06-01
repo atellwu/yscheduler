@@ -1,0 +1,156 @@
+package com.yeahmobi.yscheduler.web.controller.mytask;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.servlet.ModelAndView;
+
+import com.alibaba.fastjson.JSON;
+import com.yeahmobi.yscheduler.common.Paginator;
+import com.yeahmobi.yscheduler.model.Instance;
+import com.yeahmobi.yscheduler.model.Task;
+import com.yeahmobi.yscheduler.model.User;
+import com.yeahmobi.yscheduler.model.type.InstanceStatus;
+import com.yeahmobi.yscheduler.model.type.TaskStatus;
+import com.yeahmobi.yscheduler.web.controller.AbstractController;
+import com.yeahmobi.yscheduler.web.executor.InstanceExecutor;
+import com.yeahmobi.yscheduler.web.service.AgentService;
+import com.yeahmobi.yscheduler.web.service.AttemptService;
+import com.yeahmobi.yscheduler.web.service.InstanceService;
+import com.yeahmobi.yscheduler.web.service.TaskService;
+import com.yeahmobi.yscheduler.web.service.UserService;
+import com.yeahmobi.yscheduler.web.vo.TaskVO;
+
+/**
+ * @author wukezhu
+ */
+@Controller
+@RequestMapping(value = { MyTaskController.SCREEN_NAME })
+public class MyTaskController extends AbstractController {
+
+    public static final String  SCREEN_NAME = "mytask";
+
+    private static final Logger LOGGER      = LoggerFactory.getLogger(MyTaskController.class);
+
+    @Autowired
+    private TaskService         taskService;
+
+    @Autowired
+    private InstanceService     instanceService;
+
+    @Autowired
+    private AttemptService      attemptService;
+
+    @Autowired
+    private UserService         userService;
+
+    @Autowired
+    private AgentService        agentService;
+
+    @Autowired
+    private InstanceExecutor    instanceExecutor;
+
+    @RequestMapping(value = { "" }, method = RequestMethod.GET)
+    public ModelAndView index(Integer pageNum) {
+        Map<String, Object> map = new HashMap<String, Object>();
+
+        Paginator paginator = new Paginator();
+        pageNum = ((pageNum == null) || (pageNum < 0)) ? 0 : pageNum;
+
+        List<Task> tasks = this.taskService.list(pageNum, paginator);
+        List<TaskVO> list = new ArrayList<TaskVO>(tasks.size());
+        if (tasks != null) {
+            for (Task task : tasks) {
+                TaskVO vo = new TaskVO(task);
+                User user = this.userService.get(task.getOwner());
+                vo.setUser(user);
+                list.add(vo);
+            }
+        }
+
+        map.put("list", list);
+        map.put("paginator", paginator);
+
+        return screen(map, SCREEN_NAME);
+    }
+
+    @RequestMapping(value = { "" }, method = RequestMethod.POST)
+    public ModelAndView action(HttpServletRequest request, HttpServletResponse response) throws ServletException,
+                                                                                        IOException {
+        Map<String, Object> map = new HashMap<String, Object>();
+        long taskId = Long.parseLong(request.getParameter("id"));
+        Task task = this.taskService.get(taskId);
+        String action = request.getParameter("action");
+        String actionChinese = request.getParameter("actionChinese");
+        boolean result = false;
+        if ("suspend".equals(action)) {
+            task.setStatus(TaskStatus.PAUSED);
+            result = this.taskService.update(task);
+        } else if ("resume".equals(action)) {
+            task.setStatus(TaskStatus.OPEN);
+            result = this.taskService.update(task);
+        } else if ("trigger".equals(action)) {
+
+        } else if ("delete".equals(action)) {
+            task.setStatus(TaskStatus.REMOVED);
+            result = this.taskService.update(task);
+        }
+        String notice = actionChinese + "作业" + task.getName();
+        boolean success = false;
+        if (result) {
+            notice += "成功！";
+            success = true;
+        } else {
+            notice += "失败！";
+        }
+
+        Paginator paginator = new Paginator();
+        List<Task> list = this.taskService.list(0, paginator);
+        map.put("list", list);
+        map.put("notice", notice);
+        map.put("success", success);
+        map.put("paginator", paginator);
+        return new ModelAndView("redirect:/" + SCREEN_NAME, map);
+    }
+
+    @RequestMapping(value = "/trigger", method = RequestMethod.POST, produces = "application/json; charset=utf-8")
+    @ResponseBody
+    public Object trigger(HttpSession session, long taskId) {
+        Map<String, Object> map = new HashMap<String, Object>();
+        try {
+            Instance instance = new Instance();
+            instance.setScheduleTime(new Date());
+            instance.setStatus(InstanceStatus.RUNNING);
+            instance.setTaskId(taskId);
+            this.instanceExecutor.submit(instance);
+
+            map.put("success", true);
+        } catch (IllegalArgumentException e) {
+            map.put("success", false);
+            map.put("errorMsg", e.getMessage());
+        } catch (Exception e) {
+            map.put("success", false);
+            map.put("errorMsg", e.getMessage());
+            LOGGER.error(e.getMessage(), e);
+        }
+        return JSON.toJSONString(map);
+
+    }
+
+}

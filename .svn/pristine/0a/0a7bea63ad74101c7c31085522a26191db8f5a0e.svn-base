@@ -1,0 +1,4 @@
+serverDomain=scheduler.ymtech.info
+#upload/download task file path
+attachmentServerUri=http://scheduler-storage.ymtech.info/download
+uploadPath=http://scheduler-storage.ymtech.info/upload

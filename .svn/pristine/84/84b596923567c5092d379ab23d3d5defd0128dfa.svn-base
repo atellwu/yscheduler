@@ -1,0 +1,151 @@
+<div class="container">
+	<div id="wizard">
+		<ol>
+			<li>作业部署</li>
+			<li>基本设置</li>
+			<li>其他设置</li>
+		</ol>
+
+		<form role="form" style="display: none" class="form-horizontal" id="contactForm" onsubmit="send(); return false;">
+			<label>Please fill the form</label> <br> <br>
+			<div class="form-group">
+				<label for="name" class="col-lg-3 col-sm-3">My Label 2</label>
+				<div class="col-lg-7 col-sm-7">
+					<input type="text" class="form-control" name="name" id="name" required="required" value="myName">
+				</div>
+			</div>
+
+			<div class="form-group">
+				<label for="email" class="col-lg-3 col-sm-3">My Label 3</label>
+				<div class="col-lg-7 col-sm-7">
+					<input type="email" class="form-control" name="email" id="email" required="required">
+				</div>
+			</div>
+
+			<div class="form-group">
+				<label for="message" class="col-lg-3">My Label 4</label>
+				<div class="col-lg-10 col-sm-10">
+					<textarea class="form-control" name="message" id="message" required="required"></textarea>
+				</div>
+			</div>
+
+			<button type="submit" class="btn btn-primary" id="submit" style="margin-left: 20px">Send</button>
+		</form>
+
+		<div id="deploy">
+			<form id="deploy-form" role="form" class="form-horizontal">
+				<fieldset>
+					<legend>部署设置</legend>
+					<div class="form-group">
+						<label for="name" class="col-sm-2">作业类型*</label>
+						<div class="col-sm-5">
+							<select id="taskType" name="taskType" class="form-control" required="required">
+								<option>shell</option>
+								<option>hadoop</option>
+								<option>hive</option>
+							</select>
+						</div>
+					</div>
+
+					<div class="form-group">
+						<label for="agent" class="col-sm-2">部署的机器*</label>
+						<div class="col-sm-5">
+							<input type="text" id="agent" name="agent" class="form-control" required="required" value=""
+								placeholder="10.0.0.1">
+						</div>
+					</div>
+
+				</fieldset>
+			</form>
+		</div>
+
+		<div id="base">
+			<form id="basic-form" class="form-horizontal">
+				<fieldset>
+					<legend>必要设置</legend>
+					<div class="form-group">
+						<label for="name" class="col-sm-2">名称*</label>
+						<div class="col-sm-5">
+							<input type="text" id="name" name="name" class="form-control" required="required" value=""
+								placeholder="作业的名称，可以作为被依赖的对象，不可修改">
+						</div>
+					</div>
+
+					<div class="form-group">
+						<label for="crontab" class="col-sm-2">Crontab*</label>
+						<div class="col-sm-5">
+							<input type="text" id="crontab" name="crontab" class="form-control" required="required" placeholder="0 0 0 * * ?">
+						</div>
+					</div>
+
+					<div class="form-group">
+						<label for="crontab" class="col-sm-2">命令*</label>
+						<div class="col-sm-5">
+							<input type="text" id="command" name="command" class="form-control" required="required" placeholder="作业执行的命令">
+						</div>
+					</div>
+
+					<div class="form-group">
+						<label for="owner" class="col-sm-2">属主*</label>
+						<div class="col-sm-5">
+							<input type="text" id="owner" name="owner" class="form-control" required="required" placeholder="ryan.sun">
+						</div>
+					</div>
+
+					<div class="form-group">
+						<label for="description" class="col-sm-2">描述</label>
+						<div class="col-sm-5">
+							<input type="text" id="description" name="description" class="form-control" placeholder="作业的用途">
+						</div>
+					</div>
+				</fieldset>
+			</form>
+		</div>
+		<div id="extention">
+			<form id="extended-form" class="form-horizontal">
+				<fieldset>
+					<legend>可选设置</legend>
+					<div class="form-group">
+						<label for="timeout" class="col-sm-2">执行超时时间（分钟）</label>
+						<div class="col-sm-5">
+							<input type="text" id="timeout" name="timeout" class="form-control" required="required" value="60">
+						</div>
+					</div>
+
+					<div class="form-group">
+						<label for="dependency" class="col-sm-2">依赖</label>
+						<div class="col-sm-5">
+							<input type="text" id="dependency" name="dependency" class="form-control" required="required"
+								placeholder="依赖项目名称，逗号分隔">
+						</div>
+					</div>
+
+					<div class="form-group">
+						<label for="retryTimes" class="col-sm-2">重试次数</label>
+						<div class="col-sm-5">
+							<input type="text" id="retryTimes" name="retryTimes" class="form-control" required="required">
+						</div>
+					</div>
+
+					<div class="form-group">
+						<label for="notice" class="col-sm-2">关注者</label>
+						<div class="col-sm-5">
+							<input type="text" id="notice" name="notice" class="form-control" required="required" placeholder="告警通知的对象，逗号分隔">
+						</div>
+					</div>
+				</fieldset>
+			</form>
+		</div>
+	</div>
+</div>
+<div id="confirm" class="modal hide fade">
+	<div class="modal-header">
+		<button type="button" class="close" data-dismiss="modal">&times;</button>
+		<h3 id="id_header"></h3>
+	</div>
+	<div class="modal-body">
+		<p id="id_body"></p>
+	</div>
+	<div class="modal-footer"></div>
+</div>
+

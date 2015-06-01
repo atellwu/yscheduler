@@ -1,0 +1,14 @@
+package com.yeahmobi.yscheduler.model.service;
+
+import java.util.List;
+
+import com.yeahmobi.yscheduler.model.WorkflowDetail;
+
+public interface WorkflowDetailService {
+
+    void save(long workflowId, List<WorkflowDetail> workflowDetails);
+
+    List<WorkflowDetail> list(long workflowId);
+
+    List<Long> listDependencyTasks(long workflowId, long taskId);
+}

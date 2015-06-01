@@ -1,0 +1,142 @@
+
+<script type="text/javascript"
+	src="${rc.contextPath}/assets/js/jquery.dataTables.min.js"></script>
+<script type="text/javascript"
+	src="${rc.contextPath}/assets/js/jquery.dataTables.bootstrap.js"></script>
+
+<script type="text/javascript">
+	window.uploadPath = "$uploadPath";
+
+	var validateAgentFile = function(files, dropped) {
+		var file = files[0];
+		if (file) {
+			var p = /\.zip|\.ZIP$/;
+			if (p.test(file.name))
+				return true;
+			alert("必须是.zip文件");
+			return false;
+		}
+		if (file.size > 1024 * 100) {
+			alert("文件大小不能超过100m");
+			return false;
+		}
+		return true;
+	};
+
+	var validateUpgradeShellFile = function(files, dropped) {
+		var file = files[0];
+		if (file) {
+			var p = /\.sh|\.SH$/;
+			if (p.test(file.name))
+				return true;
+			alert("必须是.sh文件");
+			return false;
+		}
+		if (file.size > 1024 * 100) {
+			alert("文件大小不能超过100m");
+			return false;
+		}
+		return true;
+	};
+
+	$("[rel=tooltip]").tooltip();
+	$(document).ready(function() {
+		$('#listTable').dataTable({
+			"bPaginate" : false,
+			"bLengthChange" : false,
+			"bInfo" : false,
+			"bFilter" : false,
+			"aoColumns" : [ {
+				"bSortable" : true
+			}, {
+				"bSortable" : true
+			}, {
+				"bSortable" : true
+			}, {
+				"bSortable" : true
+			}, {
+				"bSortable" : false
+			}, {
+				"bSortable" : false
+			} ],
+			"aaSorting" : []
+		});
+		$('#agentFileInput').ace_file_input({
+			no_file : '选择agent软件包 ...',
+			btn_choose : '选择',
+			btn_change : '重新选择',
+			before_change : validateAgentFile
+		});
+		$('#upgradeShellFileInput').ace_file_input({
+			no_file : '选择upgrade.sh ...',
+			btn_choose : '选择',
+			btn_change : '重新选择',
+			before_change : validateUpgradeShellFile
+		});
+	});
+
+	function uploadAgentFile() {
+		$("#uploadAgentFileForm button").attr('disabled', "true")
+		app.clearAlertMessage();
+		$.ajax({
+			url : '/task/create/serverExist?path=' + window.uploadPath,
+			type : 'get',
+			dataType : "json",
+			success : function(data0) {
+				if (data0.success == false) {
+					app.alertError("上传失败(服务不可用)");
+					$("#uploadAgentFileForm button").removeAttr("disabled");
+				} else {
+					//开始提交  
+					$("#uploadAgentFileForm").attr(
+							"action",
+							window.uploadPath + "?proxyPath="
+									+ window.location.origin
+									+ window.contextPath
+									+ "/static/cross_domain_proxy.html");
+					$("#uploadAgentFileForm").submit();
+				}
+			},
+			error : app.httpError,
+			async : false
+		});
+	}
+	function uploadUpgradeShellFile() {
+		$("#uploadUpgradeShellFileForm button").attr('disabled', "true")
+		app.clearAlertMessage();
+		$.ajax({
+			url : '/task/create/serverExist?path=' + window.uploadPath,
+			type : 'get',
+			dataType : "json",
+			success : function(data0) {
+				if (data0.success == false) {
+					app.alertError("上传失败(服务不可用)");
+					$("#uploadUpgradeShellFileForm button").removeAttr(
+							"disabled");
+				} else {
+					//开始提交  
+					$("#uploadUpgradeShellFileForm").attr(
+							"action",
+							window.uploadPath + "?proxyPath="
+									+ window.location.origin
+									+ window.contextPath
+									+ "/static/cross_domain_proxy.html");
+					$("#uploadUpgradeShellFileForm").submit();
+				}
+			},
+			error : app.httpError,
+			async : false
+		});
+	}
+	//该函数将来会被iframe中返回的跨域代理页面调用
+	function getIframeVal(jsonObj) {
+		if (jsonObj.success == 'true') {
+			app.alertSuccess("上传成功");
+		} else {
+			app.alertError("上传失败");
+		}
+		$("#uploadAgentFileForm button").removeAttr("disabled");
+		$("#uploadUpgradeShellFileForm button").removeAttr("disabled");
+	}
+</script>
+

@@ -1,0 +1,47 @@
+<div class="col-xs-10">
+	<div id="alertMessageDiv" style="text-align: center;"></div>
+	<p style="text-align: right">
+		<button class="btn btn-sm btn-info"
+			onclick="app.openCreateUserModal()">添加用户</button>
+	</p>
+	<div class="table-responsive">
+		<table class="table table-striped table-bordered table-hover"
+			id="listTable">
+			<thead>
+				<tr>
+					<th>用户名</th>
+					<th>团队</th>
+					<th>邮箱地址</th>
+					<th>手机</th>
+					<th>Token</th>
+					<th>创建时间</th>
+					<th>操作</th>
+				</tr>
+			</thead>
+			<tbody>
+				#foreach($user in $list)
+				<tr>
+					<td><b>$user.name</b></td>
+					<td>#if($user.teamName)<a id="users"
+						href="/user?teamId=$user.teamId"><span
+							class="label">$!user.teamName</span></a>#end</td>
+					<td>$user.email</td>
+					<td>$user.telephone</td>
+					<td>$!user.token</td>
+					<td>$dateFormatUtils.format($user.createTime,'yyyy年MM月dd日HH时mm分')</td>
+					<td style="width: 300px"><a href="javascript:;"
+						onclick="app.openRemoveUserModal($user.id,'$user.name')"><span
+							class="label label-danger">&nbsp; 删除 </span></a> &nbsp;<a
+						href="javascript:;"
+						onclick="app.openResetPasswordModal($user.id,'$user.name')"><span
+							class="label label-info">重置密码</span></a>&nbsp; &nbsp;<a
+						href="javascript:;"
+						onclick="app.openRegenTokenModal($user.id,'$user.name')"><span
+							class="label label-warning">重置Token</span></a></td>
+				</tr>
+				#end
+			</tbody>
+		</table>
+		#screen("paginator.htm")
+	</div>
+</div>

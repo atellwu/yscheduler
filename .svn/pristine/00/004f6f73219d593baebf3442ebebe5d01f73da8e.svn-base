@@ -1,0 +1,23 @@
+package com.yeahmobi.yscheduler.model.service;
+
+import java.util.List;
+
+import com.yeahmobi.yscheduler.common.Paginator;
+import com.yeahmobi.yscheduler.model.WorkflowInstance;
+import com.yeahmobi.yscheduler.model.type.WorkflowInstanceStatus;
+
+public interface WorkflowInstanceService {
+
+    WorkflowInstance get(long id);
+
+    List<WorkflowInstance> list(long workflowId, int pageNum, Paginator paginator);
+
+    List<WorkflowInstance> listAll(long workflowId);
+
+    void save(WorkflowInstance instance);
+
+    List<WorkflowInstance> getAllUncompleteds();
+
+    void updateStatus(Long instanceId, WorkflowInstanceStatus status);
+
+}

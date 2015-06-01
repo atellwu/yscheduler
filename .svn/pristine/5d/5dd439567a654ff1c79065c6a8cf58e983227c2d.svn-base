@@ -1,0 +1,180 @@
+package com.yeahmobi.yscheduler.web.controller.workflow;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+
+import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.Validate;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.support.CronTrigger;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.servlet.ModelAndView;
+
+import com.alibaba.fastjson.JSON;
+import com.yeahmobi.yscheduler.model.Workflow;
+import com.yeahmobi.yscheduler.model.WorkflowDetail;
+import com.yeahmobi.yscheduler.model.common.NameValuePair;
+import com.yeahmobi.yscheduler.model.common.UserContextHolder;
+import com.yeahmobi.yscheduler.model.service.AgentService;
+import com.yeahmobi.yscheduler.model.service.TaskAuthorityService;
+import com.yeahmobi.yscheduler.model.service.TaskDependencyService;
+import com.yeahmobi.yscheduler.model.service.TaskService;
+import com.yeahmobi.yscheduler.model.service.UserService;
+import com.yeahmobi.yscheduler.model.service.WorkflowAuthorityService;
+import com.yeahmobi.yscheduler.model.service.WorkflowDetailService;
+import com.yeahmobi.yscheduler.model.service.WorkflowService;
+import com.yeahmobi.yscheduler.web.controller.AbstractController;
+
+/**
+ * @author Ryan Sun
+ */
+@Controller
+@RequestMapping(value = { CreateController.SCREEN_NAME })
+public class CreateController extends AbstractController {
+
+    public static final String       SCREEN_NAME    = "workflow/create";
+
+    private static final Logger      LOGGER         = LoggerFactory.getLogger(CreateController.class);
+
+    private static final String      TASK_ERROR_MSG = "请检查任务的填写";                                      ;
+
+    @Autowired
+    private TaskService              taskService;
+
+    @Autowired
+    private UserService              userService;
+
+    @Autowired
+    private AgentService             agentService;
+
+    @Autowired
+    private TaskDependencyService    taskDependencyService;
+
+    @Autowired
+    private TaskAuthorityService     taskAuthorityService;
+
+    @Autowired
+    private WorkflowDetailService    workflowDetailService;
+
+    @Autowired
+    private WorkflowService          workflowService;
+
+    @Autowired
+    private WorkflowAuthorityService workflowAuthorityService;
+
+    @RequestMapping(value = { "" }, method = RequestMethod.GET)
+    public ModelAndView createView() {
+        Map<String, Object> map = new HashMap<String, Object>();
+
+        List<NameValuePair> tasks = this.taskService.list(UserContextHolder.getUserContext().getId());
+
+        map.put("tasks", tasks);
+        map.put("users", this.userService.list());
+        map.put("agents", this.agentService.list());
+
+        return screen(map, SCREEN_NAME);
+    }
+
+    @RequestMapping(value = { "" }, method = RequestMethod.POST, produces = "application/json; charset=utf-8")
+    @ResponseBody
+    public Object create(HttpServletRequest request, String name, Integer timeout, String description, String crontab,
+                         Long[] readers, Long[] writers, Long[] followers) throws ServletException, IOException {
+        Map<String, Object> map = new HashMap<String, Object>();
+        try {
+            // name
+            Validate.isTrue(StringUtils.isNotBlank(name), "工作流名称不能为空");
+            // timeout
+            Validate.isTrue((timeout != null) && (timeout > 0), "超时时间不合法");
+            // crontab
+            Validate.isTrue(StringUtils.isNotBlank(crontab), "调度表达式不合法");
+            try {
+                new CronTrigger(crontab);
+            } catch (Exception e) {
+                throw new IllegalArgumentException("错误的调度时间表达式: " + e.getMessage());
+            }
+            // detail
+            List<WorkflowDetail> details = parse(request);
+
+            Workflow workflow = new Workflow();
+            workflow.setCrontab(crontab);
+            workflow.setDescription(description);
+            workflow.setName(name);
+            workflow.setOwner(UserContextHolder.getUserContext().getId());
+            workflow.setTimeout(timeout);
+            this.workflowService.add(workflow);
+
+            this.workflowAuthorityService.add(Arrays.asList(readers), Arrays.asList(writers), Arrays.asList(followers),
+                                              workflow.getId());
+
+            this.workflowDetailService.save(workflow.getId(), details);
+
+            map.put("success", true);
+        } catch (IllegalArgumentException e) {
+            map.put("success", false);
+            map.put("errorMsg", e.getMessage());
+        } catch (Exception e) {
+            LOGGER.error(e.getMessage(), e);
+            map.put("errorMsg", e.getMessage());
+            map.put("success", false);
+        }
+        return JSON.toJSONString(map);
+    }
+
+    private List<WorkflowDetail> parse(HttpServletRequest request) {
+        List<WorkflowDetail> workflowDetails = new ArrayList<WorkflowDetail>();
+        for (int i = 0; i < Integer.MAX_VALUE; i++) {
+            String strTaskId = request.getParameter("taskId_" + i);
+            String strTaskTimeout = request.getParameter("taskTimeout_" + i);
+            String strTaskRetrycount = request.getParameter("taskRetrycount_" + i);
+            String[] strDependencyTaskIds = request.getParameterValues("dependencyTaskId_" + i);
+            // 4项都为空，则停止
+            if ((strTaskId == null) && (strTaskTimeout == null) && (strTaskRetrycount == null)
+                && ((strDependencyTaskIds == null) || (strDependencyTaskIds.length == 0))) {
+                break;
+            }
+            // 验证
+            Validate.isTrue(StringUtils.isNotBlank(strTaskId), "任务必选");
+            Validate.isTrue(StringUtils.isNotBlank(strTaskTimeout), "任务超时时间必填");
+            Validate.isTrue(StringUtils.isNotBlank(strTaskRetrycount), "任务重试次数必填");
+            Validate.isTrue((strDependencyTaskIds != null) && (strDependencyTaskIds.length > 0), "任务依赖必选");
+
+            WorkflowDetail detail = new WorkflowDetail();
+            try {
+                Long taskId = Long.valueOf(strTaskId);
+                Integer taskTimeout = Integer.valueOf(strTaskTimeout);
+                Integer taskRetrycount = Integer.valueOf(strTaskRetrycount);
+                detail.setRetryTimes(taskRetrycount);
+                detail.setTaskId(taskId);
+                detail.setTimeout(taskTimeout);
+            } catch (RuntimeException e) {
+                throw new IllegalArgumentException(TASK_ERROR_MSG, e);
+            }
+
+            for (String strDependencyTaskId : strDependencyTaskIds) {
+                Long dependencyTaskId = Long.valueOf(strDependencyTaskId);
+                detail.setDependencyTaskId(dependencyTaskId);
+                workflowDetails.add(detail);
+            }
+        }
+        Validate.isTrue((workflowDetails.size() > 0), "工作流中的任务至少要有一个");
+
+        // TODO 验证task依赖关系
+        // 寻找唯一的终点，只能有一个终点(只能有一个没有被depend的detail)
+        // 从终点开始做DFS，判断是否无环(存在环时抛出异常)
+
+        return workflowDetails;
+    }
+
+}

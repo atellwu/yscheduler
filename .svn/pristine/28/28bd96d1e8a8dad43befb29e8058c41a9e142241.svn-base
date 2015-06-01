@@ -1,0 +1,6 @@
+package com.yeahmobi.yscheduler.variable;
+
+public interface VariableHandler {
+
+    public String process(String param, VariableContext context) throws VariableException;
+}

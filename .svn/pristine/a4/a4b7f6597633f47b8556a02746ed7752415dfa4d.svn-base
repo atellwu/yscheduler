@@ -1,0 +1,7 @@
+#macro( page $path)
+    #parse("screens/${screen}/${page}/$path")
+#end
+
+#macro( screen $path)
+    #parse("screens/${screen}/$path")
+#end

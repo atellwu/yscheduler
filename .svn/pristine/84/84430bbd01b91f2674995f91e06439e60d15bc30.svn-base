@@ -1,0 +1,45 @@
+package com.yeahmobi.yscheduler.model.service.impl;
+
+import java.util.List;
+
+import javax.annotation.PostConstruct;
+
+import org.apache.ibatis.session.RowBounds;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.yeahmobi.yscheduler.common.Paginator;
+import com.yeahmobi.yscheduler.model.WorkflowTaskInstance;
+import com.yeahmobi.yscheduler.model.WorkflowTaskInstanceExample;
+import com.yeahmobi.yscheduler.model.common.Constants;
+import com.yeahmobi.yscheduler.model.dao.WorkflowTaskInstanceDao;
+import com.yeahmobi.yscheduler.model.service.WorkflowTaskInstanceService;
+
+@Service
+public class WorkflowTaskInstanceServiceImpl implements WorkflowTaskInstanceService {
+
+    @Autowired
+    private WorkflowTaskInstanceDao workflowTaskInstanceDao;
+
+    @PostConstruct
+    public void init() {
+    }
+
+    public List<WorkflowTaskInstance> list(int pageNum, Paginator paginator) {
+        WorkflowTaskInstanceExample example = new WorkflowTaskInstanceExample();
+        int count = this.workflowTaskInstanceDao.countByExample(example);
+
+        paginator.setItemsPerPage(Constants.PAGE_SIZE);
+        paginator.setItems(count);
+        paginator.setPage(pageNum);
+
+        int offset = paginator.getBeginIndex() - 1;
+        int limit = Constants.PAGE_SIZE;
+
+        RowBounds rowBounds = new RowBounds(offset, limit);
+
+        example.setOrderByClause("create_time DESC");
+        return this.workflowTaskInstanceDao.selectByExampleWithRowbounds(example, rowBounds);
+    }
+
+}

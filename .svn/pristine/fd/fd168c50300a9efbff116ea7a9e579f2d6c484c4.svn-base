@@ -1,0 +1,58 @@
+package com.yeahmobi.yscheduler.agentframework.agent.event;
+
+import java.util.Map;
+
+import org.apache.commons.lang.StringUtils;
+
+import com.yeahmobi.yscheduler.agentframework.agent.task.AgentTask;
+import com.yeahmobi.yscheduler.agentframework.agent.task.TaskExecutor;
+
+/**
+ * @author Leo.Liang
+ */
+public abstract class TaskSubmitionEventHandler extends TaskExecutionEventHandler {
+
+    public void onEvent(Map<String, String> params, HandlerResult result) {
+        try {
+            AgentTask task = beforeSubmit(params, result);
+
+            if (task == null) {
+                if (result.isSuccess()) {
+                    result.setSuccess(false);
+                }
+                if (StringUtils.isBlank(result.getErrorMsg())) {
+                    result.setErrorMsg("Agent task is null");
+                }
+            } else {
+                TaskExecutor taskExecutor = task.getTaskExecutor();
+                if (taskExecutor == null) {
+                    result.setSuccess(false);
+                    result.setErrorMsg("Task executor is null");
+                } else {
+                    long txId = this.taskExecutionContainer.submit(task);
+                    result.setSuccess(true);
+                    result.setResult(txId);
+                    afterSubmit(params, result);
+                }
+            }
+
+        } catch (Throwable e) {
+            result.setSuccess(false);
+            result.setErrorMsg("Exception occurs while handle event");
+            result.setThrowable(e);
+        } finally {
+            beforeReturn(params, result);
+        }
+    }
+
+    protected void beforeReturn(Map<String, String> params, HandlerResult result) {
+
+    }
+
+    protected void afterSubmit(Map<String, String> params, HandlerResult result) {
+
+    }
+
+    protected abstract AgentTask beforeSubmit(Map<String, String> params, HandlerResult handlerResult);
+
+}

@@ -1,0 +1,53 @@
+package com.yeahmobi.yscheduler.agent.handler.java;
+
+import java.io.IOException;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+
+import org.apache.commons.lang.StringUtils;
+
+import com.yeahmobi.yscheduler.agent.handler.JavaTaskHandler;
+import com.yeahmobi.yscheduler.agentframework.agent.task.BaseTaskExecutor;
+import com.yeahmobi.yscheduler.agentframework.agent.task.TaskTransaction;
+import com.yeahmobi.yscheduler.agentframework.utils.LogUtil;
+
+public class SleepUntilTaskHandler extends BaseTaskExecutor implements JavaTaskHandler {
+
+    private Map<String, String> params;
+    private volatile boolean    cancelled = false;
+
+    public SleepUntilTaskHandler(Map<String, String> params) {
+        this.params = params;
+    }
+
+    public void execute(TaskTransaction taskTransaction) {
+        info(taskTransaction, "SleepUntil task begin...");
+        String absTimeStr = this.params.get("absTime");
+        if (StringUtils.isNumeric(absTimeStr)) {
+            long absTime = Long.valueOf(absTimeStr);
+            while (!this.cancelled && (System.currentTimeMillis() < absTime)) {
+                try {
+                    TimeUnit.SECONDS.sleep(1);
+                } catch (InterruptedException e) {
+                    info(taskTransaction, "Interrupted");
+                }
+            }
+        }
+
+        info(taskTransaction, "SleepUntil task end...");
+        taskTransaction.endWithSuccess(0);
+    }
+
+    protected void info(TaskTransaction taskTransaction, String msg) {
+        try {
+            LogUtil.info(taskTransaction, msg);
+        } catch (IOException e) {
+            // ignore
+        }
+    }
+
+    public void cancel() {
+        this.cancelled = true;
+    }
+
+}

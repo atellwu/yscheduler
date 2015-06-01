@@ -1,0 +1,9 @@
+<link href="${rc.contextPath}/assets/css/bwizard.min.css" rel="stylesheet" />
+<script src="${rc.contextPath}/assets/js/bwizard/bwizard.js" type="text/javascript"></script>
+<script src="${rc.contextPath}/assets/js/jquery.validate.min.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+	$(document).ready(function() {
+		$("#wizard").bwizard();
+	});
+</script>

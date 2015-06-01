@@ -1,0 +1,56 @@
+package com.yeahmobi.yscheduler.web.service.impl;
+
+import java.util.List;
+
+import org.junit.Assert;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.TestExecutionListeners;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.test.context.support.DependencyInjectionTestExecutionListener;
+
+import com.yeahmobi.yscheduler.common.Paginator;
+import com.yeahmobi.yscheduler.model.TaskInstance;
+import com.yeahmobi.yscheduler.web.service.TaskInstanceService;
+import com.yeahmobi.yunit.DbUnitTestExecutionListener;
+import com.yeahmobi.yunit.annotation.DatabaseSetup;
+
+/**
+ * 本示例的场景是：PersonService依赖了dao(PersonMapper)，因此对PersonService的单元测试，可以将PersonMapper进行mock。
+ */
+@RunWith(SpringJUnit4ClassRunner.class)
+@ContextConfiguration(locations = { "classpath:applicationContext-test.xml" })
+@TestExecutionListeners({ DependencyInjectionTestExecutionListener.class, DbUnitTestExecutionListener.class })
+public class InstanceServiceImplTest {
+
+    @Autowired
+    private TaskInstanceService instanceService;
+
+    @Test
+    @DatabaseSetup
+    public void testGet() throws Exception {
+        TaskInstance instance = this.instanceService.get(1);
+        Assert.assertEquals(Long.valueOf(1), instance.getId());
+        Assert.assertTrue(instance.getTaskId() == 1);
+    }
+
+    @Test
+    @DatabaseSetup
+    public void testList() throws Exception {
+        int instanceId = 1;
+        int pageNum = 1;
+        Paginator paginator = new Paginator();
+        // List<Instance> list = this.instanceService.list(instanceId, pageNum, paginator);
+        // Assert.assertTrue(list.size() == 2);
+    }
+
+    @Test
+    @DatabaseSetup
+    public void testListAll() throws Exception {
+        int instanceId = 1;
+        List<TaskInstance> list = this.instanceService.listAll(instanceId);
+        Assert.assertTrue(list.size() == 2);
+    }
+}

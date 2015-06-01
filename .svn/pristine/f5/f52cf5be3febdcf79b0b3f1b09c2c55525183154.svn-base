@@ -1,0 +1,27 @@
+package com.yeahmobi.yscheduler.workflow;
+
+import com.yeahmobi.yscheduler.model.WorkflowInstance;
+import com.yeahmobi.yscheduler.model.service.WorkflowDetailService;
+import com.yeahmobi.yscheduler.model.service.WorkflowInstanceService;
+
+/**
+ * @author Ryan Sun
+ */
+public class DefaultWorkflowExecutor implements WorkflowExecutor {
+
+    private WorkflowDetailService   workflowDetailService;
+
+    private WorkflowInstanceService workflowInstanceService;
+
+    public void submit(WorkflowInstance workflowInstance) {
+        long workflowId = workflowInstance.getId();
+        this.workflowDetailService.list(workflowId);
+        this.workflowInstanceService.listAll(workflowId);
+    }
+
+    public boolean isRunning(long workflowInstanceId) {
+
+        return false;
+    }
+
+}

@@ -1,0 +1,26 @@
+package com.yeahmobi.yscheduler.common;
+
+import java.util.regex.Pattern;
+
+public class Constants {
+
+    public static final String  LOG_FILE_ENCODE                 = "UTF-8";
+
+    public static final String  AGENT_CONTEXT                   = "yscheduler";
+
+    public static final String  EVENT_TYPE_TASK_STATUS          = "TASK_STATUS";
+    public static final String  EVENT_TYPE_TASK_LOG             = "TASK_LOG";
+    public static final String  EVENT_TYPE_TASK_CANCLE          = "TASK_CANCLE";
+    public static final String  EVENT_TYPE_SHELL_TASK_SUBMIT    = "SHELL_TASK_SUBMIT";
+    public static final String  EVENT_TYPE_HTTP_CALLOUT         = "TASK_HTTP_CALLOUT";
+    public static final String  EVENT_TYPE_CALLBACK             = "TASK_CALLBACK";
+
+    public static final Pattern USER_NAME_PATTERN               = Pattern.compile("^[a-zA-Z][a-zA-Z0-9_.]{2,29}$");
+    public static final Pattern USER_TELEPHONE_PATTERN          = Pattern.compile("^((13[0-9])|(15[^4,\\D])|(18[0,5-9]))\\d{8}$");
+    public static final String  USER_EMAIL_suffix               = "@ndpmedia.com";
+
+    public static final String  FILESERVER_NAMESPACE_ATTEMPTLOG = "attempt-log";
+
+    public static final String  DATE_FORMAT_PATTERN             = "yyyyMMdd HH:mm:ss";
+
+}

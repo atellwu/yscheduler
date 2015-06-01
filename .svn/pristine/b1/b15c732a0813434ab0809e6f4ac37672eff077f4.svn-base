@@ -1,0 +1,9 @@
+
+.y_searchform label{
+	margin-left:15px
+}
+
+.y_searchform button{
+	margin-left:20px
+}
+

@@ -1,0 +1,23 @@
+package com.yeahmobi.yscheduler.web.service;
+
+import java.util.List;
+
+import com.yeahmobi.yscheduler.common.Paginator;
+import com.yeahmobi.yscheduler.model.Instance;
+import com.yeahmobi.yscheduler.model.type.InstanceStatus;
+
+public interface InstanceService {
+
+    Instance get(long id);
+
+    List<Instance> list(long taskId, int pageNum, Paginator paginator);
+
+    List<Instance> listAll(long taskId);
+
+    void save(Instance instance);
+
+    List<Instance> getAllUncompleteds();
+
+    void updateStatus(Long instanceId, InstanceStatus status);
+
+}

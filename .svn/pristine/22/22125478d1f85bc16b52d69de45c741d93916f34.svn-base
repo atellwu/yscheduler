@@ -1,0 +1,12 @@
+package com.yeahmobi.yscheduler.agentframework.agent.task;
+
+/**
+ * @author Leo.Liang
+ */
+public interface TaskExecutor {
+
+    public void execute(TaskTransaction taskTransaction);
+
+    public void cancel();
+
+}

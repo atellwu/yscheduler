@@ -1,0 +1,35 @@
+package com.yeahmobi.yscheduler.variable;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
+import org.apache.commons.lang.StringUtils;
+
+import com.yeahmobi.yscheduler.model.WorkflowInstance;
+
+public class ScheduleTimeHandler implements VariableHandler {
+
+    public static final String VARIABLE_NAME = "scheduleTime";
+
+    public String process(String param, VariableContext context) throws VariableException {
+        try {
+            Date scheduleTime = context.getTaskIntance().getScheduleTime();
+            if (scheduleTime == null) {
+                WorkflowInstance workflowInstance = context.getWorkflowInstance();
+                scheduleTime = workflowInstance == null ? null : workflowInstance.getScheduleTime();
+            }
+
+            if (scheduleTime != null) {
+                if (StringUtils.isBlank(param)) {
+                    return String.valueOf(scheduleTime.getTime() / 1000);
+                }
+                SimpleDateFormat formatter = new SimpleDateFormat(param);
+                return formatter.format(scheduleTime);
+            } else {
+                return StringUtils.EMPTY;
+            }
+        } catch (Exception e) {
+            throw new VariableException(e);
+        }
+    }
+}

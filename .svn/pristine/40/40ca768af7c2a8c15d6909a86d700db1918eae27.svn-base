@@ -1,0 +1,97 @@
+package com.yeahmobi.yscheduler.agentframework.agent.event.task;
+
+import java.io.IOException;
+import java.util.Map;
+import java.util.concurrent.FutureTask;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
+import org.apache.commons.lang.BooleanUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.yeahmobi.yscheduler.agentframework.agent.task.TaskTransaction;
+
+public abstract class AbstractCalloutTaskExecutor extends AbstractAsyncTaskExecutor {
+
+    private static final Logger LOGGER   = LoggerFactory.getLogger(AbstractCalloutTaskExecutor.class);
+
+    private static final int    INTERVAL = 1;
+
+    private volatile boolean    cancel   = false;
+    private TaskTransaction     taskTransaction;
+
+    public void execute(TaskTransaction taskTransaction) {
+        this.taskTransaction = taskTransaction;
+        try {
+            // callout
+            callout(taskTransaction, this.getParams());
+
+            if (needCallback(this.getParams())) {
+                // add futureTask to Map
+                FutureTask<Void> task = new FutureTask<Void>(new Runnable() {
+
+                    public void run() {
+                    }
+                }, null);
+
+                holder.put(taskTransaction.getId(), new Pair(taskTransaction, task));
+
+                // wait for callback
+                while (!this.cancel) {
+                    try {
+                        task.get(INTERVAL, TimeUnit.SECONDS);
+                        break;
+
+                        // 由callback设置taskTransaction成功与否
+                        // taskTransaction.endWithSuccess(0);
+                    } catch (TimeoutException e) {
+                        info(taskTransaction, "Waiting for callback...");
+                    } catch (Throwable e) {
+                        error(taskTransaction, e.getMessage(), e);
+                        taskTransaction.endWithFail(null);
+                        break;
+                    }
+                }
+
+            } else {
+                // 不需要callback，则再callout成功后顺利结束
+                taskTransaction.endWithSuccess(0);
+            }
+
+        } catch (Exception e1) {
+            try {
+                LOGGER.error(e1.getMessage(), e1);
+                error(taskTransaction, e1.getMessage(), e1);
+            } catch (IOException e) {
+                LOGGER.error(e.getMessage(), e);
+            }
+            taskTransaction.endWithFail(null);
+        }
+    }
+
+    public void cancel() {
+        try {
+            cancel(this.taskTransaction, this.getParams());
+        } catch (Exception e) {
+            try {
+                error(this.taskTransaction, "Error when cancelling", e);
+            } catch (IOException e1) {
+                LOGGER.error(e1.getMessage(), e1);
+            }
+        }
+        this.cancel = true;
+    }
+
+    private boolean needCallback(Map<String, String> params) {
+        return BooleanUtils.toBoolean(params.get("needCallback"));
+    }
+
+    protected abstract void callout(TaskTransaction taskTransaction, Map<String, String> params) throws Exception;
+
+    /**
+     * 执行cancel操作，方法正确退出表示cancel成功，否则抛出异常
+     */
+    protected abstract void cancel(TaskTransaction taskTransaction, Map<String, String> params) throws Exception;
+
+}

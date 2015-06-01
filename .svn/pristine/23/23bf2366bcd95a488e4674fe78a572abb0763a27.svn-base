@@ -1,0 +1,12 @@
+package com.yeahmobi.yscheduler.model.service.impl;
+
+import java.util.Date;
+
+public class TestUtils {
+
+    private static final long SECOND = 1000;
+
+    public static boolean generallyEquals(Date date1, Date date2) {
+        return Math.abs(date1.getTime() - date2.getTime()) < (5 * SECOND);
+    }
+}

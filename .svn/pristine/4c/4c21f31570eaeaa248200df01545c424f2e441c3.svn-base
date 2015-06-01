@@ -1,0 +1,39 @@
+#!/usr/bin/expect
+cd /tmp/yscheduler
+set AGENT_HOST [lindex $argv 0]
+set USER [lindex $argv 1]
+set PASSWORD [lindex $argv 2]
+set DATE [lindex $argv 3]
+
+   #scp
+   spawn scp deploy/target/yagent-0.0.2.zip $USER@${AGENT_HOST}:/dianyi/
+   expect "password:" {
+      send "${PASSWORD}\r"
+   }
+   expect "*]*"
+   #login
+   spawn ssh $USER@$AGENT_HOST
+   expect "(yes/no)?" {
+         send "yes\r"
+         expect "password:" {
+             send "$PASSWORD\r"
+         }
+   } "password:" {
+         send "$PASSWORD\r"
+   }
+   expect "*]*"
+   #stop
+   send "/dianyi/yagent/bin/jetty.sh stop\r"
+   expect "*]*"
+   #backup,unzip
+   send "mv /dianyi/yagent /dianyi/backup/yagent.${DATE}\r"
+   expect "*]*"
+   send "unzip -q /dianyi/yagent-0.0.2.zip -d /dianyi/\r"
+   expect "*]*"
+   #start
+   send "/dianyi/yagent/bin/jetty.sh start\r"
+   expect "*]*"
+
+send "exit\r"
+expect eof
+exit

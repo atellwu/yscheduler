@@ -1,0 +1,100 @@
+package com.yeahmobi.yscheduler.web.service.impl;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+import org.apache.ibatis.session.RowBounds;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.yeahmobi.yscheduler.common.Paginator;
+import com.yeahmobi.yscheduler.common.PasswordEncoder;
+import com.yeahmobi.yscheduler.model.User;
+import com.yeahmobi.yscheduler.model.UserExample;
+import com.yeahmobi.yscheduler.model.dao.UserDao;
+import com.yeahmobi.yscheduler.web.common.Constants;
+import com.yeahmobi.yscheduler.web.common.NameValuePair;
+import com.yeahmobi.yscheduler.web.service.UserService;
+
+@Service
+public class UserServiceImpl implements UserService {
+
+    @Autowired
+    private UserDao userDao;
+
+    public User get(long id) {
+        return this.userDao.selectByPrimaryKey(id);
+    }
+
+    public List<User> list(int pageNum, Paginator paginator) {
+        UserExample example = new UserExample();
+
+        example.setOrderByClause("create_time DESC");
+
+        int count = this.userDao.countByExample(example);
+
+        paginator.setItemsPerPage(Constants.PAGE_SIZE);
+        paginator.setItems(count);
+        paginator.setPage(pageNum);
+
+        int offset = paginator.getBeginIndex() - 1;
+        int limit = Constants.PAGE_SIZE;
+
+        RowBounds rowBounds = new RowBounds(offset, limit);
+
+        List<User> list = this.userDao.selectByExampleWithRowbounds(example, rowBounds);
+
+        return list;
+    }
+
+    public UserDao getUserDao() {
+        return this.userDao;
+    }
+
+    public void setUserDao(UserDao userDao) {
+        this.userDao = userDao;
+    }
+
+    public List<NameValuePair> list() {
+        UserExample example = new UserExample();
+        List<User> users = this.userDao.selectByExample(example);
+        List<NameValuePair> result = new ArrayList<NameValuePair>();
+        for (User user : users) {
+            NameValuePair pair = new NameValuePair();
+            pair.setValue(user.getId());
+            pair.setName(user.getName());
+            result.add(pair);
+        }
+        return result;
+    }
+
+    public User get(String username) {
+        UserExample example = new UserExample();
+        example.createCriteria().andNameEqualTo(username);
+        List<User> users = this.userDao.selectByExample(example);
+        if ((users == null) || users.isEmpty()) {
+            throw new IllegalArgumentException(String.format("用户 %s 不存在", username));
+        } else {
+            return users.get(0);
+        }
+    }
+
+    public void add(User user) {
+        Date time = new Date();
+        user.setCreateTime(time);
+        this.userDao.insertSelective(user);
+    }
+
+    public void remove(long userId) {
+        this.userDao.deleteByPrimaryKey(userId);
+    }
+
+    public void resetPassword(long userId) {
+        User user = this.userDao.selectByPrimaryKey(userId);
+        User record = new User();
+        record.setId(userId);
+        record.setPassword(PasswordEncoder.encode(user.getName()));
+        this.userDao.updateByPrimaryKeySelective(record);
+    }
+}

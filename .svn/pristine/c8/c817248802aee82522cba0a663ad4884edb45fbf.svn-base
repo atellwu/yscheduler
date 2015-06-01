@@ -1,0 +1,4 @@
+fs.defaultFS=hdfs://172.20.0.180:9000
+dfs.replication=1
+dfs.client.socket-timeout=10000
+yscheduler.baseDir=/yscheduler/attemptLog-qa/

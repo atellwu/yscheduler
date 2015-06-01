@@ -1,0 +1,32 @@
+package com.yeahmobi.yscheduler.workflow;
+
+import java.util.List;
+
+import com.yeahmobi.yscheduler.model.TaskInstance;
+
+/**
+ * @author Ryan Sun
+ */
+public class TaskInstanceWithDependency {
+
+    private TaskInstance taskInstance;
+
+    private List<Long>   dependencies;
+
+    public TaskInstance getTaskInstance() {
+        return this.taskInstance;
+    }
+
+    public void setTaskInstance(TaskInstance taskInstance) {
+        this.taskInstance = taskInstance;
+    }
+
+    public List<Long> getDependencies() {
+        return this.dependencies;
+    }
+
+    public void setDependencies(List<Long> dependencies) {
+        this.dependencies = dependencies;
+    }
+
+}

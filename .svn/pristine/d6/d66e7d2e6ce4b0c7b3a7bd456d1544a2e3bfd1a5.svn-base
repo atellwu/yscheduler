@@ -1,0 +1,41 @@
+package com.yeahmobi.yscheduler.agentframework.agent.event.task;
+
+import java.util.Map;
+
+import com.yeahmobi.yscheduler.agentframework.agent.event.HandlerResult;
+import com.yeahmobi.yscheduler.agentframework.agent.event.TaskSubmitionEventHandler;
+import com.yeahmobi.yscheduler.agentframework.agent.task.AgentTask;
+import com.yeahmobi.yscheduler.agentframework.agent.task.TaskExecutor;
+
+/**
+ * @author atell.wu
+ */
+public class AsyncEventHandler extends TaskSubmitionEventHandler {
+
+    private AbstractAsyncTaskExecutor taskExecutor;
+
+    public void setTaskExecutor(AbstractAsyncTaskExecutor taskExecutor) {
+        this.taskExecutor = taskExecutor;
+    }
+
+    @Override
+    protected AgentTask beforeSubmit(Map<String, String> params, HandlerResult handlerResult) {
+        try {
+            this.taskExecutor.setParams(params);
+            this.taskExecutor.validate(params);
+        } catch (Exception e) {
+            handlerResult.setSuccess(false);
+            handlerResult.setErrorMsg("Parameter invalid: " + e.getMessage());
+            return null;
+        }
+        return new AsyncAgentTask();
+    }
+
+    private final class AsyncAgentTask implements AgentTask {
+
+        public TaskExecutor getTaskExecutor() {
+            return AsyncEventHandler.this.taskExecutor;
+        }
+    }
+
+}

@@ -1,0 +1,109 @@
+package com.yeahmobi.yscheduler.web.controller.topo;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.servlet.ModelAndView;
+
+import com.yeahmobi.yscheduler.web.controller.AbstractController;
+import com.yeahmobi.yscheduler.web.topo.service.WorkflowTopoService;
+
+/**
+ * @author Ryan Sun
+ */
+@Controller
+@RequestMapping(value = { TopoController.SCREEN_NAME })
+public class TopoController extends AbstractController {
+
+    public static final String  SCREEN_NAME = "topo";
+
+    private static final Logger LOGGER      = LoggerFactory.getLogger(TopoController.class);
+
+    private static final String WORKFLOW    = "workflow";
+
+    private static final String INSTANCE    = "instance";
+
+    @Autowired
+    private PageBuilder         pageBuilder;
+
+    @Autowired
+    private WorkflowTopoService workflowTopoService;
+
+    @RequestMapping(value = { "" }, method = RequestMethod.GET)
+    public ModelAndView workflow(long id, String type) {
+        Map<String, Object> map = new HashMap<String, Object>();
+        List<TopoNode> nodes = null;
+        if (WORKFLOW.equals(type)) {
+            nodes = this.workflowTopoService.buildWorkflowTopoTree(id);
+        } else if (INSTANCE.equals(type)) {
+            nodes = this.workflowTopoService.buildInstanceTopoTree(id);
+        } else {
+            LOGGER.warn("Wrong topo type: " + type);
+            return null;
+        }
+        TopoTreeManager topoTreeManager = new TopoTreeManager();
+        if (!nodes.isEmpty()) {
+            topoTreeManager.tag(topoTreeManager.getRoot(nodes));
+        }
+        map.put("nodes", this.pageBuilder.nodeHtml(nodes));
+        map.put("css", this.pageBuilder.css(nodes));
+        map.put("connects", this.pageBuilder.connectHtml(nodes, false));
+        return screen(map, SCREEN_NAME);
+    }
+
+    // private List<TopoNode> build() {
+    // TopoNode node1 = new TopoNode();
+    // TopoNode node2 = new TopoNode();
+    // TopoNode node3 = new TopoNode();
+    // TopoNode node4 = new TopoNode();
+    // TopoNode node5 = new TopoNode();
+    // TopoNode node6 = new TopoNode();
+    // TopoNode node7 = new TopoNode();
+    // TopoNode node8 = new TopoNode();
+    // TopoNode node9 = new TopoNode();
+    // node1.setName("node1");
+    // node2.setName("node2");
+    // node3.setName("node3");
+    // node4.setName("node4");
+    // node5.setName("node5");
+    // node6.setName("node6");
+    // node7.setName("node7");
+    // node8.setName("node8");
+    // node9.setName("node9");
+    // node1.setStatus(TaskInstanceStatus.DEPENDENCY_WAIT);
+    // node2.setStatus(TaskInstanceStatus.READY);
+    // node3.setStatus(TaskInstanceStatus.RUNNING);
+    // node4.setStatus(TaskInstanceStatus.SUCCESS);
+    // node5.setStatus(TaskInstanceStatus.FAILED);
+    // node6.setStatus(TaskInstanceStatus.WORKFLOW_FAILED);
+    // node7.setStatus(TaskInstanceStatus.CANCELLED);
+    // node8.setStatus(TaskInstanceStatus.SKIPPED);
+    // node9.setStatus(TaskInstanceStatus.COMPLETE_WITH_UNKNOWN_STATUS);
+    //
+    // node1.setNodes(Arrays.asList(node2, node3));
+    // node2.setNodes(Arrays.asList(node4));
+    // node4.setNodes(Arrays.asList(node5, node6, node7));
+    // node3.setNodes(Arrays.asList(node8, node9));
+    //
+    // List<TopoNode> nodes = new ArrayList<TopoNode>();
+    // nodes.add(node1);
+    // nodes.add(node2);
+    // nodes.add(node3);
+    // nodes.add(node4);
+    // nodes.add(node5);
+    // nodes.add(node6);
+    // nodes.add(node7);
+    // nodes.add(node8);
+    // nodes.add(node9);
+    // return nodes;
+    //
+    // }
+
+}

@@ -1,0 +1,76 @@
+package com.yeahmobi.yscheduler.monitor.impl;
+
+import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
+
+import javax.annotation.PostConstruct;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.yeahmobi.yscheduler.model.Agent;
+import com.yeahmobi.yscheduler.model.service.AgentService;
+import com.yeahmobi.yscheduler.monitor.ActiveAgentManager;
+
+@Service
+public class DefaultActiveAgentManager implements ActiveAgentManager {
+
+    // <agentId,lastHeartbeatTime>
+    private ConcurrentHashMap<Long, Long> agentId2LastHeartbeatTime = new ConcurrentHashMap<Long, Long>();
+
+    @Autowired
+    private AgentService                  agentService;
+
+    // default 3min
+    private long                          thresholdMillis           = 180000;
+
+    // 从数据库加载所有agent(enable)
+    // 加载后，默认都是active的agent
+    // 本来是不需要加载，只要heartbeat时记录即可。但是，就怕在启动后，在heartbeat到来之前，正常的task就获取不到可用的agent
+    @PostConstruct
+    public void init() {
+        List<Agent> list = this.agentService.list();
+        long curTime = System.currentTimeMillis();
+        for (Agent agent : list) {
+            if (agent.getEnable()) {
+                this.agentId2LastHeartbeatTime.put(agent.getId(), curTime);
+            }
+        }
+    }
+
+    // 新增agent后，agent heartbeat会出现，进而会调用该方法，此时能自动追加active列表（所以在agent时，无须处理）
+    public void heartbeat(long agentId) {
+        long curTime = System.currentTimeMillis();
+        this.agentId2LastHeartbeatTime.put(agentId, curTime);
+
+        // 每30分钟，清理一次数据(把过期的清除)
+        for (Long agentId0 : this.agentId2LastHeartbeatTime.keySet()) {
+            Long lastHeartbeatTime = this.agentId2LastHeartbeatTime.get(agentId0);
+            if (lastHeartbeatTime != null) {
+                long duration = System.currentTimeMillis() - lastHeartbeatTime;
+                if (duration > this.thresholdMillis) {
+                    this.agentId2LastHeartbeatTime.remove(agentId);
+                }
+            }
+        }
+    }
+
+    public boolean isActive(long agentId) {
+        Long lastHeartbeatTime = this.agentId2LastHeartbeatTime.get(agentId);
+        if (lastHeartbeatTime == null) {
+            lastHeartbeatTime = -1L;
+        }
+        long duration = System.currentTimeMillis() - lastHeartbeatTime;
+        if (duration > this.thresholdMillis) {
+            this.agentId2LastHeartbeatTime.remove(agentId);
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+    public void setThresholdMinute(long thresholdMinute) {
+        this.thresholdMillis = thresholdMinute * 60 * 1000;
+    }
+
+}

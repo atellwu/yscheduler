@@ -1,0 +1,137 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:task="http://www.springframework.org/schema/task"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:util="http://www.springframework.org/schema/util"
+	xsi:schemaLocation="
+			http://www.springframework.org/schema/beans 
+			http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+			http://www.springframework.org/schema/context
+            http://www.springframework.org/schema/context/spring-context-3.0.xsd
+            http://www.springframework.org/schema/task   
+    http://www.springframework.org/schema/task/spring-task-3.0.xsd
+    http://www.springframework.org/schema/util   
+    http://www.springframework.org/schema/util/spring-util-3.0.xsd">
+
+	<bean
+		class="com.yeahmobi.yscheduler.agentframework.agent.event.spring.SpringEventMapper">
+		<property name="handlers" ref="eventHandlers" />
+	</bean>
+	<bean name="eventHandlers" class="java.util.HashMap">
+		<constructor-arg>
+			<map>
+				<entry key="echo1" value-ref="echoHandler" />
+				<entry key="javaSample" value-ref="executeJavaTaskSampleEventHandler" />
+				<entry value-ref="taskStatusHandler">
+					<key>
+						<util:constant
+							static-field="com.yeahmobi.yscheduler.common.Constants.EVENT_TYPE_TASK_STATUS" />
+					</key>
+				</entry>
+				<entry value-ref="taskLogHandler">
+					<key>
+						<util:constant
+							static-field="com.yeahmobi.yscheduler.common.Constants.EVENT_TYPE_TASK_LOG" />
+					</key>
+				</entry>
+				<entry value-ref="taskCancelHandler">
+					<key>
+						<util:constant
+							static-field="com.yeahmobi.yscheduler.common.Constants.EVENT_TYPE_TASK_CANCLE" />
+					</key>
+				</entry>
+				<entry value-ref="shellTaskSubmitionEventHandler">
+					<key>
+						<util:constant
+							static-field="com.yeahmobi.yscheduler.common.Constants.EVENT_TYPE_SHELL_TASK_SUBMIT" />
+					</key>
+				</entry>
+				<entry value-ref="httpCalloutHandler">
+					<key>
+						<util:constant
+							static-field="com.yeahmobi.yscheduler.common.Constants.EVENT_TYPE_HTTP_CALLOUT" />
+					</key>
+				</entry>
+				<entry value-ref="callbackHandler">
+					<key>
+						<util:constant
+							static-field="com.yeahmobi.yscheduler.common.Constants.EVENT_TYPE_CALLBACK" />
+					</key>
+				</entry>
+				<entry value-ref="javaTaskSubmitionEventHandler">
+					<key>
+						<util:constant
+							static-field="com.yeahmobi.yscheduler.common.Constants.EVENT_TYPE_JAVA_TASK_SUBMIT" />
+					</key>
+				</entry>
+			</map>
+		</constructor-arg>
+	</bean>
+
+	<bean name="javaTaskSubmitionEventHandler"
+		class="com.yeahmobi.yscheduler.agent.handler.JavaTaskSubmitionEventHandler">
+		<property name="taskExecutionContainer" ref="taskExecutionContainer" />
+		<property name="executorMapping">
+			<map>
+				<entry
+					value="com.yeahmobi.yscheduler.agent.handler.java.SleepUntilTaskHandler">
+					<key>
+						<util:constant
+							static-field="com.yeahmobi.yscheduler.common.Constants.JAVA_TASK_HANDLER_SLEEPUNTIL" />
+					</key>
+				</entry>
+			</map>
+		</property>
+	</bean>
+
+	<bean name="echoHandler"
+		class="com.yeahmobi.yscheduler.agent.handler.sample.EchoHandler" />
+
+	<bean name="executeJavaTaskSampleEventHandler"
+		class="com.yeahmobi.yscheduler.agent.handler.sample.ExecuteJavaTaskSampleEventHandler">
+		<property name="taskExecutionContainer" ref="taskExecutionContainer" />
+	</bean>
+
+	<bean name="shellTaskSubmitionEventHandler"
+		class="com.yeahmobi.yscheduler.agentframework.agent.event.shell.ShellTaskSubmitionEventHandler">
+		<property name="taskExecutionContainer" ref="taskExecutionContainer" />
+	</bean>
+
+	<bean name="taskStatusHandler"
+		class="com.yeahmobi.yscheduler.agentframework.agent.event.task.TaskStatusEventHandler">
+		<property name="taskExecutionContainer" ref="taskExecutionContainer" />
+	</bean>
+
+	<bean name="taskLogHandler"
+		class="com.yeahmobi.yscheduler.agentframework.agent.event.task.TaskLogEventHandler">
+		<property name="taskExecutionContainer" ref="taskExecutionContainer" />
+	</bean>
+
+	<bean name="taskCancelHandler"
+		class="com.yeahmobi.yscheduler.agentframework.agent.event.task.TaskCancellationEventHandler">
+		<property name="taskExecutionContainer" ref="taskExecutionContainer" />
+	</bean>
+
+	<bean name="httpCalloutHandler"
+		class="com.yeahmobi.yscheduler.agentframework.agent.event.task.CalloutEventHandler">
+		<property name="taskExecutionContainer" ref="taskExecutionContainer" />
+	</bean>
+
+	<bean name="callbackHandler"
+		class="com.yeahmobi.yscheduler.agentframework.agent.event.task.CallbackEventHandler">
+		<property name="taskExecutionContainer" ref="taskExecutionContainer" />
+	</bean>
+
+	<bean name="taskExecutionContainer" init-method="init"
+		class="com.yeahmobi.yscheduler.agentframework.agent.task.DefaultTaskExecutionContainer">
+		<property name="taskTransactionManager" ref="taskTransactionManager" />
+	</bean>
+
+	<bean name="taskTransactionManager"
+		class="com.yeahmobi.yscheduler.agentframework.agent.task.FileBasedTaskTransactionManager"
+		init-method="init">
+		<property name="baseDir" value="/dianyi/log/yagent/yscheduler/tx" />
+	</bean>
+
+
+</beans>

@@ -1,0 +1,343 @@
+package com.yeahmobi.yscheduler.workflow;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.yeahmobi.yscheduler.condition.ConditionChecker;
+import com.yeahmobi.yscheduler.condition.ConditionContext;
+import com.yeahmobi.yscheduler.executor.TaskInstanceExecutor;
+import com.yeahmobi.yscheduler.model.TaskInstance;
+import com.yeahmobi.yscheduler.model.Workflow;
+import com.yeahmobi.yscheduler.model.WorkflowInstance;
+import com.yeahmobi.yscheduler.model.service.TaskInstanceService;
+import com.yeahmobi.yscheduler.model.service.TaskService;
+import com.yeahmobi.yscheduler.model.service.WorkflowDetailService;
+import com.yeahmobi.yscheduler.model.service.WorkflowInstanceService;
+import com.yeahmobi.yscheduler.model.service.WorkflowService;
+import com.yeahmobi.yscheduler.model.type.TaskInstanceStatus;
+import com.yeahmobi.yscheduler.model.type.WorkflowInstanceStatus;
+import com.yeahmobi.yscheduler.notice.NoticeService;
+
+/**
+ * @author Ryan Sun
+ */
+@Service
+public class WorkflowEngine {
+
+    private static final Logger                              LOGGER                         = LoggerFactory.getLogger(WorkflowEngine.class);
+
+    private static final long                                CHECK_INTERVAL                 = 1000 * 5;
+
+    private Map<Long, Map<Long, TaskInstanceWithDependency>> runningWorkflows               = new ConcurrentHashMap<Long, Map<Long, TaskInstanceWithDependency>>();
+
+    @Autowired
+    private TaskInstanceExecutor                             taskInstanceExecutor;
+
+    @Autowired
+    private WorkflowInstanceService                          workflowInstanceService;
+
+    @Autowired
+    private WorkflowService                                  workflowService;
+
+    @Autowired
+    private TaskInstanceService                              taskInstanceService;
+
+    @Autowired
+    private TaskService                                      taskService;
+
+    @Autowired
+    private WorkflowDetailService                            workflowDetailService;
+
+    @Autowired
+    private NoticeService                                    noticeService;
+
+    @Autowired
+    private ConditionChecker                                 conditionChecker;
+
+    private Thread                                           worker;
+    private AtomicBoolean                                    closed                         = new AtomicBoolean(false);
+    private ConcurrentSkipListSet<Long>                      cancelledWorkflowInstanceIdSet = new ConcurrentSkipListSet<Long>();
+    private ConcurrentSkipListSet<Long>                      timeoutWorkflowInstanceIdSet   = new ConcurrentSkipListSet<Long>();
+
+    @PostConstruct
+    public void init() {
+        List<WorkflowInstance> workflowInstances = this.workflowInstanceService.getAllRunning();
+        for (WorkflowInstance workflowInstance : workflowInstances) {
+            buildWorkflow(workflowInstance.getWorkflowId(), workflowInstance.getId());
+        }
+        this.worker = new Thread(new InnerTask());
+        this.worker.setDaemon(true);
+        this.worker.start();
+    }
+
+    @PreDestroy
+    public void close() {
+        if (this.closed.compareAndSet(false, true)) {
+            this.worker.interrupt();
+        }
+    }
+
+    private void buildWorkflow(Long workflowId, Long workflowInstanceId) {
+        List<TaskInstance> taskInstances = this.taskInstanceService.listByWorkflowInstanceId(workflowInstanceId);
+        buildWorkflow(workflowId, workflowInstanceId, taskInstances);
+    }
+
+    private void buildWorkflow(Long workflowId, Long workflowInstanceId, List<TaskInstance> taskInstances) {
+        Map<Long, TaskInstanceWithDependency> innerMap = new HashMap<Long, TaskInstanceWithDependency>();
+        Map<Long, TaskInstance> taskIdToInstanceMap = new HashMap<Long, TaskInstance>();
+        for (TaskInstance taskInstance : taskInstances) {
+            taskIdToInstanceMap.put(taskInstance.getTaskId(), taskInstance);
+        }
+
+        for (TaskInstance taskInstance : taskInstances) {
+            List<Long> dependencyTaskIds = this.workflowDetailService.listDependencyTaskIds(workflowId,
+                                                                                            taskInstance.getTaskId());
+            List<Long> dependencyTaskInstanceIds = new ArrayList<Long>();
+            for (Long id : dependencyTaskIds) {
+                dependencyTaskInstanceIds.add(taskIdToInstanceMap.get(id).getId());
+            }
+            TaskInstanceWithDependency taskInstanceWd = new TaskInstanceWithDependency();
+            taskInstanceWd.setTaskInstance(taskInstance);
+            taskInstanceWd.setDependencies(dependencyTaskInstanceIds);
+            innerMap.put(taskInstance.getId(), taskInstanceWd);
+        }
+        this.runningWorkflows.put(workflowInstanceId, innerMap);
+    }
+
+    void submit(WorkflowInstance workflowInstance, List<TaskInstance> taskIntances) {
+        if (this.runningWorkflows.containsKey(workflowInstance)) {
+            throw new IllegalArgumentException("重复提交工作流");
+        }
+        updateWorkflowInstanceStatus(workflowInstance.getId(), WorkflowInstanceStatus.RUNNING);
+        buildWorkflow(workflowInstance.getWorkflowId(), workflowInstance.getId(), taskIntances);
+    }
+
+    private void fetchLatestStatus(Collection<TaskInstanceWithDependency> collection) {
+        for (TaskInstanceWithDependency taskInstanceWd : collection) {
+            TaskInstance taskInstance = taskInstanceWd.getTaskInstance();
+            if (taskInstance.getStatus() != TaskInstanceStatus.DEPENDENCY_WAIT) {
+                taskInstance.setStatus(this.taskInstanceExecutor.getStatus(taskInstance.getId()));
+            }
+        }
+    }
+
+    private boolean fail(Long workflowInstanceId, Collection<TaskInstanceWithDependency> collection) {
+        boolean failed = false;
+        for (TaskInstanceWithDependency taskInstanceWd : collection) {
+            TaskInstance taskInstance = taskInstanceWd.getTaskInstance();
+            TaskInstanceStatus status = taskInstance.getStatus();
+            if ((status == TaskInstanceStatus.FAILED) || (status == TaskInstanceStatus.COMPLETE_WITH_UNKNOWN_STATUS)) {
+                failed = true;
+                break;
+            }
+        }
+        if (failed) {
+            for (TaskInstanceWithDependency taskInstanceWd : collection) {
+                TaskInstance taskInstance = taskInstanceWd.getTaskInstance();
+                TaskInstanceStatus status = taskInstance.getStatus();
+                if (status.beforeRunning()) {
+                    this.taskInstanceService.updateStatus(taskInstance.getId(), TaskInstanceStatus.WORKFLOW_FAILED);
+                }
+            }
+            updateWorkflowInstanceStatus(workflowInstanceId, WorkflowInstanceStatus.FAILED);
+            this.noticeService.workflowFail(workflowInstanceId);
+        }
+
+        return failed;
+    }
+
+    private boolean success(Long workflowInstanceId, Collection<TaskInstanceWithDependency> collection) {
+        for (TaskInstanceWithDependency taskInstanceWd : collection) {
+            TaskInstance taskInstance = taskInstanceWd.getTaskInstance();
+            if (taskInstance.getStatus() != TaskInstanceStatus.SUCCESS) {
+                return false;
+            }
+        }
+        updateWorkflowInstanceStatus(workflowInstanceId, WorkflowInstanceStatus.SUCCESS);
+
+        return true;
+    }
+
+    private boolean cancel(Long workflowInstanceId, Collection<TaskInstanceWithDependency> collection) {
+        boolean cancelled = false;
+        if (this.cancelledWorkflowInstanceIdSet.contains(workflowInstanceId)) {
+            for (TaskInstanceWithDependency taskInstanceWd : collection) {
+                TaskInstance taskInstance = taskInstanceWd.getTaskInstance();
+                if (!taskInstance.getStatus().isCompleted()) {
+                    return false;
+                } else if (TaskInstanceStatus.CANCELLED.equals(taskInstance.getStatus())) {
+                    cancelled = true;
+                }
+            }
+
+            if (cancelled) {
+                updateWorkflowInstanceStatus(workflowInstanceId, WorkflowInstanceStatus.CANCELLED);
+            }
+
+            return cancelled;
+        }
+        return false;
+    }
+
+    private boolean handleCancelIfNeeded(Long workflowInstanceId, Collection<TaskInstanceWithDependency> collection) {
+        if (this.cancelledWorkflowInstanceIdSet.contains(workflowInstanceId)) {
+            for (TaskInstanceWithDependency taskInstanceWd : collection) {
+                TaskInstance taskInstance = taskInstanceWd.getTaskInstance();
+                if (TaskInstanceStatus.DEPENDENCY_WAIT.equals(taskInstance.getStatus())) {
+                    taskInstance.setStatus(TaskInstanceStatus.CANCELLED);
+                    this.taskInstanceService.updateStatus(taskInstance.getId(), TaskInstanceStatus.CANCELLED);
+                } else {
+                    this.taskInstanceExecutor.cancel(taskInstance.getId());
+                }
+            }
+
+            return true;
+        }
+        return false;
+    }
+
+    private void updateWorkflowInstanceStatus(Long workflowInstanceId, WorkflowInstanceStatus status) {
+        this.workflowInstanceService.updateStatus(workflowInstanceId, status);
+    }
+
+    private void clearCancelledIdSet() {
+        Iterator<Long> iterator = this.cancelledWorkflowInstanceIdSet.iterator();
+        while (iterator.hasNext()) {
+            Long workflowInstanceId = iterator.next();
+            if (!WorkflowEngine.this.runningWorkflows.containsKey(workflowInstanceId)) {
+                iterator.remove();
+            }
+        }
+    }
+
+    class InnerTask implements Runnable {
+
+        public void run() {
+            while (!WorkflowEngine.this.closed.get()) {
+                try {
+                    for (Map.Entry<Long, Map<Long, TaskInstanceWithDependency>> entry : WorkflowEngine.this.runningWorkflows.entrySet()) {
+                        Long workflowInstanceId = entry.getKey();
+                        WorkflowInstance workflowInstance = WorkflowEngine.this.workflowInstanceService.get(workflowInstanceId);
+                        if (workflowInstance == null) {
+                            continue;
+                        }
+                        Map<Long, TaskInstanceWithDependency> taskInstances = entry.getValue();
+
+                        fetchLatestStatus(taskInstances.values());
+
+                        boolean cancelled = handleCancelIfNeeded(workflowInstanceId, taskInstances.values());
+
+                        // 判断工作流是否结束
+                        boolean success = success(workflowInstanceId, taskInstances.values());
+
+                        if (success || fail(workflowInstanceId, taskInstances.values())
+                            || cancel(workflowInstanceId, taskInstances.values())) {
+                            WorkflowEngine.this.runningWorkflows.remove(workflowInstanceId);
+
+                            if (success
+                                && WorkflowEngine.this.timeoutWorkflowInstanceIdSet.contains(workflowInstanceId)) {
+                                notifySuccess(workflowInstanceId);
+                            }
+
+                            WorkflowEngine.this.timeoutWorkflowInstanceIdSet.remove(workflowInstanceId);
+
+                            clearCancelledIdSet();
+                            continue;
+                        }
+
+                        if (!cancelled) {
+                            // 超时只是报警，无做其他处理，故在loop里每次检查一下即可
+                            checkTimeout(workflowInstance);
+
+                            // 判断依赖是否满足
+                            for (Map.Entry<Long, TaskInstanceWithDependency> innerEntry : taskInstances.entrySet()) {
+                                final TaskInstanceWithDependency taskInstanceWd = innerEntry.getValue();
+                                TaskInstance taskInstance = taskInstanceWd.getTaskInstance();
+
+                                List<TaskInstance> dependencyTaskInstances = new ArrayList<TaskInstance>();
+
+                                for (TaskInstanceWithDependency wd : taskInstances.values()) {
+                                    if (taskInstanceWd.getDependencies().contains(wd.getTaskInstance().getId())) {
+                                        dependencyTaskInstances.add(wd.getTaskInstance());
+                                    }
+                                }
+
+                                Long taskId = taskInstance.getTaskId();
+                                ConditionContext context = new ConditionContext(
+                                                                                workflowInstance,
+                                                                                WorkflowEngine.this.workflowDetailService.get(workflowInstance.getWorkflowId(),
+                                                                                                                              taskId),
+                                                                                WorkflowEngine.this.taskService.get(taskId),
+                                                                                taskInstance, dependencyTaskInstances);
+                                if ((taskInstance.getStatus() == TaskInstanceStatus.DEPENDENCY_WAIT)
+                                    && WorkflowEngine.this.conditionChecker.satisfy(context)) {
+                                    taskInstance.setStatus(TaskInstanceStatus.READY);
+                                    WorkflowEngine.this.taskInstanceService.updateStatus(taskInstance.getId(),
+                                                                                         TaskInstanceStatus.READY);
+                                    WorkflowEngine.this.taskInstanceExecutor.submit(taskInstance);
+                                }
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    LOGGER.error(e.getMessage(), e);
+                }
+                try {
+                    TimeUnit.MILLISECONDS.sleep(CHECK_INTERVAL);
+                } catch (InterruptedException e) {
+                    // ignore
+                }
+            }
+        }
+    }
+
+    private void notifySuccess(Long workflowInstanceId) {
+        this.noticeService.workflowSuccess(workflowInstanceId);
+    }
+
+    private boolean checkTimeout(WorkflowInstance workflowInstance) {
+        Long workflowInstanceId = workflowInstance.getId();
+        if (this.timeoutWorkflowInstanceIdSet.contains(workflowInstanceId)) {
+            // 如果已经超时，说明已经检查过，不再检查
+            return true;
+        }
+        Workflow workflow = this.workflowService.get(workflowInstance.getWorkflowId());
+        long timeout = workflow.getTimeout() * 60 * 1000L;
+        Date startTime = workflowInstance.getScheduleTime();
+        if (startTime == null) {
+            startTime = workflowInstance.getStartTime();
+        }
+        if (startTime != null) {
+            long duration = System.currentTimeMillis() - startTime.getTime();
+            if (duration > timeout) {
+                // 报警
+                this.timeoutWorkflowInstanceIdSet.add(workflowInstanceId);
+                this.noticeService.workflowTimeout(workflowInstanceId);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public void cancel(long workflowInstanceId) {
+        this.cancelledWorkflowInstanceIdSet.add(workflowInstanceId);
+    }
+
+}

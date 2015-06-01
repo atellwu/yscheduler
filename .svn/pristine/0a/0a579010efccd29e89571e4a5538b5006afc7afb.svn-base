@@ -1,0 +1,13 @@
+package com.yeahmobi.yscheduler.agentframework.agent.task.async;
+
+import com.yeahmobi.yscheduler.agentframework.agent.event.task.HttpCalloutTaskExecutor;
+
+public class HttpCalloutAgentTask extends AsyncAgentTask {
+
+    private HttpCalloutTaskExecutor executor = new HttpCalloutTaskExecutor();
+
+    @Override
+    public HttpCalloutTaskExecutor getTaskExecutor() {
+        return this.executor;
+    }
+}

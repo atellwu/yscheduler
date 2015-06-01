@@ -1,0 +1,46 @@
+package com.yeahmobi.yscheduler.agentframework.agent.task.shell;
+
+import java.util.Map;
+
+import com.yeahmobi.yscheduler.agentframework.agent.task.AbstractAgentTask;
+import com.yeahmobi.yscheduler.agentframework.agent.task.TaskExecutor;
+
+/**
+ * @author Leo.Liang
+ */
+public class ShellAgentTask extends AbstractAgentTask {
+
+    private String       command;
+    private TaskExecutor taskExecutor;
+
+    public ShellAgentTask(String eventType, Map<String, String> params, String command, TaskExecutor taskExecutor) {
+        super(eventType, params);
+        this.command = command;
+        this.taskExecutor = taskExecutor;
+    }
+
+    /**
+     * @param command the command to set
+     */
+    public void setCommand(String command) {
+        this.command = command;
+    }
+
+    public String getCommand() {
+        return this.command;
+    }
+
+    public TaskExecutor getTaskExecutor() {
+        return this.taskExecutor;
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see java.lang.Object#toString()
+     */
+    @Override
+    public String toString() {
+        return "ShellAgentTask [command=" + this.command + "]";
+    }
+
+}

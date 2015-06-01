@@ -1,0 +1,80 @@
+package com.yeahmobi.yscheduler.model.common;
+
+import com.yeahmobi.yscheduler.model.type.TaskStatus;
+import com.yeahmobi.yscheduler.model.type.TaskType;
+import com.yeahmobi.yscheduler.model.type.WorkflowStatus;
+
+public class Query {
+
+    private TaskType       taskType;
+    private TaskStatus     taskStatus;
+    private WorkflowStatus workflowStatus;
+    private String         name;
+    private Long           owner;
+
+    public TaskType getTaskType() {
+        return this.taskType;
+    }
+
+    public void setTaskType(TaskType taskType) {
+        this.taskType = taskType;
+    }
+
+    public TaskStatus getTaskStatus() {
+        return this.taskStatus;
+    }
+
+    public void setTaskStatus(TaskStatus taskStatus) {
+        this.taskStatus = taskStatus;
+    }
+
+    public WorkflowStatus getWorkflowStatus() {
+        return this.workflowStatus;
+    }
+
+    public void setWorkflowStatus(WorkflowStatus workflowStatus) {
+        this.workflowStatus = workflowStatus;
+    }
+
+    public String getName() {
+        return this.name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public Long getOwner() {
+        return this.owner;
+    }
+
+    public void setOwner(Long owner) {
+        this.owner = owner;
+    }
+
+    public String getQueryString() {
+        StringBuilder builder = new StringBuilder();
+        if (this.taskType != null) {
+            builder.append("taskType=").append(this.taskType.getId()).append('&');
+        }
+        if (this.taskStatus != null) {
+            builder.append("taskStatus=").append(this.taskStatus.getId()).append('&');
+        }
+        if (this.workflowStatus != null) {
+            builder.append("workflowStatus=").append(this.workflowStatus.getId()).append('&');
+        }
+        if (this.name != null) {
+            builder.append("name=").append(this.name).append('&');
+        }
+        if (this.owner != null) {
+            builder.append("owner=").append(this.owner).append('&');
+        }
+
+        if (builder.length() > 0) {
+            builder.deleteCharAt(builder.length() - 1);
+        }
+
+        return builder.toString();
+    }
+
+}

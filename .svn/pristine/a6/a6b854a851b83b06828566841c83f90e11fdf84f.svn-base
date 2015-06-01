@@ -1,0 +1,173 @@
+<div class="page-header">
+	<h1>
+		<a href="${rc.contextPath}/mytask/detail/$!{task.id}">$!{task.name}</a>
+		<small> <i class="icon-double-angle-right"></i> 任务调度详情
+		</small>
+	</h1>
+</div>
+<div id="alertMessageDiv" style="text-align: center;"></div>
+<div class="col-xs-3">
+	<div class="row">
+		<div class="col-sm-4 infobox-container">
+			<div class="infobox infobox-blue2  " style="border: 0px">
+				<div class="infobox-progress">
+					<div class="easy-pie-chart percentage easyPieChart"
+						data-percent="80" data-size="46"
+						style="width: 46px; height: 46px; line-height: 46px;">
+						<span class="percent">80</span>%
+						<canvas width="46" height="46"></canvas>
+					</div>
+				</div>
+
+				<div class="infobox-data">
+					<span class="infobox-text">成功率</span>
+					<div class="infobox-content">
+						<span class="bigger-110">~</span> 只统计最近一个月
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="space-6"></div>
+	<div class="row">
+		<div class="widget-box">
+			<div class="widget-header widget-header-flat widget-header-small">
+				<h5>
+					<i class="icon-signal"></i> 返回值统计
+				</h5>
+
+				<div class="widget-toolbar no-border">
+					<button class="btn btn-minier btn-primary dropdown-toggle"
+						data-toggle="dropdown">
+						This Week <i class="icon-angle-down icon-on-right bigger-110"></i>
+					</button>
+
+					<ul
+						class="dropdown-menu pull-right dropdown-125 dropdown-lighter dropdown-caret">
+						<li class="active"><a href="#" class="blue"> <i
+								class="icon-caret-right bigger-110">&nbsp;</i> This Week
+						</a></li>
+
+						<li><a href="#"> <i
+								class="icon-caret-right bigger-110 invisible">&nbsp;</i> Last
+								Week
+						</a></li>
+
+						<li><a href="#"> <i
+								class="icon-caret-right bigger-110 invisible">&nbsp;</i> This
+								Month
+						</a></li>
+
+						<li><a href="#"> <i
+								class="icon-caret-right bigger-110 invisible">&nbsp;</i> Last
+								Month
+						</a></li>
+					</ul>
+				</div>
+			</div>
+
+			<div class="widget-body">
+				<div class="widget-main">
+					<div id="piechart-placeholder"
+						style="width: 90%; min-height: 150px; padding: 0px; position: relative;">
+						<canvas class="flot-base" width="454" height="150"
+							style="direction: ltr; position: absolute; left: 0px; top: 0px; width: 454px; height: 150px;"></canvas>
+						<canvas class="flot-overlay" width="454" height="150"
+							style="direction: ltr; position: absolute; left: 0px; top: 0px; width: 454px; height: 150px;"></canvas>
+						<div class="legend">
+							<div
+								style="position: absolute; width: 114px; height: 110px; top: 15px; right: -30px; opacity: 0.85; background-color: rgb(255, 255, 255);">
+							</div>
+							<table
+								style="position: absolute; top: 15px; right: -30px;; font-size: smaller; color: #545454">
+								<tbody>
+									<tr>
+										<td class="legendColorBox"><div
+												style="border: 1px solid null; padding: 1px">
+												<div
+													style="width: 4px; height: 0; border: 5px solid #68BC31; overflow: hidden"></div>
+											</div></td>
+										<td class="legendLabel">0</td>
+									</tr>
+									<tr>
+										<td class="legendColorBox"><div
+												style="border: 1px solid null; padding: 1px">
+												<div
+													style="width: 4px; height: 0; border: 5px solid #2091CF; overflow: hidden"></div>
+											</div></td>
+										<td class="legendLabel">1</td>
+									</tr>
+									<tr>
+										<td class="legendColorBox"><div
+												style="border: 1px solid null; padding: 1px">
+												<div
+													style="width: 4px; height: 0; border: 5px solid #AF4E96; overflow: hidden"></div>
+											</div></td>
+										<td class="legendLabel">2</td>
+									</tr>
+									<tr>
+										<td class="legendColorBox"><div
+												style="border: 1px solid null; padding: 1px">
+												<div
+													style="width: 4px; height: 0; border: 5px solid #DA5430; overflow: hidden"></div>
+											</div></td>
+										<td class="legendLabel">3</td>
+									</tr>
+								</tbody>
+							</table>
+						</div>
+					</div>
+				</div>
+				<!-- /widget-main -->
+			</div>
+			<!-- /widget-body -->
+		</div>
+	</div>
+</div>
+<div class="col-xs-9">
+	<div class="table-responsive" style="width: 90%;min-height: 400px">
+		<table class="table table-striped table-bordered table-hover"
+			id="instanceListTable">
+			<thead>
+				<tr>
+					<th>调度时间</th>
+					<th>结束时间</th>
+					<th>运行次数</th>
+					<th>状态</th>
+					<th>操作</th>
+				</tr>
+			</thead>
+			<tbody id="adList">
+				#foreach($instance in $list)
+				<tr>
+					<td style="">$dateFormatUtils.format($instance.startTime,'yyyy年MM月dd日HH时mm分')</td>
+					<td style="">#if($instance.status.isCompleted())
+						$!dateFormatUtils.format($instance.attempt.endTime,'yyyy年MM月dd日HH时mm分')
+						#end</td>
+					<td style="">$instance.execTimes</td>
+					<td>#if($instance.status.id==1) <span class="label label-sm">$instance.status.desc</span>
+						#elseif($instance.status.id==2) <span
+						class="label label-sm label-info arrowed-in">$instance.status.desc</span>
+						#elseif($instance.status.id==3) <span
+						class="label label-sm label-success">$instance.status.desc</span>
+						#elseif($instance.status.id==4) <span
+						class="label label-sm label-danger">$instance.status.desc</span>
+						#end
+					</td>
+					<td style="">#if(${instance.attempt.id})<a
+						href="javascript:app.openInstanceLogModal(${instance.attempt.id});"><span
+							class="
+						label">&nbsp; 查看日志 </span></a>&nbsp;&nbsp;&nbsp;<a
+						href="${rc.contextPath}/mytask/instance/attempt?instanceId=$instance.id"><span
+							class="label label-info">运行情况 </span></a>#else <span
+						class="
+                        labellabel-info">&nbsp;
+							尚未运行 </span> #end
+					</td>
+				</tr>
+				#end
+			</tbody>
+		</table>
+	</div>
+	#screen("paginator.htm")
+</div>

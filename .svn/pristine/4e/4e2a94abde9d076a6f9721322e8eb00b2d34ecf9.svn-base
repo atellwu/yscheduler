@@ -1,0 +1,28 @@
+package com.yeahmobi.yscheduler.model.common;
+
+/**
+ * @author Ryan Sun
+ */
+public class NameValuePair {
+
+    private long   value;
+
+    private String name;
+
+    public String getName() {
+        return this.name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public long getValue() {
+        return this.value;
+    }
+
+    public void setValue(long value) {
+        this.value = value;
+    }
+
+}

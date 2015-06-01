@@ -1,0 +1,78 @@
+<link href="${rc.contextPath}/assets/css/autocomplete.css" rel="stylesheet" />
+<link href="${rc.contextPath}/assets/css/chosen.min.css" rel="stylesheet" />
+<link href="${rc.contextPath}/static/css/custom.css" rel="stylesheet" />
+
+<script type="text/javascript" src="${rc.contextPath}/assets/js/jquery.dataTables.min.js"></script>
+<script type="text/javascript" src="${rc.contextPath}/assets/js/jquery.dataTables.bootstrap.js"></script>
+<script src="${rc.contextPath}/assets/js/jquery.autocomplete.js" type="text/javascript"></script>
+<script src="${rc.contextPath}/assets/js/chosen.jquery.min.js" type="text/javascript"></script>
+<script src="${rc.contextPath}/assets/js/bootbox.min.js" type="text/javascript"></script>
+<script src="${rc.contextPath}/assets/js/jquery.validate.min.js" type="text/javascript"></script>
+<script src="${rc.contextPath}/static/js/validate.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+	$("[rel=tooltip]").tooltip();
+	
+	function schedule_changed() {
+		var value = $("input[name='schedule']:checked").val();
+		if(value=='clock'){
+			$('#schedule').show();
+		} else {
+			$('#schedule').hide();
+		}
+	}
+	$(document).ready(function() {
+		$(".chosen-select").chosen({
+			width : "50%"
+		});
+
+		$('#updateBtn').click(function(e) {
+			var btn = $('#updateBtn');
+			if (btn.text().trim() == "修改") {
+				app.onCrontabTip();
+				btn.html("保存");
+				$('#cancelBtn').html("取消");
+				$('.field').removeAttr("readonly");
+				$("input[name='schedule']").prop('disabled', false);
+				$('#agent').prop('disabled', false).trigger("chosen:updated");
+				$('#dependency').prop('disabled', false).trigger("chosen:updated");
+				$('#readers').prop('disabled', false).trigger("chosen:updated");
+				$('#writers').prop('disabled', false).trigger("chosen:updated");
+				$('#followers').prop('disabled', false).trigger("chosen:updated");
+				$('#calloutUrl').prop('disabled', false).trigger("chosen:updated");
+				$('#cancelUrl').prop('disabled', false).trigger("chosen:updated");
+				$('#needCallback').prop('disabled', false).trigger("chosen:updated");
+
+			} else {
+				if (!$('#form').validate().form()) {
+					return false;
+				}
+				$('#updateBtn').button('loading');
+
+				$.ajax({
+					type : $('#form').attr('method'),
+					url : $('#form').attr('action'),
+					data : $('#form').serialize(),
+					dataType : "json",
+					success : function(data) {
+						$('#updateBtn').button('reset');
+						if (data.success == false) {
+							bootbox.alert({
+								message : data.notice,
+								title : "修改任务失败！"
+							});
+						} else {
+							bootbox.alert("修改任务成功！", function(result) {
+								window.location.href = '/task';
+							});
+						}
+					},
+					error : function(data) {
+						app.httpError
+					}
+				});
+			}
+		});
+	});
+</script>
+

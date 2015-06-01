@@ -1,0 +1,93 @@
+package com.yeahmobi.yscheduler.workflow;
+
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+
+import javax.annotation.PostConstruct;
+
+import org.jboss.netty.util.internal.ConcurrentHashMap;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import com.yeahmobi.yscheduler.model.TaskInstance;
+import com.yeahmobi.yscheduler.model.WorkflowInstance;
+import com.yeahmobi.yscheduler.model.service.TaskInstanceService;
+import com.yeahmobi.yscheduler.model.service.WorkflowInstanceService;
+import com.yeahmobi.yscheduler.model.type.TaskInstanceStatus;
+import com.yeahmobi.yscheduler.model.type.WorkflowInstanceStatus;
+
+/**
+ * @author Ryan Sun
+ */
+public class WorkflowStatusCheckTask implements Runnable {
+
+    private static final Logger         LOGGER                   = LoggerFactory.getLogger(WorkflowStatusCheckTask.class);
+
+    private static final long           CHECK_INTERVAL           = 10 * 1000;
+
+    private Map<Long, WorkflowInstance> runningWorkflowInstances = new ConcurrentHashMap<Long, WorkflowInstance>();
+
+    @Autowired
+    private TaskInstanceService         taskInstanceService;
+
+    @Autowired
+    private WorkflowInstanceService     workflowInstanceService;
+
+    @PostConstruct
+    public void init() {
+        List<WorkflowInstance> instances = this.workflowInstanceService.getAllUncompleteds();
+        for (WorkflowInstance instance : instances) {
+            this.runningWorkflowInstances.put(instance.getId(), instance);
+        }
+    }
+
+    public void run() {
+        try {
+            for (WorkflowInstance workflowInstance : this.runningWorkflowInstances.values()) {
+                long workflowInstanceId = workflowInstance.getId();
+                List<TaskInstance> taskInstances = this.taskInstanceService.listByWorkflowInstanceId(workflowInstanceId);
+                boolean fail = false;
+                boolean success = true;
+                for (TaskInstance taskInstance : taskInstances) {
+                    if ((taskInstance.getStatus() == TaskInstanceStatus.INITED)
+                        || (taskInstance.getStatus() == TaskInstanceStatus.RUNNING)) {
+                        success = false;
+                    } else if (taskInstance.getStatus() == TaskInstanceStatus.FAILED) {
+                        fail = true;
+                    } else if (taskInstance.getStatus() == TaskInstanceStatus.SUCCESS) {
+
+                    }
+                    if (fail) {
+                        workflowInstance.setStatus(WorkflowInstanceStatus.FAILED);
+                        this.runningWorkflowInstances.remove(workflowInstanceId);
+                        this.workflowInstanceService.updateStatus(workflowInstanceId, WorkflowInstanceStatus.FAILED);
+                    } else if (success) {
+                        workflowInstance.setStatus(WorkflowInstanceStatus.SUCCESS);
+                        this.runningWorkflowInstances.remove(workflowInstanceId);
+                        this.workflowInstanceService.updateStatus(workflowInstanceId, WorkflowInstanceStatus.SUCCESS);
+                    }
+
+                    // TODO 告警
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.error(e.getMessage(), e);
+        }
+        try {
+            TimeUnit.MILLISECONDS.sleep(CHECK_INTERVAL);
+        } catch (InterruptedException e) {
+            LOGGER.error(e.getMessage(), e);
+        }
+    }
+
+    public void addRunningWorkflow(WorkflowInstance instance) {
+        this.runningWorkflowInstances.put(instance.getId(), instance);
+    }
+
+    public boolean isRunning(long workflowInstanceId) {
+        return this.runningWorkflowInstances.containsKey(workflowInstanceId);
+    }
+
+}

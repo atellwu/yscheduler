@@ -1,0 +1,191 @@
+package com.yeahmobi.yscheduler.model.service.impl;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
+
+import org.apache.ibatis.session.RowBounds;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.yeahmobi.yscheduler.common.Paginator;
+import com.yeahmobi.yscheduler.model.Agent;
+import com.yeahmobi.yscheduler.model.Task;
+import com.yeahmobi.yscheduler.model.TaskExample;
+import com.yeahmobi.yscheduler.model.TaskExample.Criteria;
+import com.yeahmobi.yscheduler.model.common.Constants;
+import com.yeahmobi.yscheduler.model.common.NameValuePair;
+import com.yeahmobi.yscheduler.model.dao.TaskDao;
+import com.yeahmobi.yscheduler.model.service.TaskAuthorityService;
+import com.yeahmobi.yscheduler.model.service.TaskService;
+import com.yeahmobi.yscheduler.model.type.TaskStatus;
+import com.yeahmobi.yscheduler.model.type.TaskType;
+
+@Service
+public class TaskServiceImpl implements TaskService {
+
+    private static final String  HEARTBEAT_TASK_NAME_PREFIX = "heartbeat_";
+
+    @Autowired
+    private TaskDao              taskDao;
+
+    @Autowired
+    private TaskAuthorityService authorityService;
+
+    public Task get(long id) {
+        return this.taskDao.selectByPrimaryKey(id);
+    }
+
+    public List<Task> list(int pageNum, Paginator paginator, long userId) {
+        TaskExample example = new TaskExample();
+
+        example.setOrderByClause("create_time DESC");
+
+        authorityCheck(example, userId);
+
+        int count = this.taskDao.countByExample(example);
+
+        paginator.setItemsPerPage(Constants.PAGE_SIZE);
+        paginator.setItems(count);
+        paginator.setPage(pageNum);
+
+        int offset = paginator.getBeginIndex() - 1;
+        int limit = Constants.PAGE_SIZE;
+
+        RowBounds rowBounds = new RowBounds(offset, limit);
+
+        List<Task> list = this.taskDao.selectByExampleWithRowbounds(example, rowBounds);
+
+        return list;
+    }
+
+    private void authorityCheck(TaskExample example, long userId) {
+        List<Long> readonlyTaskIds = this.authorityService.listReadonlyTaskIds(userId);
+        List<Long> writableTaskIds = this.authorityService.listWritableTaskIds(userId);
+
+        List<Long> canShowTaskIds = new ArrayList<Long>();
+        canShowTaskIds.addAll(readonlyTaskIds);
+        canShowTaskIds.addAll(writableTaskIds);
+
+        Criteria criteria1 = example.createCriteria();
+        criteria1.andStatusNotEqualTo(TaskStatus.REMOVED).andOwnerEqualTo(userId);
+        if ((canShowTaskIds != null) && !canShowTaskIds.isEmpty()) {
+            Criteria criteria2 = example.or();
+            criteria2.andStatusNotEqualTo(TaskStatus.REMOVED).andIdIn(canShowTaskIds);
+        }
+    }
+
+    public TaskDao getTaskDao() {
+        return this.taskDao;
+    }
+
+    public void setTaskDao(TaskDao taskDao) {
+        this.taskDao = taskDao;
+    }
+
+    public void add(Task task) {
+        Date time = new Date();
+        task.setCreateTime(time);
+        task.setUpdateTime(time);
+        task.setLastScheduleTime(time);
+        this.taskDao.insert(task);
+    }
+
+    public List<String> listName() {
+        TaskExample example = new TaskExample();
+        List<Task> tasks = this.taskDao.selectByExample(example);
+        List<String> result = new ArrayList<String>();
+        for (Task task : tasks) {
+            result.add(task.getName());
+        }
+        return result;
+    }
+
+    public List<NameValuePair> list(long userId) {
+        TaskExample example = new TaskExample();
+        authorityCheck(example, userId);
+        List<Task> tasks = this.taskDao.selectByExample(example);
+        List<NameValuePair> result = new ArrayList<NameValuePair>();
+        for (Task task : tasks) {
+            NameValuePair pair = new NameValuePair();
+            pair.setValue(task.getId());
+            pair.setName(task.getName());
+            result.add(pair);
+        }
+        return result;
+    }
+
+    public void update(Task task) {
+        Date time = new Date();
+        Task oldTask = this.taskDao.selectByPrimaryKey(task.getId());
+        task.setUpdateTime(time);
+        if (TaskStatus.PAUSED.equals(oldTask.getStatus()) && TaskStatus.OPEN.equals(task.getStatus())) {
+            task.setLastScheduleTime(time);
+        }
+        this.taskDao.updateByPrimaryKeySelective(task);
+    }
+
+    public boolean canModify(long taskId, long userId) {
+        Task task = this.taskDao.selectByPrimaryKey(taskId);
+        if (task != null) {
+            if (task.getOwner() == userId) {
+                return true;
+            } else {
+                List<Long> writableUsers = this.authorityService.listWritableUser(taskId);
+                return (writableUsers != null) && writableUsers.contains(userId);
+            }
+        }
+
+        return false;
+    }
+
+    public boolean nameExist(String name) {
+        TaskExample example = new TaskExample();
+        example.createCriteria().andNameEqualTo(name);
+        return this.taskDao.selectByExample(example).size() != 0;
+    }
+
+    public List<Task> listAll(TaskStatus status) {
+        TaskExample example = new TaskExample();
+        example.createCriteria().andStatusEqualTo(status);
+        return this.taskDao.selectByExample(example);
+    }
+
+    public void updateLastScheduleTime(Long id, Date scheduleTime) {
+        Task record = new Task();
+        record.setId(id);
+        record.setLastScheduleTime(scheduleTime);
+        this.taskDao.updateByPrimaryKeySelective(record);
+    }
+
+    public boolean hasTaskAttachedToAgent(long agentId) {
+        TaskExample example = new TaskExample();
+        example.createCriteria().andAgentIdEqualTo(agentId).andStatusIn(Arrays.asList(new TaskStatus[] {
+                                                                                TaskStatus.OPEN, TaskStatus.PAUSED }));
+        return this.taskDao.selectByExample(example).size() != 0;
+    }
+
+    public void addHeartbeatTask(Agent agent) {
+        Task heartbeatTask = new Task();
+        heartbeatTask.setAgentId(agent.getId());
+        heartbeatTask.setCommand("echo 1");
+        heartbeatTask.setCrontab("0 * * * * *");
+        heartbeatTask.setDescription("Hearbeat task for agent " + agent.getName());
+        heartbeatTask.setName(HEARTBEAT_TASK_NAME_PREFIX + agent.getName());
+        // monitor用户的id是2
+        heartbeatTask.setOwner(2L);
+        heartbeatTask.setRetryTimes(0);
+        heartbeatTask.setTimeout(1);
+        heartbeatTask.setType(TaskType.SHELL);
+        heartbeatTask.setStatus(TaskStatus.OPEN);
+        this.add(heartbeatTask);
+    }
+
+    public void removeHeartbeatTask(long agentId, String name) {
+        TaskExample example = new TaskExample();
+        example.createCriteria().andAgentIdEqualTo(agentId).andNameEqualTo(HEARTBEAT_TASK_NAME_PREFIX + name);
+        this.taskDao.deleteByExample(example);
+    }
+
+}

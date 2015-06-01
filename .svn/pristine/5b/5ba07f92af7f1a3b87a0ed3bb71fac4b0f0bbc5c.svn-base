@@ -1,0 +1,42 @@
+Manifest-Version: 1.0
+Class-Path: common.jar commons-codec-1.9.jar commons-httpclient-3.1.ja
+ r commons-logging-1.0.4.jar commons-io-2.4.jar velocity-1.7.jar commo
+ ns-collections-3.2.jar commons-lang-2.4.jar velocity-tools-view-1.3.j
+ ar hadoop-client-2.6.0.jar hadoop-common-2.6.0.jar hadoop-annotations
+ -2.6.0.jar guava-18.0.jar commons-cli-1.2.jar commons-math3-3.1.1.jar
+  xmlenc-0.52.jar commons-net-3.1.jar log4j-1.2.17.jar commons-configu
+ ration-1.6.jar commons-digester-1.8.jar commons-beanutils-1.9.2.jar c
+ ommons-beanutils-core-1.8.0.jar slf4j-api-1.7.7.jar slf4j-log4j12-1.7
+ .5.jar jackson-core-asl-1.9.13.jar jackson-mapper-asl-1.9.13.jar avro
+ -1.7.4.jar paranamer-2.3.jar snappy-java-1.0.4.1.jar commons-compress
+ -1.9.jar protobuf-java-2.5.0.jar gson-2.3.jar hadoop-auth-2.6.0.jar h
+ ttpclient-4.3.5.jar httpcore-4.3.2.jar apacheds-kerberos-codec-2.0.0-
+ M15.jar apacheds-i18n-2.0.0-M15.jar api-asn1-api-1.0.0-M20.jar api-ut
+ il-1.0.0-M20.jar zookeeper-3.4.6.jar netty-3.6.2.Final.jar curator-fr
+ amework-2.6.0.jar curator-client-2.6.0.jar curator-recipes-2.6.0.jar 
+ jsr305-1.3.9.jar htrace-core-3.0.4.jar hadoop-hdfs-2.6.0.jar jetty-ut
+ il-6.1.14.jar xercesImpl-2.9.1.jar xml-apis-1.3.04.jar hadoop-mapredu
+ ce-client-app-2.6.0.jar hadoop-mapreduce-client-common-2.6.0.jar hado
+ op-yarn-common-2.6.0.jar hadoop-yarn-api-2.6.0.jar jaxb-api-2.2.2.jar
+  stax-api-1.0-2.jar activation-1.1.jar jersey-core-1.9.jar jersey-cli
+ ent-1.9.jar jackson-jaxrs-1.9.13.jar jackson-xc-1.9.13.jar aopallianc
+ e-1.0.jar jettison-1.2.jar hadoop-yarn-client-2.6.0.jar hadoop-mapred
+ uce-client-core-2.6.0.jar hadoop-yarn-server-common-2.6.0.jar leveldb
+ jni-all-1.8.jar hadoop-mapreduce-client-shuffle-2.6.0.jar hadoop-mapr
+ educe-client-jobclient-2.6.0.jar spring-data-hadoop-2.1.2.RELEASE.jar
+  spring-context-support-4.0.0.RELEASE.jar spring-beans-4.0.0.RELEASE.
+ jar spring-core-4.0.0.RELEASE.jar spring-context-4.0.0.RELEASE.jar sp
+ ring-aop-4.0.0.RELEASE.jar spring-expression-4.0.0.RELEASE.jar spring
+ -tx-4.0.0.RELEASE.jar spring-data-hadoop-pig-2.1.2.RELEASE.jar spring
+ -batch-core-3.0.3.RELEASE.jar com.ibm.jbatch-tck-spi-1.0.jar javax.ba
+ tch-api-1.0.jar xstream-1.4.7.jar xmlpull-1.1.3.1.jar xpp3_min-1.1.4c
+ .jar spring-batch-infrastructure-3.0.3.RELEASE.jar spring-retry-1.1.0
+ .RELEASE.jar spring-data-hadoop-core-2.1.2.RELEASE.jar hadoop-distcp-
+ 2.6.0.jar hadoop-streaming-2.6.0.jar spring-data-hadoop-batch-2.1.2.R
+ ELEASE.jar spring-data-hadoop-hbase-2.1.2.RELEASE.jar spring-data-had
+ oop-hive-2.1.2.RELEASE.jar spring-jdbc-4.0.0.RELEASE.jar jcl-over-slf
+ 4j-1.7.7.jar commons-fileupload-1.2.1.jar fastjson-1.1.42.jar spring-
+ web-4.0.0.RELEASE.jar spring-webmvc-4.0.0.RELEASE.jar jetty-6.1.14.ja
+ r servlet-api-2.5-6.1.14.jar jsp-2.1-6.1.14.jar core-3.1.1.jar jsp-ap
+ i-2.1-6.1.14.jar ant-1.6.5.jar
+

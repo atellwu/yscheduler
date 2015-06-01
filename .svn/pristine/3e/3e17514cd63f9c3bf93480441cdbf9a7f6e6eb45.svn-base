@@ -1,0 +1,23 @@
+package com.yeahmobi.yscheduler.web.service;
+
+import java.util.List;
+
+import com.yeahmobi.yscheduler.common.Paginator;
+import com.yeahmobi.yscheduler.model.Task;
+import com.yeahmobi.yscheduler.web.common.NameValuePair;
+
+public interface TaskService {
+
+    Task get(long id);
+
+    List<Task> list(int pageNum, Paginator paginator);
+
+    boolean add(Task task);
+
+    List<String> listName();
+
+    List<NameValuePair> list();
+
+    boolean update(Task task);
+
+}

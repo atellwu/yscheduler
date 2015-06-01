@@ -1,0 +1,254 @@
+package com.yeahmobi.yscheduler.executor.impl;
+
+import java.io.ByteArrayOutputStream;
+import java.io.PrintWriter;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
+
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.concurrent.CustomizableThreadFactory;
+import org.springframework.stereotype.Service;
+
+import com.yeahmobi.yscheduler.agentframework.AgentRequest;
+import com.yeahmobi.yscheduler.agentframework.AgentResponse;
+import com.yeahmobi.yscheduler.agentframework.AgentResponseCode;
+import com.yeahmobi.yscheduler.agentframework.agent.task.TaskStatus;
+import com.yeahmobi.yscheduler.agentframework.agent.task.TaskTransactionStatus;
+import com.yeahmobi.yscheduler.agentframework.client.DefaultAgentClient;
+import com.yeahmobi.yscheduler.agentframework.exception.AgentClientException;
+import com.yeahmobi.yscheduler.common.Constants;
+import com.yeahmobi.yscheduler.executor.AttemptExecutor;
+import com.yeahmobi.yscheduler.model.Agent;
+import com.yeahmobi.yscheduler.model.Attempt;
+import com.yeahmobi.yscheduler.model.Task;
+import com.yeahmobi.yscheduler.model.TaskInstance;
+import com.yeahmobi.yscheduler.model.service.AgentService;
+import com.yeahmobi.yscheduler.model.service.AttemptService;
+import com.yeahmobi.yscheduler.model.service.TaskInstanceService;
+import com.yeahmobi.yscheduler.model.service.TaskService;
+import com.yeahmobi.yscheduler.model.type.AttemptStatus;
+
+@Service
+public class DefaultAttemptExecutor implements AttemptExecutor {
+
+    ExecutorService             executorService = Executors.newCachedThreadPool(new CustomizableThreadFactory(
+                                                                                                              "attempt-pool-"));
+
+    /** 以<instanceId,Pair>键值对在内存中存放运行中的Attempt，便于InstanceExecutor查询Attempt状态 */
+    private Map<Long, Pair>     attemptMap      = new ConcurrentHashMap<Long, Pair>();
+
+    @Autowired
+    private TaskService         taskService;
+
+    @Autowired
+    private TaskInstanceService instanceService;
+
+    @Autowired
+    private AttemptService      attemptService;
+
+    @Autowired
+    private AgentService        agentService;
+
+    private AtomicBoolean       closed          = new AtomicBoolean(false);
+
+    @PostConstruct
+    public void init() {
+        // 从db中加载上次未结束的attempt
+        List<Attempt> attemptList = this.attemptService.getAllUncompleteds();
+        for (Attempt attempt : attemptList) {
+            Pair pair = buildPair(attempt);
+            putPair(pair);
+            this.executorService.submit(new InnerTask(pair));
+        }
+    }
+
+    private String getOutput(DefaultAgentClient agentClient, String host, long txId) throws AgentClientException {
+        Map<String, String> params = new HashMap<String, String>();
+        params.put("txId", String.valueOf(txId));
+
+        AgentResponse<String> res = agentClient.call(host, new AgentRequest(Constants.EVENT_TYPE_TASK_LOG, params));
+
+        if (AgentResponseCode.SUCCESS.equals(res.getResponseCode())) {
+            String log = res.getResponseData();
+            return log;
+        } else {
+            throw new AgentClientException("Agent return failed when get log, response code is "
+                                           + res.getResponseCode() + ", errorMsg is " + res.getErrorMsg());
+        }
+    }
+
+    private TaskStatus checkStatus(DefaultAgentClient agentClient, String host, long txId) throws AgentClientException {
+        Map<String, String> params = new HashMap<String, String>();
+        params.put("txId", String.valueOf(txId));
+
+        AgentResponse<TaskStatus> res = agentClient.call(host, new AgentRequest(Constants.EVENT_TYPE_TASK_STATUS,
+                                                                                params));
+
+        if (AgentResponseCode.SUCCESS.equals(res.getResponseCode())) {
+            TaskStatus taskStatus = res.getResponseData();
+            return taskStatus;
+        } else {
+            throw new AgentClientException("Agent return failed when check status, response code is "
+                                           + res.getResponseCode() + ", errorMsg is " + res.getErrorMsg());
+        }
+    }
+
+    private long submitToAgent(DefaultAgentClient agentClient, String host, Pair pair) throws AgentClientException {
+        Map<String, String> params = new HashMap<String, String>();
+        String shellCmd = pair.task.getCommand();
+        params.put("shellCmd", shellCmd);
+
+        AgentResponse<Long> res = agentClient.call(host, new AgentRequest(Constants.EVENT_TYPE_SHELL_TASK_SUBMIT,
+                                                                          params));
+
+        if (AgentResponseCode.SUCCESS.equals(res.getResponseCode())) {
+            long txId = res.getResponseData();
+            return txId;
+        } else {
+            throw new AgentClientException("Agent return failed when submit shellcmd, response code is "
+                                           + res.getResponseCode() + ", errorMsg is " + res.getErrorMsg());
+        }
+
+    }
+
+    @PreDestroy
+    public void close() {
+        if (this.closed.compareAndSet(false, true)) {
+            this.executorService.shutdownNow();
+        }
+    }
+
+    private Pair buildPair(Attempt attempt) {
+        long instanceId = attempt.getInstanceId();
+        long taskId = attempt.getTaskId();
+        TaskInstance instance = this.instanceService.get(instanceId);
+        Task task = this.taskService.get(taskId);
+        Pair pair = new Pair(task, instance, attempt);
+        return pair;
+    }
+
+    private void putPair(Pair pair) {
+        TaskInstance instance = pair.instance;
+        this.attemptMap.put(instance.getId(), pair);
+    }
+
+    public void submit(final Attempt attempt) {
+        this.attemptService.save(attempt);
+        Pair pair = buildPair(attempt);
+        putPair(pair);
+        this.executorService.submit(new InnerTask(pair));
+    }
+
+    private static class Pair {
+
+        Task         task;
+        Attempt      attempt;
+        TaskInstance instance;
+
+        public Pair(Task task, TaskInstance instance, Attempt attempt) {
+            super();
+            this.task = task;
+            this.instance = instance;
+            this.attempt = attempt;
+        }
+    }
+
+    public boolean isRunnig(long instanceId) {
+        Pair pair = this.attemptMap.get(instanceId);
+        return (pair != null) && (pair.attempt.getStatus() == AttemptStatus.RUNNING);
+    }
+
+    /**
+     * 负责执行一个attempt
+     */
+    private class InnerTask implements Runnable {
+
+        private static final int FETCH_INTERVAL = 1000;
+        private Pair             pair;
+
+        public InnerTask(Pair pair) {
+            this.pair = pair;
+        }
+
+        public void run() {
+            try {
+                // 执行attempt
+                Attempt attempt = this.pair.attempt;
+                Agent agent = DefaultAttemptExecutor.this.agentService.get(attempt.getAgentId());
+                String ip = agent.getIp();
+                String[] split = StringUtils.split(ip, ':');
+                String host = split[0];
+                int port = -1;
+                if (split.length > 1) {
+                    port = Integer.parseInt(split[1]);
+                }
+
+                DefaultAgentClient agentClient = new DefaultAgentClient(port, Constants.AGENT_CONTEXT);
+                if (port > 0) {
+                    agentClient = new DefaultAgentClient(port, Constants.AGENT_CONTEXT);
+                } else {
+                    agentClient = new DefaultAgentClient(Constants.AGENT_CONTEXT);
+                }
+
+                try {
+                    if (attempt.getTransactionId() == null) {
+                        // 没有txId，说明是新提交(不是从db load的attempt)，需要提交
+                        attempt.setTransactionId(submitToAgent(agentClient, host, this.pair));
+                        DefaultAttemptExecutor.this.attemptService.update(attempt);
+                    }
+                    long txId = attempt.getTransactionId();
+
+                    TaskStatus agentStatus;
+                    do {
+                        agentStatus = checkStatus(agentClient, host, txId);
+
+                        attempt.setOutput(getOutput(agentClient, host, txId));
+                        attempt.setDuration(agentStatus.getDuration());
+                        DefaultAttemptExecutor.this.attemptService.update(attempt);
+
+                        // sleep park
+                        if (!agentStatus.getStatus().isCompleted()) {
+                            TimeUnit.MILLISECONDS.sleep(FETCH_INTERVAL);
+                        }
+
+                    } while (!agentStatus.getStatus().isCompleted());
+
+                    // 正常结束
+                    attempt.setStatus((agentStatus.getStatus() == TaskTransactionStatus.SUCCESS) ? AttemptStatus.SUCCESS : AttemptStatus.FAILED);
+                    attempt.setReturnValue(agentStatus.getReturnValue());
+
+                } catch (AgentClientException e) {
+                    // 异常结束
+                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                    e.printStackTrace(new PrintWriter(baos));
+                    attempt.setOutput(StringUtils.trimToEmpty(attempt.getOutput()) + IOUtils.LINE_SEPARATOR
+                                      + StringUtils.trimToEmpty(e.getMessage()) + IOUtils.LINE_SEPARATOR
+                                      + baos.toString());
+                    attempt.setStatus(AttemptStatus.FAILED);
+                } finally {
+                    attempt.setEndTime(new Date());
+                }
+
+                // 将结果写回db
+                DefaultAttemptExecutor.this.attemptService.update(attempt);
+                // 移除
+                DefaultAttemptExecutor.this.attemptMap.remove(attempt.getInstanceId());
+
+            } catch (InterruptedException e) {
+                // 一般是关闭程序时才会关闭线程池，才会中断，故不做任何事情，让线程结束
+            }
+        }
+    }
+}

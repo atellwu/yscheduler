@@ -1,0 +1,19 @@
+package com.yeahmobi.yscheduler.model.type;
+
+/**
+ * @author Ryan Sun
+ */
+public enum ScheduleType {
+    TASK("任务"), //
+    WORKFLOW("工作流");
+
+    private String value;
+
+    ScheduleType(String value) {
+        this.value = value;
+    }
+
+    public String value() {
+        return this.value;
+    }
+}

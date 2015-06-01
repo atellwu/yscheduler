@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- dbunit用于初始化数据的文件，每个ut方法都会执行一遍 -->
+<!-- 默认从以下路径尝试找setup.xml文件，找不到会便停止往下找： -->
+<!-- 1. <packageName>/<className>.<methodName>-setup.xml -->
+<!-- 2. <packageName>/<className>-setup.xml -->
+<!-- 3. <packageName>/setup.xml -->
+<!-- 4. <className>.<methodName>-setup.xml -->
+<!-- 5. <className>.setup.xml -->
+<!-- 6. setup.xml -->
+<dataset>
+	<Agent id="1" name="agent1" ip="10.0.0.1" alive="1" enable="1"
+		create_time="2014-11-26 17:00:00" update_time="2014-11-26 17:38:00" />
+
+	<Task id="1" name="task1" owner="1" type="1" crontab="0/5 * * * * ?"
+		command="echo task1" agent_id="1" status="1" timeout="1" retry_times="1"
+		last_schedule_time="2009-09-09 00:00:00" description="desc...1"
+		create_time="2009-09-09 00:00:00" update_time="2009-09-09 00:00:00" />
+
+	<!-- id,task_id,workflow_instance_id,status,schedule_time,start_time,end_time,create_time,update_time -->
+	<!-- 1,155,1,30,NULL,"2014-11-14 23:34:49","2014-11-14 23:35:20","2014-11-14 
+		23:34:45","2014-11-14 23:35:20" -->
+	<Task_instance id="1" task_id="1" workflow_instance_id="1"
+		status="1" schedule_time="2009-09-09 00:00:00" start_time="2009-09-09 00:00:00"
+		end_time="2009-09-09 00:00:00" create_time="2009-09-09 00:00:00"
+		update_time="2009-09-09 00:00:00" />
+
+	<!-- id,workflow_id,status,schedule_time,start_time,end_time,create_time,update_time -->
+	<!-- 1,18,20,"2014-11-14 23:32:00","2014-11-14 23:34:45","2014-11-14 23:35:24","2014-11-14 
+		23:34:45","2014-11-14 23:35:24" -->
+	<Workflow_instance id="1" workflow_id="1" status="1"
+		schedule_time="2009-09-09 00:00:00" start_time="2009-09-09 00:00:00"
+		end_time="2009-09-09 00:00:00" create_time="2009-09-09 00:00:00"
+		update_time="2009-09-09 00:00:00" />
+
+	<!-- id,task_id,instance_id,agent_id,transaction_id,status,return_value,output,start_time,end_time,duration,create_time,update_time -->
+	<Attempt id="1" task_id="1" instance_id="1" agent_id="1"
+		transaction_id="1" status="10" return_value="0" output="test 1"
+		start_time="2014-11-26 17:38:00" end_time="2014-11-26 17:39:00"
+		duration="60000" create_time="2014-11-26 17:00:00" update_time="2014-11-26 17:38:00" />
+	<Attempt id="2" task_id="1" instance_id="1" agent_id="1"
+		transaction_id="1" status="10" return_value="0" output="test 2"
+		start_time="2014-11-26 17:38:00" end_time="2014-11-26 17:39:00"
+		duration="60000" create_time="2014-11-26 17:00:00" update_time="2014-11-26 17:38:00" />
+	<Attempt id="3" task_id="1" instance_id="1" agent_id="1"
+		transaction_id="1" status="10" return_value="0" output="test 3"
+		start_time="2014-11-26 17:38:00" end_time="2014-11-26 17:39:00"
+		duration="60000" create_time="2014-11-26 17:00:00" update_time="2014-11-26 17:38:00" />
+	<Attempt id="4" task_id="1" instance_id="1" agent_id="1"
+		transaction_id="1" status="10" return_value="0" output="test 4"
+		start_time="2014-11-26 17:38:00" end_time="2014-11-26 17:39:00"
+		duration="60000" create_time="2014-11-26 17:00:00" update_time="2014-11-26 17:38:00" />
+	<Attempt id="5" task_id="1" instance_id="1" agent_id="1"
+		transaction_id="1" status="10" return_value="0" output="test 5"
+		start_time="2014-11-26 17:38:00" end_time="2014-11-26 17:39:00"
+		duration="60000" create_time="2014-11-26 17:00:00" update_time="2014-11-26 17:38:00" />
+	<Attempt id="6" task_id="1" instance_id="1" agent_id="1"
+		transaction_id="1" status="10" return_value="0" output="test 6"
+		start_time="2014-11-26 17:38:00" end_time="2014-11-26 17:39:00"
+		duration="60000" create_time="2014-11-26 17:00:00" update_time="2014-11-26 17:38:00" />
+	<Attempt id="7" task_id="1" instance_id="1" agent_id="1"
+		transaction_id="1" status="10" return_value="0" output="test 7"
+		start_time="2014-11-26 17:38:00" end_time="2014-11-26 17:39:00"
+		duration="60000" create_time="2014-11-26 17:00:00" update_time="2014-11-26 17:38:00" />
+	<Attempt id="8" task_id="1" instance_id="1" agent_id="1"
+		transaction_id="1" status="10" return_value="0" output="test 8"
+		start_time="2014-11-26 17:38:00" end_time="2014-11-26 17:39:00"
+		duration="60000" create_time="2014-11-26 17:00:00" update_time="2014-11-26 17:38:00" />
+	<Attempt id="9" task_id="1" instance_id="1" agent_id="1"
+		transaction_id="1" status="10" return_value="0" output="test 9"
+		start_time="2014-11-26 17:38:00" end_time="2014-11-26 17:39:00"
+		duration="60000" create_time="2014-11-26 17:00:00" update_time="2014-11-26 17:38:00" />
+	<Attempt id="10" task_id="1" instance_id="1" agent_id="1"
+		transaction_id="1" status="10" return_value="0" output="test 10"
+		start_time="2014-11-26 17:38:00" end_time="2014-11-26 17:39:00"
+		duration="60000" create_time="2014-11-26 17:00:00" update_time="2014-11-26 17:38:00" />
+	<Attempt id="11" task_id="1" instance_id="1" agent_id="1"
+		transaction_id="1" status="10" return_value="0" output="test 11"
+		start_time="2014-11-26 17:38:00" end_time="2014-11-26 17:39:00"
+		duration="60000" create_time="2014-11-26 17:00:00" update_time="2014-11-26 17:38:00" />
+	<Attempt id="12" task_id="1" instance_id="1" agent_id="1"
+		transaction_id="1" status="10" return_value="0" output="test 12"
+		start_time="2014-11-26 17:38:00" end_time="2014-11-26 17:39:00"
+		duration="60000" create_time="2014-11-26 17:00:00" update_time="2014-11-26 17:38:00" />
+	<Attempt id="13" task_id="1" instance_id="1" agent_id="1"
+		transaction_id="1" status="10" return_value="0" output="test 13"
+		start_time="2014-11-26 17:38:00" end_time="2014-11-26 17:39:00"
+		duration="60000" create_time="2014-11-26 17:00:00" update_time="2014-11-26 17:38:00" />
+	<Attempt id="14" task_id="1" instance_id="1" agent_id="1"
+		transaction_id="1" status="10" return_value="0" output="test 14"
+		start_time="2014-11-26 17:38:00" end_time="2014-11-26 17:39:00"
+		duration="60000" create_time="2014-11-26 17:00:00" update_time="2014-11-26 17:38:00" />
+	<Attempt id="15" task_id="1" instance_id="1" agent_id="1"
+		transaction_id="1" status="10" return_value="0" output="test 15"
+		start_time="2014-11-26 17:38:00" end_time="2014-11-26 17:39:00"
+		duration="60000" create_time="2014-11-26 17:00:00" update_time="2014-11-26 17:38:00" />
+</dataset> 

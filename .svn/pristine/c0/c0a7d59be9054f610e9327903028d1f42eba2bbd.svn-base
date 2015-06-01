@@ -1,0 +1,86 @@
+package com.yeahmobi.yscheduler.web.controller.mytask;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.commons.lang.StringEscapeUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.servlet.ModelAndView;
+
+import com.yeahmobi.yscheduler.model.Agent;
+import com.yeahmobi.yscheduler.model.Task;
+import com.yeahmobi.yscheduler.model.User;
+import com.yeahmobi.yscheduler.model.common.NameValuePair;
+import com.yeahmobi.yscheduler.model.common.UserContextHolder;
+import com.yeahmobi.yscheduler.model.service.AgentService;
+import com.yeahmobi.yscheduler.model.service.TaskAuthorityService;
+import com.yeahmobi.yscheduler.model.service.TaskDependencyService;
+import com.yeahmobi.yscheduler.model.service.TaskService;
+import com.yeahmobi.yscheduler.model.service.UserService;
+import com.yeahmobi.yscheduler.web.controller.AbstractController;
+
+/**
+ * @author wukezhu
+ */
+@Controller
+@RequestMapping(value = { TaskDetailController.SCREEN_NAME })
+public class TaskDetailController extends AbstractController {
+
+    public static final String SCREEN_NAME = "mytask/detail";
+
+    @Autowired
+    private TaskService        taskService;
+
+    @Autowired
+    private UserService        userService;
+
+    @Autowired
+    private AgentService       agentService;
+
+    @Autowired
+    private TaskAuthorityService   authorityService;
+
+    @Autowired
+    private TaskDependencyService  dependencyService;
+
+    @RequestMapping(value = { "/{taskId}" })
+    public ModelAndView task(@PathVariable
+    long taskId) {
+        Map<String, Object> map = new HashMap<String, Object>();
+
+        Task task = this.taskService.get(taskId);
+        User user = this.userService.get(task.getOwner());
+        Agent agent = this.agentService.get(task.getAgentId());
+        List<NameValuePair> tasks = this.taskService.list();
+        List<String> names = new ArrayList<String>();
+        for (NameValuePair item : tasks) {
+            names.add(item.getName());
+        }
+
+        // 将命令和描述中的特殊字符转义
+        task.setCommand(StringEscapeUtils.escapeHtml(task.getCommand()));
+        task.setDescription(StringEscapeUtils.escapeHtml(task.getDescription()));
+
+        map.put("task", task);
+        map.put("owner", user);
+        map.put("agent", agent);
+
+        map.put("dependencies", this.dependencyService.listDependBy(taskId));
+        map.put("readers", this.authorityService.listReadonlyUser(taskId));
+        map.put("writers", this.authorityService.listWritableUser(taskId));
+        map.put("followers", this.authorityService.listFollowUser(taskId));
+
+        map.put("users", this.userService.list());
+        map.put("agents", this.agentService.list());
+        map.put("tasks", this.taskService.list());
+
+        map.put("canModify", this.taskService.canModify(taskId, UserContextHolder.getUserContext().getId()));
+
+        return screen(map, SCREEN_NAME);
+    }
+}

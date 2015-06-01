@@ -1,0 +1,29 @@
+<ul class="breadcrumb">
+#if($path1 != "index")
+	<li><i class="icon-home home-icon"></i> <a href="${rc.contextPath}/">首页</a></li>
+    #title("$path1")
+	#if(!$path2)
+      <li class="active">$!{title}</li>
+    #else
+      <li> <a href="${rc.contextPath}/${path1}$!query">$!title</a></li>
+      #title("$path1/$path2")
+      #if(!$path3)
+        <li class="active">$!{title}</li>
+      #else
+        <li> <a href="${rc.contextPath}/${path1}/${path2}$!query">$!{title}</a></li>
+        #title("$path1/$path2/$path3")
+        #if(!$path4)
+          <li class="active">$!{title}</li>
+        #else
+          <li> <a href="${rc.contextPath}/${path1}/${path2}/${path3}$!query">$!{title}</a></li>
+          #title("$path1/$path2/$path3/$path4")
+          #if($path4)
+          <li class="active">$!{title}</li>
+          #end
+        #end
+      #end
+    #end
+#else
+    <li class="active"> <i class="icon-home home-icon"></i> 首页</li>
+#end
+</ul>

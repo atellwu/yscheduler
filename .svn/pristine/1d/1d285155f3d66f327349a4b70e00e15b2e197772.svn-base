@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- dbunit用于初始化数据的文件，每个ut方法都会执行一遍 -->
+<!-- 默认从以下路径尝试找setup.xml文件，找不到会便停止往下找： -->
+<!-- 1. <packageName>/<className>.<methodName>-setup.xml -->
+<!-- 2. <packageName>/<className>-setup.xml -->
+<!-- 3. <packageName>/setup.xml -->
+<!-- 4. <className>.<methodName>-setup.xml -->
+<!-- 5. <className>.setup.xml -->
+<!-- 6. setup.xml -->
+<dataset>
+	<Agent id="1" name="agent1" ip="10.0.0.1" alive="1" enable="1"
+		create_time="2014-11-26 17:38:00" update_time="2014-11-26 17:38:00" />
+
+	<Task id="1" name="test1" owner="1" type="1" crontab="0/5 * * * * ?"
+		can_skip="1" last_status_dependency="1" command="echo test1" agent_id="1"
+		status="1" timeout="1" retry_times="1" last_schedule_time="2009-09-09 00:00:00"
+		description="desc...1" create_time="2009-09-09 00:00:00" update_time="2009-09-09 00:00:00" />
+	<Task id="2" name="test2" owner="1" type="1" crontab="0/5 * * * * ?"
+		can_skip="1" last_status_dependency="1" command="echo test2" agent_id="1"
+		status="1" timeout="1" retry_times="1" last_schedule_time="2009-09-09 00:00:00"
+		description="desc...2" create_time="2009-09-09 00:00:00" update_time="2009-09-09 00:00:00" />
+	<Task id="3" name="test3" owner="1" type="1" crontab="0/5 * * * * ?"
+		can_skip="1" last_status_dependency="1" command="echo test3" agent_id="1"
+		status="1" timeout="1" retry_times="1" last_schedule_time="2009-09-09 00:00:00"
+		description="desc...3" create_time="2009-09-09 00:00:00" update_time="2009-09-09 00:00:00" />
+	<Task id="4" name="test4" owner="1" type="1" crontab="0/5 * * * * ?"
+		can_skip="1" last_status_dependency="1" command="echo test4" agent_id="1"
+		status="1" timeout="1" retry_times="1" last_schedule_time="2009-09-09 00:00:00"
+		description="desc...4" create_time="2009-09-09 00:00:00" update_time="2009-09-09 00:00:00" />
+	<Task id="5" name="test5" owner="1" type="1" crontab="0/5 * * * * ?"
+		can_skip="1" last_status_dependency="1" command="echo test5" agent_id="1"
+		status="1" timeout="1" retry_times="1" last_schedule_time="2009-09-09 00:00:00"
+		description="desc...5" create_time="2009-09-09 00:00:00" update_time="2009-09-09 00:00:00" />
+	<Task id="6" name="test6" owner="1" type="1" crontab="0/5 * * * * ?"
+		can_skip="1" last_status_dependency="1" command="echo test6" agent_id="1"
+		status="1" timeout="1" retry_times="1" last_schedule_time="2009-09-09 00:00:00"
+		description="desc...6" create_time="2009-09-09 00:00:00" update_time="2009-09-09 00:00:00" />
+	<Task id="7" name="test7" owner="1" type="1" crontab="0/5 * * * * ?"
+		can_skip="1" last_status_dependency="1" command="echo test7" agent_id="1"
+		status="1" timeout="1" retry_times="1" last_schedule_time="2009-09-09 00:00:00"
+		description="desc...7" create_time="2009-09-09 00:00:00" update_time="2009-09-09 00:00:00" />
+	<Task id="8" name="test8" owner="1" type="1" crontab="0/5 * * * * ?"
+		can_skip="1" last_status_dependency="1" command="echo test8" agent_id="1"
+		status="1" timeout="1" retry_times="1" last_schedule_time="2009-09-09 00:00:00"
+		description="desc...8" create_time="2009-09-09 00:00:00" update_time="2009-09-09 00:00:00" />
+	<Task id="9" name="test9" owner="1" type="1" crontab="0/5 * * * * ?"
+		can_skip="1" last_status_dependency="1" command="echo test9" agent_id="1"
+		status="1" timeout="1" retry_times="1" last_schedule_time="2009-09-09 00:00:00"
+		description="desc...9" create_time="2009-09-09 00:00:00" update_time="2009-09-09 00:00:00" />
+	<Task id="10" name="test10" owner="1" type="1" crontab="0/5 * * * * ?"
+		can_skip="1" last_status_dependency="1" command="echo test10"
+		agent_id="1" status="1" timeout="1" retry_times="1"
+		last_schedule_time="2009-09-09 00:00:00" description="desc...10"
+		create_time="2009-09-09 00:00:00" update_time="2009-09-09 00:00:00" />
+	<Task id="11" name="test11" owner="1" type="1" crontab="0/5 * * * * ?"
+		can_skip="1" last_status_dependency="1" command="echo test11"
+		agent_id="1" status="1" timeout="1" retry_times="1"
+		last_schedule_time="2009-09-09 00:00:00" description="desc...11"
+		create_time="2009-09-09 00:00:00" update_time="2009-09-09 00:00:00" />
+	<Task id="12" name="test12" owner="1" type="1" crontab="0/5 * * * * ?"
+		can_skip="1" last_status_dependency="1" command="echo test12"
+		agent_id="1" status="3" timeout="1" retry_times="1"
+		last_schedule_time="2009-09-09 00:00:00" description="desc...12"
+		create_time="2009-09-09 00:00:00" update_time="2009-09-09 00:00:00" />
+	<Task id="13" name="test13" owner="2" type="1" crontab="0/5 * * * * ?"
+		can_skip="1" last_status_dependency="1" command="echo test13"
+		agent_id="1" status="1" timeout="1" retry_times="1"
+		last_schedule_time="2009-09-09 00:00:00" description="desc...13"
+		create_time="2009-09-09 00:00:00" update_time="2009-09-09 00:00:00" />
+	<Task id="14" name="test14" owner="3" type="1" crontab="0/5 * * * * ?"
+		can_skip="1" last_status_dependency="1" command="echo test14"
+		agent_id="1" status="1" timeout="1" retry_times="1"
+		last_schedule_time="2009-09-09 00:00:00" description="desc...14"
+		create_time="2009-09-09 00:00:00" update_time="2009-09-09 00:00:00" />
+	<Task id="15" name="test15" owner="3" type="1" crontab="0/5 * * * * ?"
+		can_skip="1" last_status_dependency="1" command="echo test15"
+		agent_id="1" status="2" timeout="1" retry_times="1"
+		last_schedule_time="2009-09-09 00:00:00" description="desc...15"
+		create_time="2009-09-09 00:00:00" update_time="2009-09-09 00:00:00" />
+
+	<User id="1" name="admin1" password="21232f297a57a5a743894a0e4a801fc3"
+		email="platform@ndpmedia.com" telephone="15921096896" create_time="2014-11-26 17:00:00"
+		update_time="2014-11-26 17:38:00" token="token1" team_id="1" />
+	<User id="2" name="admin2" password="21232f297a57a5a743894a0e4a801fc3"
+		email="platform@ndpmedia.com" telephone="15921096896" create_time="2014-11-26 17:00:00"
+		update_time="2014-11-26 17:38:00" token="token2" team_id="1" />
+	<User id="3" name="admin3" password="21232f297a57a5a743894a0e4a801fc3"
+		email="platform@ndpmedia.com" telephone="15921096896" create_time="2014-11-26 17:00:00"
+		update_time="2014-11-26 17:38:00" token="token3" team_id="2" />
+</dataset> 

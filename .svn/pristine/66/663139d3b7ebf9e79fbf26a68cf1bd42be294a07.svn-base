@@ -1,0 +1,152 @@
+package com.yeahmobi.yscheduler.agentframework.agent.event.task;
+
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+
+import org.apache.commons.lang.BooleanUtils;
+import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.Validate;
+import org.apache.http.HttpStatus;
+import org.apache.http.StatusLine;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.config.RequestConfig;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.client.methods.RequestBuilder;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
+
+import com.yeahmobi.yscheduler.agentframework.agent.task.TaskTransaction;
+import com.yeahmobi.yscheduler.agentframework.exception.AgentClientException;
+
+/**
+ * 发起callout：http://localhost:24368/yscheduler/?eventType=TASK_HTTP_CALLOUT&params={
+ * 'calloutUrl':'http://www.baidu.com','needCallback':'true','agentHost':'localhost:24368'}<br>
+ * 查看callout状态：http://localhost:24368/yscheduler/?eventType=TASK_STATUS&params={%22txId%22:%2221%22} <br>
+ * 查看callout日志：http://localhost:24368/yscheduler/?eventType=TASK_LOG&params={%22txId%22:%2221%22} <br>
+ *
+ * @author atell.wu
+ */
+public class HttpCalloutTaskExecutor extends AbstractCalloutTaskExecutor {
+
+    private int                     connectTimeout = 3000;
+    private int                     socketTimeout  = 10000;
+
+    private String                  calloutUri;
+    private HashMap<String, String> calloutParams  = new HashMap<String, String>();
+    private String                  agentHost;
+
+    private String                  cancelUri;
+    private Map<String, String>     cancelParams   = new HashMap<String, String>();
+    private boolean                 needCallback;
+
+    public void setConnectTimeout(int connectTimeout) {
+        this.connectTimeout = connectTimeout;
+    }
+
+    public void setSocketTimeout(int socketTimeout) {
+        this.socketTimeout = socketTimeout;
+    }
+
+    @Override
+    public void callout(TaskTransaction taskTransaction, Map<String, String> params) throws Exception {
+
+        this.calloutParams.put("txId", String.valueOf(taskTransaction.getId()));
+        String workflowName = params.get("workflowName");
+        if (workflowName != null) {
+            this.calloutParams.put("workflowName", workflowName);
+        }
+        String taskName = params.get("taskName");
+        if (taskName != null) {
+            this.calloutParams.put("taskName", taskName);
+        }
+        if (this.needCallback) {
+            this.calloutParams.put("callback",
+                                   "http://" + this.agentHost + "/yscheduler/?eventType=TASK_CALLBACK&txId="
+                                           + String.valueOf(taskTransaction.getId()) + "&returnValue=");
+        }
+
+        this.info(taskTransaction, "Calling out, uri: " + this.calloutUri + ", params: " + this.calloutParams);
+        get(this.calloutUri, this.calloutParams);
+        this.info(taskTransaction, "Call out done");
+    }
+
+    @Override
+    public void cancel(TaskTransaction taskTransaction, Map<String, String> params) throws Exception {
+        this.info(taskTransaction, "Cancelling.");
+        if (this.cancelUri != null) {
+            // 如果params中有cancelUrl，则调用，并等待200结果。否则直接返回
+            this.cancelParams.put("txId", String.valueOf(taskTransaction.getId()));
+            this.info(taskTransaction, "Calling out for cancel, uri: " + this.cancelUri + ", params: "
+                                       + this.cancelParams);
+            get(this.cancelUri, this.cancelParams);
+        }
+    }
+
+    private void parseQuery(Map<String, String> calloutParams, String[] splits) {
+        if (splits.length > 1) {
+            String[] paramSplits = StringUtils.split(splits[1], '&');
+            for (String keyValue : paramSplits) {
+                String[] keyValueSplits = StringUtils.split(keyValue, '=');
+                Validate.isTrue(keyValueSplits.length == 2, "query'" + splits + "' invalid");
+                String key = keyValueSplits[0];
+                String value = keyValueSplits[1];
+                calloutParams.put(key, value);
+            }
+        }
+    }
+
+    @Override
+    public void validate(Map<String, String> params) throws IllegalArgumentException {
+        // callout
+        String calloutUrl = params.get("calloutUrl");
+        Validate.notEmpty(calloutUrl, "calloutUrl cannot be empty");
+        String[] splits = StringUtils.split(calloutUrl, '?');
+        this.calloutUri = splits[0];
+        parseQuery(this.calloutParams, splits);
+        this.needCallback = BooleanUtils.toBoolean(params.get("needCallback"));
+        this.agentHost = params.get("agentHost");
+        if (this.needCallback) {
+            Validate.notEmpty(this.agentHost, "agentHost cannot be empty since needCallback");
+        }
+        // cancel
+        String cancelUrl = params.get("cancelUrl");
+        if (StringUtils.isNotEmpty(cancelUrl)) {
+            splits = StringUtils.split(cancelUrl, '?');
+            this.cancelUri = splits[0];
+            parseQuery(this.cancelParams, splits);
+        }
+    }
+
+    private void get(String uri, Map<String, String> params) throws ClientProtocolException, IOException,
+                                                            AgentClientException {
+
+        RequestBuilder requestBuilder = RequestBuilder.get().setUri(uri).setConfig(buildConfig());
+
+        for (Map.Entry<String, String> entry : params.entrySet()) {
+            requestBuilder.addParameter(entry.getKey(), entry.getValue());
+        }
+
+        HttpUriRequest uriRequest = requestBuilder.build();
+
+        CloseableHttpClient httpclient = HttpClientBuilder.create().build();
+
+        CloseableHttpResponse response = httpclient.execute(uriRequest);
+        try {
+            StatusLine statusLine = response.getStatusLine();
+            if (HttpStatus.SC_OK != statusLine.getStatusCode()) {
+                throw new AgentClientException(String.format("Call Uri(%s) error: responseCode=%d, reason=%s", uri,
+                                                             statusLine.getStatusCode(), statusLine.getReasonPhrase()));
+            }
+
+        } finally {
+            httpclient.close();
+        }
+
+    }
+
+    private RequestConfig buildConfig() {
+        return RequestConfig.custom().setConnectTimeout(this.connectTimeout).setSocketTimeout(this.socketTimeout).build();
+    }
+}

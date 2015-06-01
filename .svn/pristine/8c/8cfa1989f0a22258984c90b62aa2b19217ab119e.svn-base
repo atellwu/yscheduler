@@ -1,0 +1,39 @@
+<div class="col-xs-10">
+	<div id="alertMessageDiv" style="text-align: center;"></div>
+	<p style="text-align: right">
+		<button class="btn btn-sm btn-info"
+			onclick="app.openCreateTeamModal()">添加团队</button>
+	</p>
+	<div class="table-responsive">
+		<table class="table table-striped table-bordered table-hover"
+			id="listTable">
+			<thead>
+				<tr>
+					<th>ID</th>
+					<th>团队名称</th>
+					<th>创建时间</th>
+					<th>操作</th>
+				</tr>
+			</thead>
+			<tbody>
+				#foreach($team in $list)
+				<tr>
+					<td>$team.id</td>
+					<td><b>$team.name</b></td>
+					<td>$dateFormatUtils.format($team.createTime,'yyyy年MM月dd日HH时mm分')</td>
+					<td style="width: 300px"><a href="javascript:;"
+						onclick="app.openRemoveTeamModal($team.id,'$team.name')"><span
+							class="label label-danger">&nbsp; 删除 </span></a>
+							&nbsp;<a
+						href="javascript:;"
+						onclick="app.openRenameTeamModal($team.id,'$team.name')"><span
+							class="label label-info">&nbsp; 重命名 </span></a>&nbsp;<a id="users"
+						href="/user?teamId=$team.id"><span
+							class="label label-warniing">团队成员</span></a></td>
+				</tr>
+				#end
+			</tbody>
+		</table>
+		#screen("paginator.htm")
+	</div>
+</div>

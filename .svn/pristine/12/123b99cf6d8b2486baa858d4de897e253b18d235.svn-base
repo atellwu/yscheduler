@@ -1,0 +1,229 @@
+package com.yeahmobi.yscheduler.model.service.impl;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.List;
+
+import org.junit.Assert;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.TestExecutionListeners;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.test.context.support.DependencyInjectionTestExecutionListener;
+
+import com.yeahmobi.yscheduler.common.Paginator;
+import com.yeahmobi.yscheduler.model.TaskInstance;
+import com.yeahmobi.yscheduler.model.service.TaskInstanceService;
+import com.yeahmobi.yscheduler.model.type.TaskInstanceStatus;
+import com.yeahmobi.yunit.DbUnitTestExecutionListener;
+import com.yeahmobi.yunit.annotation.DatabaseSetup;
+
+/**
+ * Leo.Liang
+ */
+@RunWith(SpringJUnit4ClassRunner.class)
+@ContextConfiguration(locations = { "classpath:applicationContext-test.xml" })
+@TestExecutionListeners({ DependencyInjectionTestExecutionListener.class, DbUnitTestExecutionListener.class })
+public class TaskInstanceServiceImplTest {
+
+    @Autowired
+    private TaskInstanceService           instanceService;
+
+    private static final long             TIME_ACCEPTABLE_DIFF = 1000L;
+    private static final SimpleDateFormat sdf                  = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
+    @Test
+    @DatabaseSetup
+    public void testGet() throws Exception {
+        TaskInstance instance = this.instanceService.get(1);
+        assertTaskInstance(instance, 1L, sdf.parse("2014-11-26 17:37:00"), sdf.parse("2014-11-26 17:38:30"),
+                           "2014-11-26 17:38:00", "2014-11-26 17:38:10", null, TaskInstanceStatus.RUNNING, 1L, 1L);
+    }
+
+    @Test
+    @DatabaseSetup
+    public void testGetByTaskIdAndWorkflowInstanceId() throws Exception {
+        TaskInstance instance = this.instanceService.get(1, 1);
+        assertTaskInstance(instance, 1L, sdf.parse("2014-11-26 17:37:00"), sdf.parse("2014-11-26 17:38:30"),
+                           "2014-11-26 17:38:00", "2014-11-26 17:38:10", null, TaskInstanceStatus.RUNNING, 1L, 1L);
+        Assert.assertNull(this.instanceService.get(100, 1000));
+    }
+
+    @Test
+    @DatabaseSetup
+    public void testExistUncompletedScheduled() throws Exception {
+        Assert.assertTrue(this.instanceService.existUncompletedScheduled(1L));
+        Assert.assertTrue(this.instanceService.existUncompletedScheduled(2L));
+        Assert.assertFalse(this.instanceService.existUncompletedScheduled(3L));
+        Assert.assertFalse(this.instanceService.existUncompletedScheduled(4L));
+        Assert.assertFalse(this.instanceService.existUncompletedScheduled(5L));
+        Assert.assertFalse(this.instanceService.existUncompletedScheduled(6L));
+        Assert.assertFalse(this.instanceService.existUncompletedScheduled(7L));
+        Assert.assertFalse(this.instanceService.existUncompletedScheduled(8L));
+        Assert.assertFalse(this.instanceService.existUncompletedScheduled(9L));
+    }
+
+    @Test
+    @DatabaseSetup
+    public void testListByWorkflowInstanceId() throws Exception {
+        List<TaskInstance> taskInstances = this.instanceService.listByWorkflowInstanceId(21L);
+        Assert.assertEquals(11, taskInstances.size());
+        for (int i = 1; i <= taskInstances.size(); i++) {
+            TaskInstance instance = taskInstances.get(i - 1);
+            assertTaskInstance(instance, Long.valueOf(20 + i), sdf.parse("2014-11-26 17:37:00"),
+                               sdf.parse("2014-11-26 17:38:30"), "2014-11-26 17:38:00", "2014-11-26 17:38:10",
+                               "2014-11-26 17:38:30", TaskInstanceStatus.SUCCESS, 21L, 21L);
+        }
+    }
+
+    @Test
+    @DatabaseSetup
+    public void testListByWorkflowInstanceIdPagination() throws Exception {
+        List<TaskInstance> taskInstances = this.instanceService.listByWorkflowInstanceId(21L, 1, new Paginator());
+        Assert.assertEquals(10, taskInstances.size());
+        for (int i = 1; i <= taskInstances.size(); i++) {
+            TaskInstance instance = taskInstances.get(i - 1);
+            assertTaskInstance(instance, Long.valueOf(20 + i), sdf.parse("2014-11-26 17:37:00"),
+                               sdf.parse("2014-11-26 17:38:30"), "2014-11-26 17:38:00", "2014-11-26 17:38:10",
+                               "2014-11-26 17:38:30", TaskInstanceStatus.SUCCESS, 21L, 21L);
+        }
+
+        taskInstances = this.instanceService.listByWorkflowInstanceId(21L, 2, new Paginator());
+        Assert.assertEquals(1, taskInstances.size());
+        assertTaskInstance(taskInstances.get(0), Long.valueOf(31), sdf.parse("2014-11-26 17:37:00"),
+                           sdf.parse("2014-11-26 17:38:30"), "2014-11-26 17:38:00", "2014-11-26 17:38:10",
+                           "2014-11-26 17:38:30", TaskInstanceStatus.SUCCESS, 21L, 21L);
+    }
+
+    @Test
+    @DatabaseSetup
+    public void testListByTaskId() throws Exception {
+        List<TaskInstance> taskInstances = this.instanceService.listAll(21L);
+        Assert.assertEquals(11, taskInstances.size());
+        for (int i = 1; i <= taskInstances.size(); i++) {
+            TaskInstance instance = taskInstances.get(i - 1);
+            assertTaskInstance(instance, Long.valueOf(32 - i), sdf.parse("2014-11-26 17:37:00"),
+                               sdf.parse("2014-11-26 17:38:30"), "2014-11-26 17:38:00", "2014-11-26 17:38:10",
+                               "2014-11-26 17:38:30", TaskInstanceStatus.SUCCESS, 21L, 21L);
+        }
+    }
+
+    @Test
+    @DatabaseSetup
+    public void testListByTaskIdPagination() throws Exception {
+        List<TaskInstance> taskInstances = this.instanceService.list(21L, 1, new Paginator());
+        Assert.assertEquals(10, taskInstances.size());
+        for (int i = 1; i <= taskInstances.size(); i++) {
+            TaskInstance instance = taskInstances.get(i - 1);
+            assertTaskInstance(instance, Long.valueOf(32 - i), sdf.parse("2014-11-26 17:37:00"),
+                               sdf.parse("2014-11-26 17:38:30"), "2014-11-26 17:38:00", "2014-11-26 17:38:10",
+                               "2014-11-26 17:38:30", TaskInstanceStatus.SUCCESS, 21L, 21L);
+        }
+
+        taskInstances = this.instanceService.list(21L, 2, new Paginator());
+        Assert.assertEquals(1, taskInstances.size());
+        assertTaskInstance(taskInstances.get(0), Long.valueOf(21), sdf.parse("2014-11-26 17:37:00"),
+                           sdf.parse("2014-11-26 17:38:30"), "2014-11-26 17:38:00", "2014-11-26 17:38:10",
+                           "2014-11-26 17:38:30", TaskInstanceStatus.SUCCESS, 21L, 21L);
+    }
+
+    @Test
+    @DatabaseSetup
+    public void testDeleteByWorkflowInstanceId() throws Exception {
+        this.instanceService.deleteByWorkflowInstanceId(21L);
+        Assert.assertEquals(0, this.instanceService.listByWorkflowInstanceId(21L).size());
+    }
+
+    @Test
+    @DatabaseSetup
+    public void testListAllDependencyWait() throws Exception {
+        List<TaskInstance> taskInstances = this.instanceService.listAllDependencyWait();
+        Assert.assertEquals(1, taskInstances.size());
+        assertTaskInstance(taskInstances.get(0), Long.valueOf(8), sdf.parse("2014-11-26 17:37:00"),
+                           sdf.parse("2014-11-26 17:38:30"), null, null, null, TaskInstanceStatus.DEPENDENCY_WAIT, 8L,
+                           8L);
+    }
+
+    @Test
+    @DatabaseSetup
+    public void testGetAllUncompleteds() throws Exception {
+        List<TaskInstance> taskInstances = this.instanceService.getAllUncompleteds();
+        Assert.assertEquals(2, taskInstances.size());
+        assertTaskInstance(taskInstances.get(0), Long.valueOf(1), sdf.parse("2014-11-26 17:37:00"),
+                           sdf.parse("2014-11-26 17:38:30"), "2014-11-26 17:38:00", "2014-11-26 17:38:10", null,
+                           TaskInstanceStatus.RUNNING, 1L, 1L);
+        assertTaskInstance(taskInstances.get(1), Long.valueOf(2), sdf.parse("2014-11-26 17:37:00"),
+                           sdf.parse("2014-11-26 17:37:00"), "2014-11-26 17:38:00", null, null,
+                           TaskInstanceStatus.READY, 2L, 2L);
+    }
+
+    @Test
+    @DatabaseSetup
+    public void testUpdateStatus() throws Exception {
+        this.instanceService.updateStatus(1L, TaskInstanceStatus.SUCCESS);
+        this.instanceService.updateStatus(2L, TaskInstanceStatus.RUNNING);
+
+        Date now = new Date();
+        assertTaskInstance(this.instanceService.get(1L), Long.valueOf(1), sdf.parse("2014-11-26 17:37:00"), now,
+                           "2014-11-26 17:38:00", "2014-11-26 17:38:10", sdf.format(now), TaskInstanceStatus.SUCCESS,
+                           1L, 1L);
+        assertTaskInstance(this.instanceService.get(2L), Long.valueOf(2), sdf.parse("2014-11-26 17:37:00"), now,
+                           "2014-11-26 17:38:00", sdf.format(now), null, TaskInstanceStatus.RUNNING, 2L, 2L);
+    }
+
+    @Test
+    @DatabaseSetup
+    public void testSave() throws Exception {
+        TaskInstance instance = new TaskInstance();
+        Date now = new Date();
+        instance.setScheduleTime(now);
+        instance.setStartTime(now);
+        instance.setStatus(TaskInstanceStatus.SUCCESS);
+        instance.setEndTime(now);
+        instance.setTaskId(1L);
+        instance.setWorkflowInstanceId(2L);
+        this.instanceService.save(instance);
+
+        assertTaskInstance(instance, instance.getId(), now, now, sdf.format(now), sdf.format(now), sdf.format(now),
+                           TaskInstanceStatus.SUCCESS, 1L, 2L);
+    }
+
+    @Test
+    @DatabaseSetup
+    public void testExists() throws Exception {
+        Assert.assertTrue(this.instanceService.exist(21L, sdf.parse("2014-11-26 17:38:00")));
+        Assert.assertFalse(this.instanceService.exist(8L, sdf.parse("2014-11-26 17:38:00")));
+        Assert.assertFalse(this.instanceService.exist(100L, sdf.parse("2014-11-26 17:38:00")));
+    }
+
+    private void assertTaskInstance(TaskInstance instance, Long id, Date createTime, Date updateTime,
+                                    String scheduleTime, String startTime, String endTime, TaskInstanceStatus status,
+                                    Long taskId, Long workflowInstanceId) {
+        Assert.assertEquals(id, instance.getId());
+        Assert.assertTrue(Math.abs(createTime.getTime() - instance.getCreateTime().getTime()) < TIME_ACCEPTABLE_DIFF);
+        Assert.assertTrue(Math.abs(updateTime.getTime() - instance.getUpdateTime().getTime()) < TIME_ACCEPTABLE_DIFF);
+        if (instance.getScheduleTime() != null) {
+            Assert.assertEquals(scheduleTime, sdf.format(instance.getScheduleTime()));
+        } else {
+            Assert.assertNull(instance.getScheduleTime());
+        }
+        if (instance.getStartTime() != null) {
+            Assert.assertEquals(startTime, sdf.format(instance.getStartTime()));
+        } else {
+            Assert.assertNull(instance.getStartTime());
+        }
+
+        if (instance.getEndTime() != null) {
+            Assert.assertEquals(endTime, sdf.format(instance.getEndTime()));
+        } else {
+            Assert.assertNull(instance.getEndTime());
+        }
+        Assert.assertEquals(status, instance.getStatus());
+        Assert.assertEquals(taskId, instance.getTaskId());
+        Assert.assertEquals(workflowInstanceId, instance.getWorkflowInstanceId());
+
+    }
+
+}

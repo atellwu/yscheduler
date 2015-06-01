@@ -1,0 +1,98 @@
+package com.yeahmobi.yscheduler.workflow;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import com.yeahmobi.yscheduler.executor.TaskInstanceExecutor;
+import com.yeahmobi.yscheduler.model.TaskInstance;
+import com.yeahmobi.yscheduler.model.WorkflowInstance;
+import com.yeahmobi.yscheduler.model.service.TaskInstanceService;
+import com.yeahmobi.yscheduler.model.service.WorkflowDetailService;
+import com.yeahmobi.yscheduler.model.service.WorkflowInstanceService;
+import com.yeahmobi.yscheduler.model.type.TaskInstanceStatus;
+
+/**
+ * @author Ryan Sun
+ */
+public class DependencyCheckTask implements Runnable {
+
+    private static final Logger     LOGGER                   = LoggerFactory.getLogger(DependencyCheckTask.class);
+
+    private static final long       CHECK_INTERVAL           = 1000;
+    @Autowired
+    private WorkflowDetailService   workflowDetailService;
+
+    @Autowired
+    private TaskInstanceService     taskInstanceService;
+
+    @Autowired
+    private WorkflowInstanceService workflowInstanceService;
+
+    @Autowired
+    private TaskInstanceExecutor    taskInstanceExecutor;
+
+    @Autowired
+    private WorkflowStatusCheckTask workflowStatusCheckTask;
+
+    private Map<Long, List<Long>>   taskInstanceDependencies = new HashMap<Long, List<Long>>();
+
+    public void run() {
+        while (true) {
+            try {
+                List<TaskInstance> instances = this.taskInstanceService.listAllInit();
+                for (TaskInstance taskInstance : instances) {
+                    if (dependencyPass(taskInstance)) {
+                        this.taskInstanceExecutor.submit(taskInstance);
+                    }
+                }
+            } catch (Exception e) {
+                LOGGER.error(e.getMessage(), e);
+            }
+            try {
+                TimeUnit.MILLISECONDS.sleep(CHECK_INTERVAL);
+            } catch (InterruptedException e) {
+                LOGGER.error(e.getMessage(), e);
+            }
+        }
+    }
+
+    private boolean dependencyPass(TaskInstance taskInstance) {
+        boolean result = true;
+        long taskInstanceId = taskInstance.getId();
+        long workflowInstanceId = taskInstance.getWorkflowInstanceId();
+        // workflow instance 处于running状态，才算真正能调度。
+        if (this.workflowStatusCheckTask.isRunning(workflowInstanceId)) {
+            List<Long> dependencyTaskInstances = this.taskInstanceDependencies.get(taskInstance);
+
+            if (dependencyTaskInstances == null) {
+                long taskId = taskInstance.getTaskId();
+                WorkflowInstance workflowInstance = this.workflowInstanceService.get(workflowInstanceId);
+                Long workflowId = workflowInstance.getWorkflowId();
+                List<Long> taskIds = this.workflowDetailService.listDependencyTasks(workflowId, taskId);
+                for (long item : taskIds) {
+                    TaskInstance instance = this.taskInstanceService.get(workflowId, item);
+                    if (instance != null) {
+                        dependencyTaskInstances.add(instance.getId());
+                    }
+                }
+                this.taskInstanceDependencies.put(taskInstanceId, dependencyTaskInstances);
+            }
+
+            for (Long id : dependencyTaskInstances) {
+                if (this.taskInstanceService.get(id).getStatus() != TaskInstanceStatus.SUCCESS) {
+                    result = false;
+                }
+            }
+        }
+        if (result == true) {
+            this.taskInstanceDependencies.remove(taskInstanceId);
+        }
+        return result;
+    }
+}

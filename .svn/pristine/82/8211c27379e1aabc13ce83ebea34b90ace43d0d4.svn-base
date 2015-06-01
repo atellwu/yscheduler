@@ -1,0 +1,130 @@
+package com.yeahmobi.yscheduler.notice;
+
+import java.util.Date;
+import java.util.List;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.yeahmobi.yscheduler.model.User;
+import com.yeahmobi.yscheduler.model.service.TaskInstanceService;
+import com.yeahmobi.yscheduler.model.service.TaskService;
+import com.yeahmobi.yscheduler.model.service.WorkflowInstanceService;
+import com.yeahmobi.yscheduler.model.service.WorkflowService;
+
+/**
+ * @author Ryan Sun
+ */
+
+@Service
+public class DefaultNoticeService implements NoticeService {
+
+    private Log                     LOGGER = LogFactory.getLog(DefaultNoticeService.class);
+
+    @Autowired
+    private EmailSender             emailSender;
+
+    @Autowired
+    private SmsSender               smsSender;
+
+    @Autowired
+    private WorkflowService         workflowService;
+
+    @Autowired
+    private WorkflowInstanceService workflowInstanceService;
+
+    @Autowired
+    private TaskService             taskService;
+
+    @Autowired
+    private TaskInstanceService     taskInstanceService;
+
+    public void alert(String title, String content, List<User> to, boolean needSms) {
+
+        Message message = new Message();
+    }
+
+    public void workflowFail(long id) {
+
+    }
+
+    public void workflowTimeout(long id) {
+        // TODO Auto-generated method stub
+
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see com.yeahmobi.yscheduler.notice.NoticeService#workflowSkip(long, java.util.Date)
+     */
+    public void workflowSkip(long id, Date scheduleTime) {
+        // TODO Auto-generated method stub
+
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see com.yeahmobi.yscheduler.notice.NoticeService#taskFail(long)
+     */
+    public void taskFail(long id) {
+        // TODO Auto-generated method stub
+
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see com.yeahmobi.yscheduler.notice.NoticeService#taskTimeout(long)
+     */
+    public void taskTimeout(long id) {
+        // TODO Auto-generated method stub
+
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see com.yeahmobi.yscheduler.notice.NoticeService#taskSkip(long, java.util.Date)
+     */
+    public void taskSkip(long id, Date scheduleTime) {
+        // TODO Auto-generated method stub
+
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see com.yeahmobi.yscheduler.notice.NoticeService#workflowCanncel(long)
+     */
+    public void workflowCanncel(long id) {
+        // TODO Auto-generated method stub
+
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see com.yeahmobi.yscheduler.notice.NoticeService#taskCanncel(long)
+     */
+    public void taskCanncel(long id) {
+        // TODO Auto-generated method stub
+
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see com.yeahmobi.yscheduler.notice.NoticeService#workflowSuccess(long)
+     */
+    public void workflowSuccess(long id) {
+        // TODO Auto-generated method stub
+
+    }
+
+    /*
+     * (non-Javadoc)
+     * @see com.yeahmobi.yscheduler.notice.NoticeService#taskSuccess(long)
+     */
+    public void taskSuccess(long id) {
+        // TODO Auto-generated method stub
+
+    }
+
+}

@@ -1,0 +1,173 @@
+#set($layout = "topoLayout.htm")
+
+<link rel="stylesheet" href="/assets/css/jsplumb.css" />
+<style type="text/css">
+/** ELEMENTS **/
+.chart-demo .window {
+	border: 0.1em dotted #d4e06b;
+	width: 8em;
+	height: 4em;
+	line-height: 3em;
+}
+
+.chart-demo .default {
+	border: 1px solid AliceBlue;
+	background-color: AliceBlue;
+	color: black;
+	opacity: 0.8;
+}
+
+.chart-demo .dependency_wait {
+	border: 1px solid gold;
+	background-color: gold;
+	color: black;
+	opacity: 0.8;
+}
+
+.chart-demo .ready {
+	border: 1px solid brown;
+	background-color: brown;
+	color: black;
+	opacity: 0.8;
+}
+
+.chart-demo .running {
+	border: 1px solid black;
+	background-color: AliceBlue;
+	color: black;
+	opacity: 0.8;
+	background-color: AliceBlue;
+}
+
+.chart-demo .success {
+	border: 1px solid #68BC31;
+	background-color: #68BC31;
+	color: black;
+	opacity: 0.8;
+}
+
+.chart-demo .failed {
+	border: 2px solid red;
+	background-color: red;
+	color: black;
+	opacity: 0.8;
+}
+
+.chart-demo .workflow_failed {
+	border: 1px solid orange;
+	background-color: orange;
+	color: black;
+	opacity: 0.8;
+}
+
+.chart-demo .cancelled {
+	border: 1px solid indigo;
+	background-color: indigo;
+	color: black;
+	opacity: 0.8;
+}
+
+.chart-demo .skipped {
+	border: 1px solid purple;
+	background-color: purple;
+	color: black;
+	opacity: 0.8;
+}
+
+.chart-demo .complete_with_unknown_status {
+	border: 1px solid pink;
+	background-color: pink;
+	color: black;
+	opacity: 0.8;
+}
+
+/** HOVER EFFECTS **/
+.chart-demo .window:hover,.chart-demo .window._jsPlumb_source_hover,.chart-demo .window._jsPlumb_target_hover
+	{
+	border: 1px solid gray;
+	color: gray;
+}
+
+/** ELEMENT POSITIONS **/
+</style>
+$css
+<div class="demo chart-demo" id="chart-demo" style="padding: 10px">$nodes</div>
+
+#if($!iframe)
+<script src='/assets/js/jquery-2.0.3.min.js'></script>
+<script src='/assets/js/jquery-ui-1.10.3.full.min.js'></script>
+#end
+<script src='/assets/js/jquery.jsPlumb-1.7.2-min.js'></script>
+<script>
+	$(document).ready(function() {
+
+		jsPlumb.ready(function() {
+			var color = "gray";
+
+			var instance = jsPlumb.getInstance({
+				// notice the 'curviness' argument to this Bezier curve.  the curves on this page are far smoother
+				// than the curves on the first demo, which use the default curviness value.			
+				Connector : [ "Flowchart", {
+					stub : [ 40, 60 ],
+					gap : 10,
+					cornerRadius : 5,
+				} ],
+				DragOptions : {
+					cursor : "pointer",
+					zIndex : 2000
+				},
+				PaintStyle : {
+					strokeStyle : color,
+					lineWidth : 2
+				},
+				EndpointStyle : {
+					radius : 5,
+					fillStyle : color
+				},
+				HoverPaintStyle : {
+					strokeStyle : "#ec9f2e"
+				},
+				EndpointHoverStyle : {
+					fillStyle : "#ec9f2e"
+				},
+				Container : "chart-demo"
+			});
+
+			// suspend drawing and initialise.
+			instance.doWhileSuspended(function() {
+				// declare some common values:
+				var arrowCommon = {
+					foldback : 0.7,
+					fillStyle : color,
+					width : 14
+				},
+				// use three-arg spec to create two different arrows with the common values:
+				overlays = [ [ "Arrow", {
+					location : 1.0
+				}, arrowCommon ] ];
+
+				// add endpoints, giving them a UUID.
+				// you DO NOT NEED to use this method. You can use your library's selector method.
+				// the jsPlumb demos use it so that the code can be shared between all three libraries.
+				var windows = jsPlumb.getSelector(".chart-demo .window");
+				for ( var i = 0; i < windows.length; i++) {
+					instance.addEndpoint(windows[i], {
+						uuid : windows[i].getAttribute("id") + "-bottom",
+						anchor : "Bottom",
+						maxConnections : -1
+					});
+					instance.addEndpoint(windows[i], {
+						uuid : windows[i].getAttribute("id") + "-top",
+						anchor : "Top",
+						maxConnections : -1
+					});
+				}
+				$connects
+				instance.draggable(windows);
+			});
+
+			jsPlumb.fire("jsPlumbDemoLoaded", instance);
+		});
+		$("[rel=tooltip]").tooltip();
+	});
+</script>

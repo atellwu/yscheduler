@@ -1,0 +1,9 @@
+package com.yeahmobi.yscheduler.agentframework.agent.task;
+
+/**
+ * @author Leo.Liang
+ */
+public interface AgentTask {
+
+    public TaskExecutor getTaskExecutor();
+}

@@ -1,0 +1,55 @@
+<link href="${rc.contextPath}/assets/css/autocomplete.css" rel="stylesheet" />
+<link href="${rc.contextPath}/assets/css/chosen.min.css" rel="stylesheet" />
+<link href="${rc.contextPath}/static/css/custom.css" rel="stylesheet" />
+
+<script type="text/javascript" src="${rc.contextPath}/assets/js/jquery.dataTables.min.js"></script>
+<script type="text/javascript" src="${rc.contextPath}/assets/js/jquery.dataTables.bootstrap.js"></script>
+<script src="${rc.contextPath}/assets/js/jquery.autocomplete.js" type="text/javascript"></script>
+<script src="${rc.contextPath}/assets/js/chosen.jquery.min.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+	$("[rel=tooltip]").tooltip();
+	$(document).ready(function() {
+		$(".chosen-select").chosen({width:"50%"});
+
+		$('#taskListTable').dataTable({
+			"bPaginate" : false,
+			"bLengthChange" : false,
+			"bInfo" : false,
+			"bFilter" : true,
+			"aoColumns" : [ {
+				"bSortable" : false
+			}, {
+				"bSortable" : true
+			}, {
+				"bSortable" : false
+			}, {
+				"bSortable" : true
+			}, {
+				"bSortable" : true
+			}, {
+				"bSortable" : false
+			} ],
+			"aaSorting" : []
+		});
+		
+		$('#updateBtn').click(function(e) {
+			var btn = $('#updateBtn');
+			if (btn.text().trim() == "修改") {
+				btn.html("保存");
+				$('#cancelBtn').html("取消");
+				$('.field').removeAttr("readonly");
+				$('#agent').prop('disabled', false).trigger("chosen:updated");
+				$('#dependency').prop('disabled', false).trigger("chosen:updated");
+				$('#readers').prop('disabled', false).trigger("chosen:updated");
+				$('#writers').prop('disabled', false).trigger("chosen:updated");
+				$('#followers').prop('disabled', false).trigger("chosen:updated");
+
+			} else {
+				$('#updateBtn').button('loading');
+				$('#form').submit();
+			}
+		});
+	});
+</script>
+

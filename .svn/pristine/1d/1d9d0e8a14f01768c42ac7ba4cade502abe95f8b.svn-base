@@ -1,0 +1,30 @@
+package com.yeahmobi.yscheduler.agentframework.agent.event.task;
+
+import java.util.Map;
+
+import com.yeahmobi.yscheduler.agentframework.agent.event.HandlerResult;
+import com.yeahmobi.yscheduler.agentframework.agent.event.TaskSubmitionEventHandler;
+import com.yeahmobi.yscheduler.agentframework.agent.task.AgentTask;
+import com.yeahmobi.yscheduler.agentframework.agent.task.async.CallbackAgentTask;
+
+/**
+ * @author atell.wu
+ */
+public class CallbackEventHandler extends TaskSubmitionEventHandler {
+
+    @Override
+    protected AgentTask beforeSubmit(Map<String, String> params, HandlerResult handlerResult) {
+        CallbackAgentTask agentTask = new CallbackAgentTask();
+        try {
+            AbstractAsyncTaskExecutor taskExecutor = agentTask.getTaskExecutor();
+            taskExecutor.setParams(params);
+            taskExecutor.validate(params);
+        } catch (Exception e) {
+            handlerResult.setSuccess(false);
+            handlerResult.setErrorMsg("Parameter invalid: " + e.getMessage());
+            return null;
+        }
+        return agentTask;
+    }
+
+}

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- dbunit用于初始化数据的文件，每个ut方法都会执行一遍 -->
+<!-- 默认从以下路径尝试找setup.xml文件，找不到会便停止往下找： -->
+<!-- 1. <packageName>/<className>.<methodName>-setup.xml -->
+<!-- 2. <packageName>/<className>-setup.xml -->
+<!-- 3. <packageName>/setup.xml -->
+<!-- 4. <className>.<methodName>-setup.xml -->
+<!-- 5. <className>.setup.xml -->
+<!-- 6. setup.xml -->
+<dataset>
+	<User id="1" name="admin1" password="21232f297a57a5a743894a0e4a801fc3"
+		email="platform@ndpmedia.com" telephone="15921096896" create_time="2014-11-26 17:00:00"
+		update_time="2014-11-26 17:38:00" token="token1" team_id="1" />
+	<Team id="1" name="team1" create_time="2014-11-26 17:00:00"
+		update_time="2014-11-26 17:38:00" />
+	<Team id="2" name="team2" create_time="2014-11-26 17:00:00"
+		update_time="2014-11-26 17:38:00" />
+	<Team id="3" name="team3" create_time="2014-11-26 17:00:00"
+		update_time="2014-11-26 17:38:00" />
+	<Team id="4" name="team4" create_time="2014-11-26 17:00:00"
+		update_time="2014-11-26 17:38:00" />
+	<Team id="5" name="team5" create_time="2014-11-26 17:00:00"
+		update_time="2014-11-26 17:38:00" />
+	<Team id="6" name="team6" create_time="2014-11-26 17:00:00"
+		update_time="2014-11-26 17:38:00" />
+	<Team id="7" name="team7" create_time="2014-11-26 17:00:00"
+		update_time="2014-11-26 17:38:00" />
+	<Team id="8" name="team8" create_time="2014-11-26 17:00:00"
+		update_time="2014-11-26 17:38:00" />
+	<Team id="9" name="team9" create_time="2014-11-26 17:00:00"
+		update_time="2014-11-26 17:38:00" />
+	<Team id="10" name="team10" create_time="2014-11-26 17:00:00"
+		update_time="2014-11-26 17:38:00" />
+	<Team id="11" name="team11" create_time="2014-11-26 17:00:00"
+		update_time="2014-11-26 17:38:00" />
+</dataset> 

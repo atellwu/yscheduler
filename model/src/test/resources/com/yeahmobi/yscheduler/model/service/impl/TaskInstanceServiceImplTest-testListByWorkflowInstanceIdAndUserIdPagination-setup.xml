@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- dbunit用于初始化数据的文件，每个ut方法都会执行一遍 -->
+<!-- 默认从以下路径尝试找setup.xml文件，找不到会便停止往下找： -->
+<!-- 1. <packageName>/<className>.<methodName>-setup.xml -->
+<!-- 2. <packageName>/<className>-setup.xml -->
+<!-- 3. <packageName>/setup.xml -->
+<!-- 4. <className>.<methodName>-setup.xml -->
+<!-- 5. <className>.setup.xml -->
+<!-- 6. setup.xml -->
+<dataset>
+	<Task_Instance id="10000" task_id="1" status="20"
+		workflow_instance_id="3000" schedule_time="2014-11-26 17:38:00"
+		start_time="2014-11-26 17:38:10" end_time="2014-11-26 17:38:10"
+		create_time="2014-11-26 17:37:00" update_time="2014-11-26 17:38:30" />
+	<Task_Instance id="1" task_id="1" status="10"
+		workflow_instance_id="1" start_time="2014-11-26 00:00:00" end_time="2014-11-26 00:00:10"
+		create_time="2014-11-26 00:00:00" update_time="2014-11-26 00:01:00" />
+	<Task_Instance id="2" task_id="2" status="10"
+		workflow_instance_id="1" start_time="2014-11-26 00:00:00" end_time="2014-11-26 00:00:10"
+		create_time="2014-11-26 00:00:00" update_time="2014-11-26 00:01:00" />
+	<Task_Instance id="3" task_id="3" status="10"
+		workflow_instance_id="1" start_time="2014-11-26 00:00:00" end_time="2014-11-26 00:00:10"
+		create_time="2014-11-26 00:00:00" update_time="2014-11-26 00:01:00" />
+	<Task_Instance id="4" task_id="100" status="10"
+		workflow_instance_id="1" start_time="2014-11-26 00:00:00" end_time="2014-11-26 00:00:10"
+		create_time="2014-11-26 00:00:00" update_time="2014-11-26 00:01:00" />
+	<Task_Instance id="5" task_id="1" workflow_instance_id="2"
+		status="10" start_time="2014-11-26 00:05:00" end_time="2014-11-26 00:05:10"
+		create_time="2014-11-26 00:05:00" update_time="2014-11-26 00:06:00" />
+	<Task_Instance id="6" task_id="2" status="10"
+		workflow_instance_id="2" start_time="2014-11-26 00:15:00" end_time="2014-11-26 00:15:10"
+		create_time="2014-11-26 00:15:00" update_time="2014-11-26 00:16:00" />
+	<Task_Instance id="7" task_id="2" status="10"
+		workflow_instance_id="2" start_time="2014-11-26 00:15:00" end_time="2014-11-26 00:15:10"
+		create_time="2014-11-26 00:15:00" update_time="2014-11-26 00:16:00" />
+
+	<Workflow_Instance id="1" workflow_id="1" status="1"
+		schedule_time="2014-11-26 17:38:00" start_time="2014-11-26 17:38:10"
+		create_time="2014-11-26 17:37:00" update_time="2014-11-26 17:38:30" />
+	<Workflow_Instance id="2" workflow_id="1" status="10"
+		schedule_time="2014-11-26 17:38:00" create_time="2014-11-26 17:37:00"
+		update_time="2014-11-26 17:37:00" />
+
+	<Task id="1" name="test1" owner="1" type="1" crontab="0/5 * * * * ?"
+		can_skip="1" last_status_dependency="1" command="echo test1" agent_id="2"
+		status="1" timeout="1" retry_times="1" last_schedule_time="2009-09-09 00:00:00"
+		description="desc...1" create_time="2009-09-09 00:00:00" update_time="2009-09-09 00:00:00" />
+	<Task id="2" name="test2" owner="2" type="1" crontab="0/5 * * * * ?"
+		can_skip="1" last_status_dependency="1" command="echo test2" agent_id="2"
+		status="1" timeout="1" retry_times="1" last_schedule_time="2009-09-09 00:00:00"
+		description="desc...1" create_time="2009-09-09 00:00:00" update_time="2009-09-09 00:00:00" />
+	<Task id="3" name="test3" owner="3" type="1" crontab="0/5 * * * * ?"
+		can_skip="1" last_status_dependency="1" command="echo test3" agent_id="2"
+		status="1" timeout="1" retry_times="1" last_schedule_time="2009-09-09 00:00:00"
+		description="desc...1" create_time="2009-09-09 00:00:00" update_time="2009-09-09 00:00:00" />
+	<Task id="100" name="team1_root_node" owner="1" type="1" can_skip="0"
+		last_status_dependency="1" command="echo test3" agent_id="2" status="2"
+		timeout="1" retry_times="1" last_schedule_time="2009-09-09 00:00:00"
+		description="desc...1" create_time="2009-09-09 00:00:00" update_time="2009-09-09 00:00:00" />
+
+	<User id="1" name="admin" password="21232f297a57a5a743894a0e4a801fc3"
+		email="platform@ndpmedia.com" telephone="15921096896" create_time="2014-11-26 17:00:00"
+		update_time="2014-11-26 17:38:00" token="token1" team_id="1" />
+	<User id="2" name="admin2" password="21232f297a57a5a743894a0e4a801fc3"
+		email="platform@ndpmedia.com" telephone="15921096896" create_time="2014-11-26 17:00:00"
+		update_time="2014-11-26 17:38:00" token="token2" team_id="1" />
+	<User id="3" name="admin3" password="21232f297a57a5a743894a0e4a801fc3"
+		email="platform@ndpmedia.com" telephone="15921096896" create_time="2014-11-26 17:00:00"
+		update_time="2014-11-26 17:38:00" token="token3" team_id="2" />
+	<User id="4" name="admin4" password="21232f297a57a5a743894a0e4a801fc3"
+		email="platform@ndpmedia.com" telephone="15921096896" create_time="2014-11-26 17:00:00"
+		update_time="2014-11-26 17:38:00" token="token3" team_id="3" />
+
+	<Team id="1" name="team1" create_time="2014-11-26 17:00:00"
+		update_time="2014-11-26 17:38:00" />
+	<Team id="2" name="team2" create_time="2014-11-26 17:00:00"
+		update_time="2014-11-26 17:38:00" />
+	<Team id="3" name="team3" create_time="2014-11-26 17:00:00"
+		update_time="2014-11-26 17:38:00" />
+
+	<Agent id="2" name="platform1" ip="10.0.0.1" alive="1" enable="1"
+		create_time="2014-11-26 17:38:00" update_time="2014-11-26 17:38:00" />
+
+</dataset> 

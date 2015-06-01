@@ -1,0 +1,66 @@
+package com.yeahmobi.yscheduler.model.type;
+
+/**
+ * @author atell
+ */
+public enum TaskInstanceStatus {
+
+    DEPENDENCY_WAIT(1, "检查依赖"), //
+    READY(10, "待运行"), //
+    RUNNING(20, "运行中"), //
+    SUCCESS(30, "运行成功"), //
+    FAILED(40, "运行失败"), //
+    WORKFLOW_FAILED(50, "工作流失败"), //
+    ;
+
+    private int    id;
+    private String desc;
+
+    TaskInstanceStatus(int id, String desc) {
+        this.id = id;
+        this.desc = desc;
+    }
+
+    public int getId() {
+        return this.id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public String getDesc() {
+        return this.desc;
+    }
+
+    public void setDesc(String desc) {
+        this.desc = desc;
+    }
+
+    public static TaskInstanceStatus valueOf(int id) {
+        switch (id) {
+            case 1:
+                return DEPENDENCY_WAIT;
+            case 10:
+                return READY;
+            case 20:
+                return RUNNING;
+            case 30:
+                return SUCCESS;
+            case 40:
+                return FAILED;
+            case 50:
+                return WORKFLOW_FAILED;
+        }
+        return null;
+    }
+
+    public boolean isCompleted() {
+        return FAILED.equals(this) || SUCCESS.equals(this) || WORKFLOW_FAILED.equals(this);
+    }
+
+    public boolean beforeRunning() {
+        return DEPENDENCY_WAIT.equals(this) || READY.equals(this);
+    }
+
+}

@@ -1,0 +1,1 @@
+java -classpath "classes/:lib/*" -Dfile.encoding=UTF-8 -Dyscheduler.devMode=false com.yeahmobi.yscheduler.monitor.Monitor

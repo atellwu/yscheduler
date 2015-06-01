@@ -1,0 +1,74 @@
+package com.yeahmobi.yscheduler.agentframework.agent.event.task;
+
+import java.util.Map;
+import java.util.concurrent.FutureTask;
+
+import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.Validate;
+import org.apache.commons.lang.math.NumberUtils;
+
+import com.yeahmobi.yscheduler.agentframework.agent.task.TaskTransaction;
+
+/**
+ * 发起callback：http://localhost:24368/yscheduler/?eventType=TASK_CALLBACK&params={
+ * 'txId':'21','returnValue':'1','log':'...'} <br>
+ *
+ * @author atell
+ */
+public class CallbackTaskExecutor extends AbstractAsyncTaskExecutor {
+
+    private Integer returnValue;
+    private String  log;
+    private long    txId;
+
+    public void callback(TaskTransaction calloutTx, Map<String, String> params) throws Exception {
+        // 拿到returnValue和log
+        this.returnValue = Integer.valueOf(params.get("returnValue"));
+        this.log = params.get("log");
+        // 存储log
+        info(calloutTx, "Callback came.");
+        if (StringUtils.isNotEmpty(this.log)) {
+            info(calloutTx, this.log);
+        }
+        // 根据returnValue，判断成功与否
+        if (this.returnValue == 0) {
+            calloutTx.endWithSuccess(this.returnValue);
+        } else {
+            calloutTx.endWithFail(this.returnValue);
+        }
+    }
+
+    @Override
+    public void validate(Map<String, String> params) throws IllegalArgumentException {
+        String returnValue = params.get("returnValue");
+        Validate.notEmpty(returnValue, "returnValue cannot be empty");
+        Validate.isTrue(NumberUtils.isNumber(returnValue), "returnValue should be numberic");
+        String txId = this.getParams().get("txId");
+        Validate.isTrue(NumberUtils.isNumber(txId), "Params invalid (txId is invalid)");
+        this.txId = Long.parseLong(txId);
+    }
+
+    public void execute(TaskTransaction taskTransaction) {
+        try {
+            // 从param能把到txId，拿到pair，拿到futrue，f.run
+            Pair pair = holder.get(this.txId);
+            Validate.notNull(pair, "Params invalid (txId is not match a callout)");
+
+            // callback
+            callback(pair.tx, this.getParams());
+
+            // callback success
+            FutureTask task = pair.task;
+            task.run();
+
+            taskTransaction.endWithSuccess(0);
+        } catch (Exception e1) {
+            taskTransaction.endWithFail(null);
+        }
+    }
+
+    public void cancel() {
+        // callback事件一般由第三方回调，而且生命周期比较短暂，不支持cancel
+    }
+
+}

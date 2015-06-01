@@ -1,0 +1,25 @@
+package com.yeahmobi.yscheduler.agentframework.agent.task;
+
+import java.util.Map;
+
+public abstract class AbstractAgentTask implements AgentTask {
+
+    private Map<String, String> params;
+
+    private String              eventType;
+
+    public AbstractAgentTask(String eventType, Map<String, String> params) {
+        super();
+        this.eventType = eventType;
+        this.params = params;
+    }
+
+    public Map<String, String> getTaskParams() {
+        return this.params;
+    }
+
+    public String getEventType() {
+        return this.eventType;
+    }
+
+}

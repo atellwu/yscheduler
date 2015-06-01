@@ -1,0 +1,110 @@
+<div class="col-xs-11">
+	<div id="alertMessageDiv" style="text-align: center;"></div>
+	
+	#if($userContext.getUserContext().isAdmin())
+	<div class="col-sm-5">
+		<div class="widget-box">
+			<div class="widget-header">
+				<h4>上传agent软件包</h4>
+			</div>
+			<div class="widget-body">
+				<div class="widget-main no-padding">
+					<iframe name='uploadAgentFileFormFrame' style='display: none;'></iframe>
+					<form id="uploadAgentFileForm" action="" method="post"
+						enctype="multipart/form-data" target="uploadAgentFileFormFrame">
+						<input type="hidden" name="nameSpace" value="agentArchive" /> <input
+							type="hidden" name="key" id="key" value="default" />
+						<fieldset>
+							<input name="fileUpload" type="file" id="agentFileInput">
+						</fieldset>
+						<div class="form-actions center">
+							<button type="button" onclick="uploadAgentFile()"
+								class="btn btn-sm btn-success">
+								上传 <i class="icon-arrow-up icon-on-right bigger-110"></i>
+							</button>
+						</div>
+					</form>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="col-sm-5">
+		<div class="widget-box">
+			<div class="widget-header">
+				<h4>上传 agent 升级脚本</h4>
+			</div>
+			<div class="widget-body">
+				<div class="widget-main no-padding">
+					<iframe name='uploadUpgradeShellFileFormFrame' style='display: none;'></iframe>
+					<form id="uploadUpgradeShellFileForm" action="" method="post"
+						enctype="multipart/form-data" target="uploadUpgradeShellFileFormFrame">
+						<input type="hidden" name="nameSpace" value="agentUpgradeShellFile" /> <input
+							type="hidden" name="key" id="key" value="default" />
+						<fieldset>
+							<input name="fileUpload" type="file" id="upgradeShellFileInput">
+						</fieldset>
+						<div class="form-actions center">
+							<button type="button" onclick="uploadUpgradeShellFile()"
+								class="btn btn-sm btn-success">
+								上传 <i class="icon-arrow-up icon-on-right bigger-110"></i>
+							</button>
+						</div>
+					</form>
+				</div>
+			</div>
+		</div>
+	</div>
+	#end
+	<p style="text-align: right; clear: both;">
+		<button class="btn btn-sm btn-info"
+			onclick="app.openCreateAgentModal()">添加Agent</button>
+	</p>
+	<div class="table-responsive">
+		<table class="table table-striped table-bordered table-hover"
+			id="listTable">
+			<thead>
+				<tr>
+					<th>名称</th>
+					<th>IP</th>
+					<th>创建时间</th>
+					<th>所属团队</th>
+					<th>状态</th>
+					<th>版本</th>
+					<th>操作</th>
+				</tr>
+			</thead>
+			<tbody>
+				#foreach($agent in $list)
+				<tr>
+					<td><b>$agent.name</b></td>
+					<td>$agent.ip</td>
+					<td>$!dateFormatUtils.format($agent.createTime,'yyyy年MM月dd日HH时mm分')</td>
+					<td>#foreach($team in $teams) #if($team.id == $agent.teamId)
+						$team.name #end #end</td> #if(!$agent.enable)
+					<td><span class="label label-info arrowed-right">下线</span></td> #elseif
+					($agent.alive)
+					<td><span class="label label-success arrowed-right">正常</span></td> #else
+					<td><span class="label label-danger arrowed-right">异常</span></td> #end
+					<td>$agent.version</td>
+					<td style="width: 300px"><a href="javascript:;"
+						onclick="app.openRemoveAgentModal($agent.id,'$agent.name')"><span
+							class="btn btn-xs btn-danger"> 删除 </span></a> &nbsp;<a
+						href="javascript:;"
+						onclick="app.openUpdateAgentIpModal($agent.id,'$agent.name','$agent.ip',$agent.teamId)"><span
+							class="btn btn-xs btn-info">修改</span></a>&nbsp; #if($agent.enable)<a
+						href="javascript:;"
+						onclick="app.openEnableOrDisableAgentModal($agent.id,'$agent.name',false)">
+							<span class="btn btn-xs btn-warning">下线</span>
+					</a> #else<a href="javascript:;"
+						onclick="app.openEnableOrDisableAgentModal($agent.id,'$agent.name',true)">
+							<span class="btn btn-xs btn-success">上线</span>
+					</a> #end &nbsp;<a href="javascript:;"
+									onclick="app.openTriggerUpgradeModal($!agent.upgradeTaskId)"><span
+										class="btn btn-xs btn-primary">升级</span></a></td>
+				</tr>
+				#end
+			</tbody>
+		</table>
+		#screen("paginator.htm")
+	</div>
+</div>

@@ -1,0 +1,68 @@
+package com.yeahmobi.yscheduler.agentframework.agent.task.shell;
+
+import java.io.IOException;
+
+import org.apache.commons.exec.CommandLine;
+import org.apache.commons.exec.DefaultExecutor;
+import org.apache.commons.exec.ExecuteWatchdog;
+import org.apache.commons.exec.Executor;
+import org.apache.commons.exec.PumpStreamHandler;
+
+import com.yeahmobi.yscheduler.agentframework.agent.task.BaseTaskExecutor;
+import com.yeahmobi.yscheduler.agentframework.agent.task.TaskTransaction;
+
+/**
+ * @author Leo.Liang
+ */
+public class ShellTaskExecutor extends BaseTaskExecutor {
+
+    private String   command;
+    private Executor executor;
+
+    public ShellTaskExecutor() {
+    }
+
+    public ShellTaskExecutor(String command) {
+        this.command = command;
+    }
+
+    /**
+     * @param command the command to set
+     */
+    public void setCommand(String command) {
+        this.command = command;
+    }
+
+    public void execute(TaskTransaction taskTransaction) {
+        try {
+            CommandLine cmdLine = new CommandLine("bash");
+            cmdLine.addArgument("-c");
+            cmdLine.addArgument(this.command, false);
+            this.executor = new DefaultExecutor();
+            this.executor.setExitValues(null);
+            this.executor.setStreamHandler(new PumpStreamHandler(taskTransaction.getOutputStream()));
+            this.executor.setWatchdog(new ExecuteWatchdog(-1));
+            int exitValue = this.executor.execute(cmdLine);
+            if (exitValue == 0) {
+                taskTransaction.endWithSuccess(exitValue);
+            } else {
+                taskTransaction.endWithFail(exitValue);
+            }
+        } catch (Throwable e) {
+            try {
+                error(taskTransaction,
+                      String.format("Exception occurs while execute task with txId=(%s).", taskTransaction.getId()), e);
+            } catch (IOException e1) {
+                // ignore
+            }
+            taskTransaction.endWithFail(null);
+        }
+
+    }
+
+    public void cancel() {
+        if (this.executor != null) {
+            this.executor.getWatchdog().destroyProcess();
+        }
+    }
+}

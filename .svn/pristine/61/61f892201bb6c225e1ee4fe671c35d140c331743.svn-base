@@ -1,0 +1,39 @@
+package com.yeahmobi.yscheduler.agentframework.agent.event.shell;
+
+import java.util.Map;
+
+import org.apache.commons.lang.StringUtils;
+
+import com.yeahmobi.yscheduler.agentframework.agent.event.HandlerResult;
+import com.yeahmobi.yscheduler.agentframework.agent.event.TaskSubmitionEventHandler;
+import com.yeahmobi.yscheduler.agentframework.agent.task.AgentTask;
+import com.yeahmobi.yscheduler.agentframework.agent.task.shell.ShellAgentTask;
+
+/**
+ * @author Leo.Liang
+ */
+public class ShellTaskSubmitionEventHandler extends TaskSubmitionEventHandler {
+
+    private static final String PARAM_SHELL_COMMAND = "shellCmd";
+
+    private boolean validateCommand(String command, HandlerResult handlerResult) {
+        if (StringUtils.isBlank(command)) {
+            handlerResult.setSuccess(false);
+            handlerResult.setErrorMsg("Parameter shellCmd can not be empty or null.");
+            return false;
+        }
+        return true;
+    }
+
+    @Override
+    protected AgentTask beforeSubmit(Map<String, String> params, HandlerResult handlerResult) {
+        String command = params.get(PARAM_SHELL_COMMAND);
+        if (!validateCommand(command, handlerResult)) {
+            return null;
+        }
+
+        return new ShellAgentTask(command);
+
+    }
+
+}

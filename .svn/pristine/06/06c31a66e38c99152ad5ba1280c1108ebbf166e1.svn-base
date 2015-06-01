@@ -1,0 +1,28 @@
+package com.yeahmobi.yscheduler.agentframework.variable;
+
+import org.apache.commons.lang.StringUtils;
+
+import com.yeahmobi.yscheduler.agentframework.config.Config;
+import com.yeahmobi.yscheduler.common.variable.VariableContext;
+import com.yeahmobi.yscheduler.common.variable.VariableException;
+import com.yeahmobi.yscheduler.common.variable.VariableHandler;
+
+public class AgentVersionHandler implements VariableHandler {
+
+    public final String VARIABLE_NAME = "agentVersion";
+
+    public String process(String[] params, VariableContext variableContext) throws VariableException {
+        String value = StringUtils.EMPTY;
+        try {
+            // TODO 获取agentVersion
+            for (String param : params) {
+                if (this.VARIABLE_NAME.equals(param)) {
+                    value = Config.AGENT_VERSION;
+                }
+            }
+        } catch (Exception e) {
+            throw new VariableException(e);
+        }
+        return value;
+    }
+}

@@ -1,0 +1,35 @@
+package com.yeahmobi.yscheduler.model.service;
+
+import java.util.Date;
+import java.util.List;
+
+import com.yeahmobi.yscheduler.common.Paginator;
+import com.yeahmobi.yscheduler.model.TaskInstance;
+import com.yeahmobi.yscheduler.model.type.TaskInstanceStatus;
+
+public interface TaskInstanceService {
+
+    TaskInstance get(long id);
+
+    List<TaskInstance> list(long taskId, int pageNum, Paginator paginator);
+
+    List<TaskInstance> listAllDependencyWait();
+
+    List<TaskInstance> listAll(long taskId);
+
+    List<TaskInstance> listByWorkflowInstanceId(long workflowInstanceId);
+
+    void save(TaskInstance instance);
+
+    List<TaskInstance> getAllUncompleteds();
+
+    void updateStatus(Long instanceId, TaskInstanceStatus status);
+
+    void deleteByWorkflowInstanceId(long workflowInstanceId);
+
+    List<TaskInstance> listByWorkflowInstanceId(Long instanceId, int pageNum, Paginator paginator);
+
+    boolean existUncompletedScheduled(long taskId);
+
+    public boolean exist(long taskId, Date scheduleTime);
+}

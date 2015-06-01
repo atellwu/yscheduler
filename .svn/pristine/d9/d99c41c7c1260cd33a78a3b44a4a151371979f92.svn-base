@@ -1,0 +1,25 @@
+package com.yeahmobi.yscheduler.web.service;
+
+import java.util.List;
+
+import com.yeahmobi.yscheduler.common.Paginator;
+import com.yeahmobi.yscheduler.model.User;
+import com.yeahmobi.yscheduler.web.common.NameValuePair;
+
+public interface UserService {
+
+    User get(long id);
+
+    List<User> list(int pageNum, Paginator paginator);
+
+    List<NameValuePair> list();
+
+    User get(String username);
+
+    void add(User user);
+
+    void remove(long userId);
+
+    void resetPassword(long userId);
+
+}

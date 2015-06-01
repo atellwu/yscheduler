@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- dbunit用于初始化数据的文件，每个ut方法都会执行一遍 -->
+<!-- 默认从以下路径尝试找setup.xml文件，找不到会便停止往下找： -->
+<!-- 1. <packageName>/<className>.<methodName>-setup.xml -->
+<!-- 2. <packageName>/<className>-setup.xml -->
+<!-- 3. <packageName>/setup.xml -->
+<!-- 4. <className>.<methodName>-setup.xml -->
+<!-- 5. <className>.setup.xml -->
+<!-- 6. setup.xml -->
+<dataset>
+	<!-- id,name,password,email,telephone,create_time,update_time -->
+	<!-- password原文是admin -->
+	<User id="1" name="admin1" password="21232f297a57a5a743894a0e4a801fc3" email="platform@ndpmedia.com" telephone="15921096896"
+		create_time="2014-11-26 17:00:00" update_time="2014-11-26 17:38:00" token="token1" team_id="1"/>
+	<User id="2" name="admin2" password="21232f297a57a5a743894a0e4a801fc3" email="platform@ndpmedia.com" telephone="15921096896"
+		create_time="2014-11-26 17:00:00" update_time="2014-11-26 17:38:00" token="token2" team_id="2"/>
+	<User id="3" name="admin3" password="21232f297a57a5a743894a0e4a801fc3" email="platform@ndpmedia.com" telephone="15921096896"
+		create_time="2014-11-26 17:00:00" update_time="2014-11-26 17:38:00" token="token3" team_id="3"/>
+	<User id="4" name="admin4" password="21232f297a57a5a743894a0e4a801fc3" email="platform@ndpmedia.com" telephone="15921096896"
+		create_time="2014-11-26 17:00:00" update_time="2014-11-26 17:38:00" token="token4" team_id="4"/>
+	<User id="5" name="admin5" password="21232f297a57a5a743894a0e4a801fc3" email="platform@ndpmedia.com" telephone="15921096896"
+		create_time="2014-11-26 17:00:00" update_time="2014-11-26 17:38:00" token="token5" team_id="5"/>
+	<User id="6" name="admin6" password="21232f297a57a5a743894a0e4a801fc3" email="platform@ndpmedia.com" telephone="15921096896"
+		create_time="2014-11-26 17:00:00" update_time="2014-11-26 17:38:00" token="token6" team_id="6"/>
+	<User id="7" name="admin7" password="21232f297a57a5a743894a0e4a801fc3" email="platform@ndpmedia.com" telephone="15921096896"
+		create_time="2014-11-26 17:00:00" update_time="2014-11-26 17:38:00" token="token7" team_id="7"/>
+	<User id="8" name="admin8" password="21232f297a57a5a743894a0e4a801fc3" email="platform@ndpmedia.com" telephone="15921096896"
+		create_time="2014-11-26 17:00:00" update_time="2014-11-26 17:38:00" token="token8" team_id="8"/>
+	<User id="9" name="admin9" password="21232f297a57a5a743894a0e4a801fc3" email="platform@ndpmedia.com" telephone="15921096896"
+		create_time="2014-11-26 17:00:00" update_time="2014-11-26 17:38:00" token="token9" team_id="9"/>
+	<User id="10" name="admin10" password="21232f297a57a5a743894a0e4a801fc3" email="platform@ndpmedia.com" telephone="15921096896"
+		create_time="2014-11-26 17:00:00" update_time="2014-11-26 17:38:00" token="token10" team_id="10"/>
+	<User id="11" name="admin11" password="21232f297a57a5a743894a0e4a801fc3" email="platform@ndpmedia.com" telephone="15921096896"
+		create_time="2014-11-26 17:00:00" update_time="2014-11-26 17:38:00" token="token11" team_id="11"/>
+	<User id="12" name="admin12" password="21232f297a57a5a743894a0e4a801fc3" email="platform@ndpmedia.com" telephone="15921096896"
+		create_time="2014-11-26 17:00:00" update_time="2014-11-26 17:38:00" token="token12" team_id="12"/>
+	<User id="13" name="admin13" password="21232f297a57a5a743894a0e4a801fc3" email="platform@ndpmedia.com" telephone="15921096896"
+		create_time="2014-11-26 17:00:00" update_time="2014-11-26 17:38:00" token="token13" team_id="13"/>
+	<User id="14" name="admin14" password="21232f297a57a5a743894a0e4a801fc3" email="platform@ndpmedia.com" telephone="15921096896"
+		create_time="2014-11-26 17:00:00" update_time="2014-11-26 17:38:00" token="token14" team_id="14"/>
+	<User id="15" name="admin15" password="21232f297a57a5a743894a0e4a801fc3" email="platform@ndpmedia.com" telephone="15921096896"
+		create_time="2014-11-26 17:00:00" update_time="2014-11-26 17:38:00" token="token15" team_id="15"/>
+</dataset> 

@@ -1,0 +1,111 @@
+<div class="container">
+	<h4 class="text-success">总体介绍</h4>
+	<div class="well">
+		<p>YScheduler是一个分布式的任务/作业调度平台，由scheduler和若干个agent组成。
+			agent机器上需要部署agent包负责实际执行作业；scheduler负责调度作业、管理作业状态和告警等。 该平台现有的主要功能如下:</p>
+
+		<ul>
+			<li class="text-info">shell执行</li> 在远程主机上执行shell命令
+			<li class="text-info">http作业调度</li>
+			执行作业的机器上不需要部署 agent，而是提供 http 接口，yscheduler 将通过 call http 接口的方式来调度您的作业。
+			<br><strong>1. 关于 “调用url”</strong>
+			<br>
+			<ul>
+				<li>
+					“调用url”由您在创建任务时填写，yscheduler将通过调用 url 来触发您的作业，调用时会带上 “txId 参数” (如果勾选了回调还会带上 “callback 参数” )。调用后，若您的接口返回 200，则表示调用成功(注意只是调用成功，不是任务成功，任务成功与否，需要视下方的“回调”而定)。
+					<br> 例如您可以填写：http://&lt;your
+					path&gt;/run，则 yscheduler 会调用“http://&lt;your path&gt;?txId=xx&callback=xxx”
+					来触发您的作业。
+					<br><strong>注意</strong>： yscheduler 通过 url 触发您的作业后，您的作业的运行时间如果比较长的话 (比如超过 10 秒)，则建议您异步执行作业，否则 http call 将超时。
+				</li>
+			</ul>
+			<strong>2. 关于 “是否需要回调”</strong>
+			<br>
+			&nbsp;&nbsp;&nbsp;在创建任务时，您可以设置 “是否需要回调”，表示您是否需要回调 yscheduler 来设置作业的运行结果 (returnValue) 和日志 (log)。
+			<ul>
+				<li>
+					如果需要回调，则触发您的作业时，会带上 callback 给您，您的作业执行完之后，需要回调该 callback，并且添加 returnValue 的参数，表示是否执行成功 (0表示成功，非0表示失败)，同时可以通过 log 参数 (post 方式) 回传 log。
+					<br>
+					例如：callback=http://&lt;agent address&gt;/yscheduler/?eventType=TASK_CALLBACK&txId=92&returnValue= <br>
+					您的作业完成后，需要调用 http://&lt;agent address&gt;/yscheduler/?eventType=TASK_CALLBACK&txId=92&returnValue=0或1 来告诉 yscheduler 运行结果，另外可加上 log 参数上传日志，以便在 yscheduler 界面查看。 
+				</li>
+				<li>
+					如果不需要回调，则触发您的 url 之后，任务即结束，不需要等待回调。您的url如果返回200，表示任务成功，否则任务失败。</li>
+			</ul>
+			<strong>3. 关于 “取消url”</strong>
+			<br>
+			<ul>
+				<li>
+					若您的任务支持取消，则需要填写 “取消 url”。当您在 yscheduler 系统界面上，点击取消任务时，yscheduler 会调用该 url 通知您。
+					<br> 例如您可以填写：http://&lt;your
+					path&gt;/cancel，则 yscheduler 会在取消任务前，调用 “http://&lt;your
+					path&gt;/cancel?txId=xx” 来通知您的作业。
+				</li>
+				<li>
+					如果不需要取消，则可以不填该 url</li>
+			</ul>
+			<li class="text-info">定时调度</li> 定时执行分布在远程主机上的作业
+			<li class="text-info">工作流</li> 在工作流中，可以定义作业之间的依赖关系，从而定义了一组作业的执行顺序
+			<li class="text-info">手动执行</li> 手工触发作业和工作流
+			<li class="text-info">运行详情</li> 查看作业和工作流的执行情况、日志,对执行异常发出告警
+			<li class="text-info">权限管理</li> 对作业、工作流、执行详情等有读写权限的控制
+		</ul>
+	</div>
+	<h4 class="text-success">基本概念</h4>
+	<dl class="dl-horizontal well">
+		<dt>Task</dt>
+		<dd>部署和调度的最小单位，包括作业类型、执行指令等基本配置。</dd>
+		<dt>Dependency</dt>
+		<dd>用于定义作业之间的关系。作业A依赖作业B，表示在B执行成功的情况下才能执行A。</dd>
+		<dt>Workflow</dt>
+		<dd>由若干个作业组成，用来定义作业之间的依赖关系，可以作为一个调度单位。</dd>
+		<dt>Instance</dt>
+		<dd>作业或工作流的一次调度。</dd>
+		<dd>以调度表达式为0 0 * * *的作业为例，该作业每天执行，那么该作业在2014-11-19
+			00:00:00的一次调度被称为一个task instance。</dd>
+		<dt>Attempt</dt>
+		<dd>作业实例的一次执行，一个task instance可能包括多次attempt。</dd>
+		<dd>可以通过重试次数设置一个instance最多能执行的attempt次数。</dd>
+		<dt>调度表达式</dt>
+		<dd>使用quartz表达式，兼容了linux下的crontab表达式。</dd>
+		<dd>目前平台支持分钟级别的调度。</dd>
+
+	</dl>
+
+	<h4 class="text-success">规划中的功能</h4>
+	<table class="table table-striped table-bordered well">
+		<tr>
+			<td class="text-info">权限控制</td>
+			<td>设置用户组，完善权限控制</td>
+		</tr>
+		<tr>
+			<td class="text-info">执行机器HA</td>
+			<td>可以通过页面上传任务执行包，执行的时候自动选择一个机器执行</td>
+		</tr>
+		<tr>
+			<td class="text-info">作业类型支持</td>
+			<td>支持更多的作业类型，如hadoop，hive等</td>
+		</tr>
+		<tr>
+			<td class="text-info">开放调度接口</td>
+			<td>开放一些调度接口控用户的程序调用</td>
+		</tr>
+
+	</table>
+	<h4 class="text-success">部署</h4>
+	<div class="well">
+		<h5 class="text-info">现有环境</h5>
+		<ul>
+			<li>测试环境</li>
+			<a href="http://qa.yscheduler.dy/">http://qa.yscheduler.dy/</a>
+			<li>线上环境</li>
+			<a href="http://scheduler.ymtech.info/">http://scheduler.ymtech.info/</a>
+		</ul>
+		<h5 class="text-info">agent包</h5>
+		<ul>
+			<li>下载地址</li>
+			<a href="${rc.contextPath}/download/agent.zip">${rc.contextPath}/download/agent.zip</a>
+		</ul>
+	</div>
+
+</div>

@@ -1,0 +1,286 @@
+package com.yeahmobi.yscheduler.agentframework.agent.task;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringUtils;
+
+/**
+ * @author Leo.Liang
+ */
+public class FileBasedTaskTransaction implements TaskTransaction {
+
+    private static final String FILE_NAME_META = "tx.meta";
+    private static final String FILE_NAME_LOG  = "tx.log";
+    private static final String LINE_SEPARATOR = System.getProperty("line.separator");
+    private static final String DATE_FORMAT    = "yyyy-MM-dd HH:mm:ss";
+    private static final String META_ENCODING  = "utf-8";
+    // private static final String LOG_ENCODING = "utf-8";
+
+    private long                id;
+    private TaskExecutor        taskExecutor;
+    private File                baseDir;
+    private OutputStream        outputStream;
+    private Meta                meta;
+
+    public FileBasedTaskTransaction(long txId, TaskExecutor taskExecutor, File baseDir) {
+        this.id = txId;
+        this.taskExecutor = taskExecutor;
+        this.baseDir = baseDir;
+    }
+
+    public OutputStream getOutputStream() throws IOException {
+        if (this.outputStream == null) {
+            synchronized (this) {
+                if (this.outputStream == null) {
+                    this.outputStream = FileUtils.openOutputStream(getLogFile(), true);
+                }
+            }
+        }
+
+        return this.outputStream;
+    }
+
+    private File getLogFile() {
+        return new File(this.baseDir, FILE_NAME_LOG);
+    }
+
+    public void endWithFail(Integer returnValue) {
+        try {
+            this.meta.setEnd(new Date());
+            this.meta.setStatus(TaskTransactionStatus.FAIL);
+            this.meta.setReturnValue(returnValue);
+            flushMeta();
+            close();
+        } catch (Throwable e) {
+            // maybe meta file has been close, just ignore it
+        }
+    }
+
+    public void endWithSuccess(Integer returnValue) {
+        try {
+            this.meta.setEnd(new Date());
+            this.meta.setStatus(TaskTransactionStatus.SUCCESS);
+            this.meta.setReturnValue(returnValue);
+            flushMeta();
+            close();
+        } catch (Throwable e) {
+            // maybe meta file has been close, just ignore it
+        }
+    }
+
+    public void endWithUnknownStatus() {
+        try {
+            this.meta.setEnd(new Date());
+            this.meta.setStatus(TaskTransactionStatus.COMPLETE_WITH_UNKNOWN_STATUS);
+            flushMeta();
+            close();
+        } catch (Throwable e) {
+            // maybe meta file has been close, just ignore it
+        }
+    }
+
+    public long getId() {
+        return this.id;
+    }
+
+    public TaskTransactionStatus getStatus() {
+        return this.meta.getStatus();
+    }
+
+    public Integer getReturnValue() {
+        return this.meta.getReturnValue();
+    }
+
+    public String getLog() {
+        File logFile = getLogFile();
+        if (logFile.exists()) {
+            try {
+                return FileUtils.readFileToString(logFile);
+            } catch (Throwable e) {
+                // TODO
+            }
+        }
+        return StringUtils.EMPTY;
+    }
+
+    public void cancel() {
+        try {
+            this.taskExecutor.cancel();
+        } finally {
+            try {
+                this.meta.setStatus(TaskTransactionStatus.CANCEL);
+                this.meta.setEnd(new Date());
+                flushMeta();
+                close();
+            } catch (Throwable e) {
+                // maybe meta file has been close, just ignore it
+            }
+        }
+    }
+
+    public void execute() {
+        this.meta.setStatus(TaskTransactionStatus.RUNNING);
+        flushMeta();
+
+        try {
+            this.taskExecutor.execute(this);
+
+            if ((this.meta.getStatus() != TaskTransactionStatus.CANCEL)
+                && (this.meta.getStatus() != TaskTransactionStatus.FAIL)
+                && (this.meta.getStatus() != TaskTransactionStatus.SUCCESS)) {
+                endWithUnknownStatus();
+            }
+        } catch (Throwable e) {
+            endWithFail(null);
+        } finally {
+            close();
+        }
+
+    }
+
+    public void close() {
+        getLogFile().setReadOnly();
+        getMetaFile().setReadOnly();
+        IOUtils.closeQuietly(this.outputStream);
+    }
+
+    public void init() {
+        this.meta = new Meta(TaskTransactionStatus.INIT, new Date(), null, null);
+        flushMeta();
+    }
+
+    public boolean load() {
+        this.meta = loadMeta();
+        return this.meta != null;
+    }
+
+    public long getDuration() {
+        Date start = this.meta.getStart();
+        Date end = this.meta.getEnd();
+        if (start == null) {
+            return 0L;
+        }
+        if (end != null) {
+            return end.getTime() - start.getTime();
+        } else {
+            return new Date().getTime() - start.getTime();
+        }
+    }
+
+    private Meta loadMeta() {
+        try {
+            return Meta.valueOf(FileUtils.readFileToString(getMetaFile(), META_ENCODING));
+        } catch (Throwable e) {
+            return null;
+        }
+    }
+
+    private File getMetaFile() {
+        return new File(this.baseDir, FILE_NAME_META);
+    }
+
+    private void flushMeta() {
+        try {
+            FileUtils.writeStringToFile(getMetaFile(), this.meta.toString(), META_ENCODING);
+        } catch (Throwable e) {
+            // TODO
+            return;
+        }
+    }
+
+    private static class Meta {
+
+        private TaskTransactionStatus status;
+        private Integer               returnValue;
+        private Date                  start;
+        private Date                  end;
+
+        public Meta(TaskTransactionStatus status, Date start, Date end, Integer returnValue) {
+            this.status = status;
+            this.start = start;
+            this.end = end;
+            this.returnValue = returnValue;
+        }
+
+        /**
+         * @return the status
+         */
+        public TaskTransactionStatus getStatus() {
+            return this.status;
+        }
+
+        /**
+         * @return the returnValue
+         */
+        public Integer getReturnValue() {
+            return this.returnValue;
+        }
+
+        /**
+         * @param returnValue the returnValue to set
+         */
+        public void setReturnValue(Integer returnValue) {
+            this.returnValue = returnValue;
+        }
+
+        /**
+         * @param status the status to set
+         */
+        public void setStatus(TaskTransactionStatus status) {
+            this.status = status;
+        }
+
+        /**
+         * @return the start
+         */
+        public Date getStart() {
+            return this.start;
+        }
+
+        /**
+         * @return the end
+         */
+        public Date getEnd() {
+            return this.end;
+        }
+
+        /**
+         * @param end the end to set
+         */
+        public void setEnd(Date end) {
+            this.end = end;
+        }
+
+        /*
+         * (non-Javadoc)
+         * @see java.lang.Object#toString()
+         */
+        @Override
+        public String toString() {
+            SimpleDateFormat sdf = new SimpleDateFormat(DATE_FORMAT);
+            return this.status + LINE_SEPARATOR + (this.start == null ? "" : sdf.format(this.start)) + LINE_SEPARATOR
+                   + (this.end == null ? "" : sdf.format(this.end)) + LINE_SEPARATOR
+                   + (this.returnValue == null ? "" : this.returnValue) + LINE_SEPARATOR;
+        }
+
+        public static Meta valueOf(String src) throws ParseException {
+            String[] arr = StringUtils.splitByWholeSeparatorPreserveAllTokens(src, LINE_SEPARATOR);
+            if ((arr == null) || (arr.length < 4)) {
+                return null;
+            } else {
+                SimpleDateFormat sdf = new SimpleDateFormat(DATE_FORMAT);
+                return new Meta(TaskTransactionStatus.valueOf(arr[0]),
+                                StringUtils.isBlank(arr[1]) ? null : sdf.parse(arr[1]),
+                                StringUtils.isBlank(arr[2]) ? null : sdf.parse(arr[2]),
+                                StringUtils.isBlank(arr[3]) ? null : Integer.valueOf(arr[3]));
+            }
+        }
+    }
+}

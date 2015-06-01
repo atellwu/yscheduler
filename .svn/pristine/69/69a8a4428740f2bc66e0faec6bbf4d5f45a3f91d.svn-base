@@ -1,0 +1,174 @@
+package com.yeahmobi.yscheduler.model.service.impl;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.List;
+
+import org.junit.Assert;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.TestExecutionListeners;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.test.context.support.DependencyInjectionTestExecutionListener;
+
+import com.yeahmobi.yscheduler.common.Paginator;
+import com.yeahmobi.yscheduler.model.Task;
+import com.yeahmobi.yscheduler.model.common.NameValuePair;
+import com.yeahmobi.yscheduler.model.service.TaskService;
+import com.yeahmobi.yscheduler.model.type.TaskStatus;
+import com.yeahmobi.yscheduler.model.type.TaskType;
+import com.yeahmobi.yunit.DbUnitTestExecutionListener;
+import com.yeahmobi.yunit.annotation.DatabaseSetup;
+
+/**
+ * Leo Liang
+ */
+@RunWith(SpringJUnit4ClassRunner.class)
+@ContextConfiguration(locations = { "classpath:applicationContext-test.xml" })
+@TestExecutionListeners({ DependencyInjectionTestExecutionListener.class, DbUnitTestExecutionListener.class })
+public class TaskServiceImplTest {
+
+    @Autowired
+    private TaskService                   taskService;
+
+    private static final SimpleDateFormat sdf          = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    private static final String           DEFAULT_TIME = "2009-09-09 00:00:00";
+
+    @Test
+    @DatabaseSetup
+    public void testGet() throws Exception {
+        Task task = this.taskService.get(1L);
+        assertTask(task, 1L, 1L);
+
+    }
+
+    @Test
+    @DatabaseSetup
+    public void testListWithPagination() throws Exception {
+        Paginator paginator = new Paginator();
+        List<Task> tasks = this.taskService.list(1, paginator, 1);
+        Assert.assertEquals(10, tasks.size());
+        for (int i = 1; i <= tasks.size(); i++) {
+            assertTask(tasks.get(i - 1), i, 1);
+        }
+    }
+
+    @Test
+    @DatabaseSetup
+    public void testListWithPaginationAndWithAuthCheck() throws Exception {
+        Paginator paginator = new Paginator();
+        List<Task> tasks = this.taskService.list(2, paginator, 1);
+        Assert.assertEquals(3, tasks.size());
+        assertTask(tasks.get(0), 11, 1);
+        assertTask(tasks.get(1), 13, 2);
+        assertTask(tasks.get(2), 14, 3);
+    }
+
+    @Test
+    @DatabaseSetup
+    public void testAdd() throws Exception {
+        Task task = new Task();
+        task.setAgentId(1L);
+        task.setCommand("lsls");
+        task.setCrontab("0/1 * * * * ?");
+        task.setDescription("test");
+        task.setName("test1");
+        task.setOwner(1L);
+        task.setRetryTimes(2);
+        task.setStatus(TaskStatus.OPEN);
+        task.setTimeout(100);
+        task.setType(TaskType.HADOOP);
+
+        this.taskService.add(task);
+        String nowTime = sdf.format(new Date());
+        Long id = task.getId();
+
+        Assert.assertNotNull(id);
+        Task actual = this.taskService.get(id);
+        assertTask(actual, id, task.getAgentId(), task.getName(), task.getCommand(), nowTime, nowTime,
+                   task.getCrontab(), task.getDescription(), nowTime, task.getOwner(), task.getRetryTimes(),
+                   task.getStatus(), task.getTimeout(), task.getType());
+
+    }
+
+    @Test
+    @DatabaseSetup
+    public void testUpdate() throws Exception {
+        Task task = new Task();
+        task.setId(15L);
+        task.setAgentId(2L);
+        task.setCommand("lsls");
+        task.setCrontab("0/1 * * * * ?");
+        task.setDescription("test");
+        task.setName("test1");
+        task.setOwner(2L);
+        task.setRetryTimes(2);
+        task.setStatus(TaskStatus.OPEN);
+        task.setTimeout(100);
+        task.setType(TaskType.HADOOP);
+        this.taskService.update(task);
+
+        String nowTime = sdf.format(new Date());
+
+        Task actual = this.taskService.get(15L);
+        assertTask(actual, 15L, task.getAgentId(), task.getName(), task.getCommand(), DEFAULT_TIME, nowTime,
+                   task.getCrontab(), task.getDescription(), nowTime, task.getOwner(), task.getRetryTimes(),
+                   task.getStatus(), task.getTimeout(), task.getType());
+    }
+
+    @Test
+    @DatabaseSetup
+    public void testListByUser() throws Exception {
+        List<NameValuePair> list = this.taskService.list(1L);
+        Assert.assertEquals(13, list.size());
+    }
+
+    @Test
+    @DatabaseSetup
+    public void testCanModify() throws Exception {
+        Assert.assertTrue(this.taskService.canModify(1, 1));
+        Assert.assertFalse(this.taskService.canModify(1, 2));
+        Assert.assertFalse(this.taskService.canModify(13, 1));
+        Assert.assertTrue(this.taskService.canModify(14, 1));
+        Assert.assertFalse(this.taskService.canModify(1000, 1));
+    }
+
+    @Test
+    @DatabaseSetup
+    public void testNameExists() throws Exception {
+        Assert.assertTrue(this.taskService.nameExist("test1"));
+        Assert.assertFalse(this.taskService.nameExist("11111"));
+    }
+
+    private void assertTask(Task task, long id, long owner) {
+        assertTask(task, id, 1, "test" + id, "echo test" + id, DEFAULT_TIME, DEFAULT_TIME, "0/5 * * * * ?", "desc..."
+                                                                                                            + id,
+                   DEFAULT_TIME, owner, 1, TaskStatus.OPEN, 1, TaskType.SHELL);
+    }
+
+    private void assertTask(Task task, long id, long agentId, String name, String command, String createTime,
+                            String updateTime, String crontab, String desc, String lastScheduleTime, long owner,
+                            Integer retryTimes, TaskStatus status, Integer timeout, TaskType type) {
+        Assert.assertEquals(Long.valueOf(id), task.getId());
+        Assert.assertEquals(Long.valueOf(agentId), task.getAgentId());
+        Assert.assertEquals(command, task.getCommand());
+        Assert.assertEquals(createTime, sdf.format(task.getCreateTime()));
+        Assert.assertEquals(updateTime, sdf.format(task.getUpdateTime()));
+        Assert.assertEquals(crontab, task.getCrontab());
+        Assert.assertEquals(desc, task.getDescription());
+        if (lastScheduleTime == null) {
+            Assert.assertNull(task.getLastScheduleTime());
+        } else {
+            Assert.assertEquals(lastScheduleTime, sdf.format(task.getLastScheduleTime()));
+        }
+        Assert.assertEquals(name, task.getName());
+        Assert.assertEquals(Long.valueOf(owner), task.getOwner());
+        Assert.assertEquals(retryTimes, task.getRetryTimes());
+        Assert.assertEquals(status, task.getStatus());
+        Assert.assertEquals(timeout, task.getTimeout());
+        Assert.assertEquals(type, task.getType());
+    }
+
+}

@@ -1,0 +1,86 @@
+package com.yeahmobi.yscheduler.workflow;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.annotation.PostConstruct;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.yeahmobi.yscheduler.model.TaskInstance;
+import com.yeahmobi.yscheduler.model.WorkflowDetail;
+import com.yeahmobi.yscheduler.model.WorkflowInstance;
+import com.yeahmobi.yscheduler.model.service.TaskInstanceService;
+import com.yeahmobi.yscheduler.model.service.WorkflowDetailService;
+import com.yeahmobi.yscheduler.model.service.WorkflowInstanceService;
+import com.yeahmobi.yscheduler.model.type.TaskInstanceStatus;
+import com.yeahmobi.yscheduler.model.type.WorkflowInstanceStatus;
+
+/**
+ * @author Ryan Sun
+ */
+@Service
+public class DefaultWorkflowExecutor implements WorkflowExecutor {
+
+    @Autowired
+    private WorkflowDetailService   workflowDetailService;
+
+    @Autowired
+    private WorkflowInstanceService workflowInstanceService;
+
+    @Autowired
+    private TaskInstanceService     taskInstanceService;
+
+    @Autowired
+    private WorkflowEngine          workflowEngine;
+
+    @PostConstruct
+    public void init() {
+        List<WorkflowInstance> instances = this.workflowInstanceService.getAllInits();
+        for (WorkflowInstance instance : instances) {
+            submit(instance);
+        }
+    }
+
+    public void submit(WorkflowInstance workflowInstance) {
+        long workflowId = workflowInstance.getWorkflowId();
+        long instanceId = workflowInstance.getId();
+        List<WorkflowDetail> details = this.workflowDetailService.list(workflowId);
+        List<TaskInstance> taskInstances = new ArrayList<TaskInstance>();
+        for (WorkflowDetail detail : details) {
+            long taskId = detail.getTaskId();
+            TaskInstance instance = this.taskInstanceService.get(taskId, instanceId);
+            if (instance == null) {
+                instance = new TaskInstance();
+                instance.setTaskId(taskId);
+                instance.setWorkflowInstanceId(instanceId);
+                instance.setStatus(TaskInstanceStatus.DEPENDENCY_WAIT);
+                this.taskInstanceService.save(instance);
+            } else if (instance.getStatus() != TaskInstanceStatus.SUCCESS) {
+                this.taskInstanceService.updateStatus(instance.getId(), TaskInstanceStatus.DEPENDENCY_WAIT);
+            }
+
+            taskInstances.add(instance);
+        }
+        this.workflowEngine.submit(workflowInstance, taskInstances);
+
+    }
+
+    public void restore(WorkflowInstance workflowInstance) {
+        long workflowInstanceId = workflowInstance.getId();
+        if (!workflowInstance.getStatus().isCompleted()) {
+            throw new IllegalStateException("工作流仍在运行中，不能重跑");
+        } else if (workflowInstance.getStatus() == WorkflowInstanceStatus.SUCCESS) {
+            throw new IllegalStateException("工作流已经成功，不能重跑");
+        } else {
+            this.workflowInstanceService.updateStatus(workflowInstanceId, WorkflowInstanceStatus.INITED);
+            submit(workflowInstance);
+        }
+    }
+
+    public void cancel(long workflowInstanceId) {
+        this.workflowEngine.cancel(workflowInstanceId);
+    }
+
+}

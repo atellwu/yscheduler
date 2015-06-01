@@ -1,0 +1,59 @@
+package com.yeahmobi.yscheduler.model.service.impl;
+
+import java.util.List;
+
+import org.apache.ibatis.session.RowBounds;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.yeahmobi.yscheduler.common.Paginator;
+import com.yeahmobi.yscheduler.model.Agent;
+import com.yeahmobi.yscheduler.model.AgentExample;
+import com.yeahmobi.yscheduler.model.common.Constants;
+import com.yeahmobi.yscheduler.model.dao.AgentDao;
+import com.yeahmobi.yscheduler.model.service.AgentService;
+
+@Service
+public class AgentServiceImpl implements AgentService {
+
+    @Autowired
+    private AgentDao agentDao;
+
+    public Agent get(long id) {
+        return this.agentDao.selectByPrimaryKey(id);
+    }
+
+    public List<Agent> list(int pageNum, Paginator paginator) {
+        AgentExample example = new AgentExample();
+
+        example.setOrderByClause("create_time DESC");
+
+        int count = this.agentDao.countByExample(example);
+
+        paginator.setItemsPerPage(Constants.PAGE_SIZE);
+        paginator.setItems(count);
+        paginator.setPage(pageNum);
+
+        int offset = paginator.getBeginIndex() - 1;
+        int limit = Constants.PAGE_SIZE;
+
+        RowBounds rowBounds = new RowBounds(offset, limit);
+
+        List<Agent> list = this.agentDao.selectByExampleWithRowbounds(example, rowBounds);
+
+        return list;
+    }
+
+    public AgentDao getAgentDao() {
+        return this.agentDao;
+    }
+
+    public void setAgentDao(AgentDao agentDao) {
+        this.agentDao = agentDao;
+    }
+
+    public List<Agent> list() {
+        return this.agentDao.selectByExample(new AgentExample());
+    }
+
+}

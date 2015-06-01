@@ -1,0 +1,18 @@
+package com.yeahmobi.yscheduler.web.common;
+
+public class UserContextHolder {
+
+    private static ThreadLocal<UserContext> holder = new ThreadLocal<UserContext>();
+
+    public static void setUserContext(UserContext userContext) {
+        holder.set(userContext);
+    }
+
+    public static UserContext getUserContext() {
+        return holder.get();
+    }
+
+    public static void clear() {
+        holder.remove();
+    }
+}

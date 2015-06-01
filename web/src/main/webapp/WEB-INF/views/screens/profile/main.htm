@@ -1,0 +1,76 @@
+<div id="alertMessageDiv" style="text-align: center;"></div>
+#if($!notice)
+<div id="alertContainer" class="container alert alert-danger">
+	<button type="button" class="close" data-dismiss="alert">&times;</button>
+	<strong>$notice</strong>
+</div>
+#end
+<div class="col-xs-12">
+	<form class="form-horizontal" id="form"
+		action="${rc.contextPath}/profile/update" method="post" role="form">
+		<input type="text" id="id" name="id" style="display: none"
+			value="$!{user.id}">
+
+		<div class="form-group">
+			<label class="col-sm-3 control-label no-padding-right" for="name">
+				用户名 </label>
+			<div class="col-sm-9">
+				<input disabled type="text" name='name'
+					class="field col-xs-10 col-sm-6" id="name" value="$!{user.name}">
+			</div>
+		</div>
+		<div class="form-group">
+			<label class="col-sm-3 control-label no-padding-right" for="email">邮箱</label>
+			<div class="col-sm-9">
+				<input disabled type="text" name="email"
+					class="field col-xs-10 col-sm-6" id="email" value="$!{user.email}">
+			</div>
+		</div>
+		<div class="form-group">
+			<label class="col-sm-3 control-label no-padding-right"
+				for="telephone">电话</label>
+			<div class="col-sm-9">
+				<input type="text" name="telephone"
+					class="field col-xs-10 col-sm-6" id="telephone"
+					value="$!{user.telephone}">
+			</div>
+		</div>
+		<div class="form-group">
+			<label class="col-sm-3 control-label no-padding-right" for="token">Token</label>
+			<div class="col-sm-9">
+				<input disabled type="text" name="token"
+					class="field col-xs-10 col-sm-6" id="token" value="$!{user.token}">
+				&nbsp; &nbsp; &nbsp; <a href="javascript:;"
+					onclick="app.openRegenTokenModal($user.id,'$user.name')"><span
+					class="label label-info">重置Token</span></a>
+			</div>
+
+		</div>
+		<div class="form-group">
+			<label class="col-sm-3 control-label no-padding-right" for="teamId">
+				团队 </label>
+			<div class="col-sm-9">
+				<select name='teamId' class="field col-xs-10 col-sm-6"
+					id="form-field-select-1">
+					<option #if(!$user.teamId)selected="" #end value="-1"></option>
+					#foreach($team in $teams)
+					<option #if($user.teamId==$team.id)selected= "" #end
+						value="$!team.id">$!team.name</option> #end
+				</select>
+			</div>
+		</div>
+		<div class="clearfix form-actions">
+			<div class="col-md-offset-5 col-md-9">
+				<button id="updateBtn" class="btn btn-info" type="button"
+					data-loading-text="提交中..">
+					<i class="icon-ok bigger-110"></i>保存
+				</button>
+				&nbsp; &nbsp; &nbsp;
+				<button id="cancelBtn" class="btn" type="button"
+					onclick="window.location='${rc.contextPath}/'">
+					<i class="icon-undo bigger-110"></i> 返回
+				</button>
+			</div>
+		</div>
+	</form>
+</div>

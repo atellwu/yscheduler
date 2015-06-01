@@ -1,0 +1,50 @@
+<div id="alertMessageDiv" style="text-align: center;"></div>
+
+<div class="col-xs-12">
+	<div>
+		<a href="task/create" style="float: right;" class="btn btn-sm btn-info"> <i class="icon-plus"></i> 创建任务
+		</a>
+	</div>
+	<div class="table-responsive">
+		<table class="table table-striped table-bordered table-hover" id="taskListTable">
+			<thead>
+				<tr>
+					<th>任务名</th>
+					<th>创建人</th>
+					<th>类型</th>
+					<th>调度状态</th>
+					<th>创建时间</th>
+					<th>操作</th>
+				</tr>
+			</thead>
+			<tbody id="adList">
+				#foreach($task in $list)
+				<tr>
+					<td><b>$task.name</b></td>
+					<td>$task.user.name</td>
+					<td>$task.type</td> #if($task.status.id==1)
+					<td><span id="crontab" rel="tooltip" title="调度表达式：$task.crontab" class="label label-success">调度中</span></td>
+					#elseif($task.status.id==2)
+					<td><span class="label label-warning">暂停</span></td> #end
+					<td style="width: 200px">$!dateFormatUtils.format($task.createTime,'yyyy年MM月dd日HH时mm分')</td>
+					<td style="width: 300px"><a href="${rc.contextPath}/task/detail/$task.id"><span
+							class="label label-success">&nbsp; 任务详情 </span></a> &nbsp;<a id="attempts" href="/task/instance?taskId=$task.id"><span
+							class="label label-info">运行历史</span></a>&nbsp;
+						<div class="btn-group">
+							<button class="label label-warning" data-toggle="dropdown">
+								操作<span class="caret"></span>
+							</button>
+							<ul class="dropdown-menu">
+								<li><a href="javascript:;" onclick="app.openTriggerTaskModal($task.id)"><span class="label label-info">执行</span></a></li>
+								<li><a href="javascript:;" onclick="showConfirm($task.id,'$task.name','delete','删除')"><span
+										class="label label-danger">删除</span></a></li>
+							</ul>
+						</div></td>
+				</tr>
+				#end
+
+			</tbody>
+		</table>
+	</div>
+</div>
+#screen("paginator.htm")

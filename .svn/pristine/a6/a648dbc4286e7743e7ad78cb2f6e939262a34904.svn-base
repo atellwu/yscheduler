@@ -1,0 +1,78 @@
+<div class="container">
+	<h4 class="text-success">总体介绍</h4>
+	<div class="well">
+
+		<p>YScheduler是一个分布式的任务/作业调度平台，由scheduler和若干个agent组成。 agent机器上需要部署agent包负责实际执行作业；scheduler负责调度作业、管理作业状态和告警等。
+			该平台现有的主要功能如下:</p>
+
+		<ul>
+			<li class="text-info">shell执行</li> 在远程主机上执行shell命令
+			<li class="text-info">定时调度</li> 定时执行分布在远程主机上的作业
+			<li class="text-info">工作流</li> 在工作流中，可以定义作业之间的依赖关系，从而定义了一组作业的执行顺序
+			<li class="text-info">手动执行</li> 手工触发作业和工作流
+			<li class="text-info">运行详情</li> 查看作业和工作流的执行情况、日志,对执行异常发出告警
+			<li class="text-info">权限管理</li> 对作业、工作流、执行详情等有读写权限的控制
+		</ul>
+	</div>
+	<h4 class="text-success">基本概念</h4>
+	<dl class="dl-horizontal well">
+		<dt>Task</dt>
+		<dd>部署和调度的最小单位，包括作业类型、执行指令等基本配置。</dd>
+		<dt>Dependency</dt>
+		<dd>用于定义作业之间的关系。作业A依赖作业B，表示在B执行成功的情况下才能执行A。</dd>
+		<dt>Workflow</dt>
+		<dd>由若干个作业组成，用来定义作业之间的依赖关系，可以作为一个调度单位。</dd>
+		<dt>Instance</dt>
+		<dd>作业或工作流的一次调度。</dd>
+		<dd>以调度表达式为0 0 0 * * *的作业为例，该作业每天执行，那么该作业在2014-11-19 00:00:00的一次调度被称为一个task instance。</dd>
+		<dt>Attempt</dt>
+		<dd>作业实例的一次执行，一个task instance可能包括多次attempt。</dd>
+		<dd>可以通过重试次数设置一个instance最多能执行的attempt次数。</dd>
+		<dt>调度表达式</dt>
+		<dd>使用quartz的cron表达式，参见</dd>
+		<dd>目前平台支持分钟级别的调度，所有cron表达式的首位必须为0。</dd>
+
+	</dl>
+
+	<h4 class="text-success">规划中的功能</h4>
+	<table class="table table-striped table-bordered well">
+		<th></th>
+		<tr>
+			<td class="text-info">http作业调度</td>
+			<td>执行作业的机器上不需要部署agent，而是提供http接口。通过平台call http接口的方式调度作业；并通过回调接口接受作业执行状态。</td>
+		</tr>
+		<tr>
+			<td class="text-info">权限控制</td>
+			<td>设置用户组，完善权限控制</td>
+		</tr>
+		<tr>
+			<td class="text-info">执行机器HA</td>
+			<td>可以通过页面上传任务执行包，执行的时候自动选择一个机器执行</td>
+		</tr>
+		<tr>
+			<td class="text-info">作业类型支持</td>
+			<td>支持更多的作业类型，如hadoop，hive等</td>
+		</tr>
+		<tr>
+			<td class="text-info">开放调度接口</td>
+			<td>开放一些调度接口控用户的程序调用</td>
+		</tr>
+
+	</table>
+	<h4 class="text-success">部署</h4>
+	<div class="well">
+		<h5 class="text-info">现有环境</h5>
+		<ul>
+			<li>测试环境</li>
+			<a href="http://qa.yscheduler.dy/">http://qa.yscheduler.dy/</a>
+			<li>线上环境</li>
+			<a href="http://scheduler.ymtech.info/">http://scheduler.ymtech.info/</a>
+		</ul>
+		<h5 class="text-info">agent包</h5>
+		<ul>
+			<li>下载地址</li>
+			<a href="${rc.contextPath}/download/agent.zip">${rc.contextPath}/download/agent.zip</a>
+		</ul>
+	</div>
+
+</div>

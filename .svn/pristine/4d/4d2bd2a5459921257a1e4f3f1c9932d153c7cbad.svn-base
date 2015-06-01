@@ -1,0 +1,125 @@
+package com.yeahmobi.yscheduler.model.service.impl;
+
+import java.util.Date;
+
+import org.junit.Assert;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.TestExecutionListeners;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.test.context.support.DependencyInjectionTestExecutionListener;
+
+import com.yeahmobi.yscheduler.common.Paginator;
+import com.yeahmobi.yscheduler.model.Workflow;
+import com.yeahmobi.yscheduler.model.service.WorkflowService;
+import com.yeahmobi.yscheduler.model.type.DependingStatus;
+import com.yeahmobi.yscheduler.model.type.WorkflowStatus;
+import com.yeahmobi.yunit.DbUnitTestExecutionListener;
+import com.yeahmobi.yunit.annotation.DatabaseSetup;
+
+/**
+ * Ryan Sun
+ */
+@RunWith(SpringJUnit4ClassRunner.class)
+@ContextConfiguration(locations = { "classpath:applicationContext-test.xml" })
+@TestExecutionListeners({ DependencyInjectionTestExecutionListener.class, DbUnitTestExecutionListener.class })
+public class WorkflowServiceImplTest {
+
+    @Autowired
+    private WorkflowService workflowService;
+
+    private Workflow buildWorkflow() {
+        Workflow workflow = new Workflow();
+        workflow.setName("test");
+        workflow.setLastScheduleTime(TestUtils.DEFAULT_TIME);
+        workflow.setCrontab("* * * * *");
+        workflow.setDescription("");
+        workflow.setOwner(1l);
+        workflow.setStatus(WorkflowStatus.OPEN);
+        workflow.setTimeout(1);
+        workflow.setCanSkip(true);
+        workflow.setLastStatusDependency(DependingStatus.COMPLETED);
+        return workflow;
+    }
+
+    @Test
+    @DatabaseSetup
+    public void testCreate() throws InterruptedException {
+        Workflow workflow = buildWorkflow();
+        this.workflowService.createOrUpdate(workflow);
+        Long id = workflow.getId();
+        Assert.assertNotNull(id);
+        Workflow actual = this.workflowService.get(id);
+        assertWorkflow(workflow, actual, new Date(), TestUtils.DEFAULT_TIME);
+    }
+
+    @Test
+    @DatabaseSetup
+    public void testUpdate() throws InterruptedException {
+        Workflow workflow = buildWorkflow();
+        workflow.setStatus(WorkflowStatus.OPEN);
+        workflow.setLastStatusDependency(DependingStatus.COMPLETED);
+        workflow.setCanSkip(false);
+        workflow.setId(1l);
+        this.workflowService.createOrUpdate(workflow);
+        Workflow actual = this.workflowService.get(1l);
+        assertWorkflow(workflow, actual, TestUtils.DEFAULT_TIME, new Date());
+    }
+
+    @Test
+    @DatabaseSetup
+    public void testList() throws InterruptedException {
+        Paginator paginator = new Paginator();
+        Assert.assertEquals(1, this.workflowService.list(2, paginator, 1).size());
+        Assert.assertEquals(1, this.workflowService.listAll(WorkflowStatus.PAUSED).size());
+    }
+
+    @Test
+    @DatabaseSetup
+    public void testCanModify() {
+        Assert.assertTrue(this.workflowService.canModify(1l, 1l));
+        Assert.assertTrue(this.workflowService.canModify(2l, 1l));
+        Assert.assertTrue(this.workflowService.canModify(1l, 2l));
+        Assert.assertFalse(this.workflowService.canModify(13l, 1l));
+        Assert.assertFalse(this.workflowService.canModify(100l, 1l));
+
+    }
+
+    @Test
+    @DatabaseSetup
+    public void testNameExist() {
+        Assert.assertTrue(this.workflowService.nameExist("test1"));
+        Assert.assertTrue(this.workflowService.nameExist("test2"));
+        Assert.assertFalse(this.workflowService.nameExist("testx"));
+
+    }
+
+    @Test
+    @DatabaseSetup
+    public void testUpdateScheduleTime() {
+        Date time = new Date();
+        this.workflowService.updateScheduleTime(1, time);
+        Assert.assertEquals(time, this.workflowService.get(1).getLastScheduleTime());
+    }
+
+    private void assertWorkflow(Workflow expected, Workflow actual, Date createTime, Date scheduleTime) {
+        Assert.assertEquals(expected.getId(), actual.getId());
+        TestUtils.generallyEquals(createTime, actual.getCreateTime());
+        TestUtils.generallyEquals(new Date(), actual.getUpdateTime());
+
+        Assert.assertEquals(expected.getCrontab(), actual.getCrontab());
+        Assert.assertEquals(expected.getDescription(), actual.getDescription());
+        if (scheduleTime == null) {
+            Assert.assertNull(actual.getLastScheduleTime());
+        } else {
+            TestUtils.generallyEquals(scheduleTime, actual.getLastScheduleTime());
+        }
+        Assert.assertEquals(expected.getName(), actual.getName());
+        Assert.assertEquals(expected.getOwner(), actual.getOwner());
+        Assert.assertEquals(expected.getStatus(), actual.getStatus());
+        Assert.assertEquals(expected.getTimeout(), actual.getTimeout());
+        Assert.assertEquals(expected.getLastScheduleTime(), actual.getLastScheduleTime());
+    }
+}

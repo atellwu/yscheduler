@@ -1,0 +1,145 @@
+package com.yeahmobi.yscheduler.agentframework.agent.task.shell;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.concurrent.TimeUnit;
+
+import org.apache.commons.exec.CommandLine;
+import org.apache.commons.exec.DefaultExecutor;
+import org.apache.commons.exec.ExecuteException;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringUtils;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
+
+import com.yeahmobi.yscheduler.agentframework.agent.task.BaseTaskExecutor;
+import com.yeahmobi.yscheduler.agentframework.agent.task.FileBasedTaskTransactionManager;
+import com.yeahmobi.yscheduler.agentframework.agent.task.TaskTransaction;
+
+/**
+ * @author Leo.Liang
+ */
+public class ShellTaskExecutor extends BaseTaskExecutor<ShellAgentTask> {
+
+    private static final long               CHECK_INTERVAL = 1;
+
+    private String                          baseDir;
+    private String                          shellDir;
+
+    private FileBasedTaskTransactionManager taskTransactionManager;
+
+    public void setTaskTransactionManager(FileBasedTaskTransactionManager transactionManager) {
+        this.taskTransactionManager = transactionManager;
+    }
+
+    public void init() throws IOException {
+        // 复制shell到 baseDir/shell
+        this.baseDir = this.taskTransactionManager.getBaseDir();
+        this.shellDir = this.baseDir + "/shell";
+
+        PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
+        Resource[] resources = resolver.getResources(getShellPathPattern());
+
+        File shellDirFile = new File(this.shellDir);
+        FileUtils.forceMkdir(shellDirFile);
+
+        for (Resource resource : resources) {
+            FileUtils.copyFileToDirectory(resource.getFile(), shellDirFile);
+        }
+    }
+
+    private String getShellPathPattern() {
+        return "classpath*:/" + ShellTaskExecutor.class.getPackage().getName().replace('.', '/') + "/*.sh";
+    }
+
+    public Integer execute(TaskTransaction<ShellAgentTask> taskTransaction) throws ExecuteException, IOException,
+                                                                           InterruptedException {
+        Integer exitCode = null;
+
+        long txId = taskTransaction.getId();
+
+        ShellAgentTask task = taskTransaction.getTask();
+
+        boolean everStarted = everStarted(txId, task.getEventType());
+        // 从未执行过，则run
+        if (!everStarted) {
+            runShell(taskTransaction, txId, task.getCommand(), task.getEventType());
+        }
+
+        // 论询pid和exitCode
+        while (checkRunningByPid(txId, task.getEventType())) {
+            TimeUnit.SECONDS.sleep(CHECK_INTERVAL);
+        }
+
+        exitCode = getExitCode(txId, task.getEventType());
+
+        return exitCode;
+
+    }
+
+    public void cancel(TaskTransaction taskTransaction) throws ExecuteException, IOException {
+        long txId = taskTransaction.getId();
+        String eventType = taskTransaction.getMeta().getEventType();
+
+        CommandLine cmdLine = new CommandLine("bash");
+        cmdLine.addArgument(this.baseDir + "/shell/cancel.sh");
+        cmdLine.addArgument(this.baseDir);
+        cmdLine.addArgument(String.valueOf(txId));
+        cmdLine.addArgument(eventType);
+        DefaultExecutor executor = new DefaultExecutor();
+        executor.setExitValues(new int[] { 0 });
+
+        executor.execute(cmdLine);
+    }
+
+    private void runShell(final TaskTransaction taskTransaction, long txId, String command, String eventType)
+                                                                                                             throws ExecuteException,
+                                                                                                             IOException {
+        CommandLine cmdLine = new CommandLine("bash");
+        cmdLine.addArgument(this.baseDir + "/shell/run.sh");
+        cmdLine.addArgument(this.baseDir);
+        cmdLine.addArgument(String.valueOf(txId));
+        cmdLine.addArgument(eventType);
+        cmdLine.addArgument(command, false);
+        DefaultExecutor executor = new DefaultExecutor();
+        executor.setExitValues(null);
+
+        executor.execute(cmdLine);
+    }
+
+    private boolean everStarted(long txId, String eventType) {
+        // 是否有pid
+        File file = new File(this.baseDir + "/" + txId + "/" + eventType + "/pid");
+        return file.exists();
+    }
+
+    private Integer getExitCode(long txId, String eventType) {
+        File file = new File(this.baseDir + "/" + txId + "/" + eventType + "/exitcode");
+        if (file.exists()) {
+            try {
+                String exitCodeStr = StringUtils.trim(IOUtils.toString(new FileInputStream(file)));
+                return Integer.parseInt(exitCodeStr);
+            } catch (Exception e) {
+                return null;
+            }
+        }
+        return null;
+    }
+
+    private boolean checkRunningByPid(long txId, String eventType) throws ExecuteException, IOException {
+        CommandLine cmdLine = new CommandLine("bash");
+        cmdLine.addArgument(this.baseDir + "/shell/check.sh");
+        cmdLine.addArgument(this.baseDir);
+        cmdLine.addArgument(String.valueOf(txId));
+        cmdLine.addArgument(eventType);
+        DefaultExecutor executor = new DefaultExecutor();
+        executor.setExitValues(null);
+
+        int exitCode = executor.execute(cmdLine);
+
+        return exitCode == 1;
+    }
+
+}

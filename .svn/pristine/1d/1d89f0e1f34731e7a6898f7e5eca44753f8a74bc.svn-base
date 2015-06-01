@@ -1,0 +1,6 @@
+notice.emailApi=http://ips.ymtech.info/notify/api/email
+notice.smsApi=http://ips.ymtech.info/notify/api/sms
+notice.smsApp=yscheduler
+notice.smsAppKey=6v8a#lo2
+notice.workflowInstanceUrl=http://qa.yscheduler.dy/workflow/instance/tasks?instanceId=
+notice.taskInstanceUrl=http://qa.yscheduler.dy/task/instance/attempt?instanceId=

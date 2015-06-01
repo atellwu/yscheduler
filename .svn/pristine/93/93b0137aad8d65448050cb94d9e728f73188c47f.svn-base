@@ -1,0 +1,30 @@
+package com.yeahmobi.yscheduler.notice;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import com.yeahmobi.yscheduler.model.TaskInstance;
+import com.yeahmobi.yscheduler.model.WorkflowInstance;
+
+/**
+ * @author Ryan Sun
+ */
+public class DefaultNoticeService implements NoticeService {
+
+    public Log LOGGER = LogFactory.getLog(DefaultNoticeService.class);
+
+    public void alert(Message message) {
+        this.LOGGER.info("alert:" + message.toString());
+    }
+
+    public void alert(WorkflowInstance workflowInstance) {
+        this.LOGGER.info("alert:" + workflowInstance);
+
+    }
+
+    public void alert(TaskInstance taskInstance) {
+        this.LOGGER.info("alert:" + taskInstance);
+
+    }
+
+}

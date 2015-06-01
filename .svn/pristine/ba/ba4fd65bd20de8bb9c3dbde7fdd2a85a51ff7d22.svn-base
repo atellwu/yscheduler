@@ -1,0 +1,9 @@
+package com.yeahmobi.yscheduler.agentframework.agent.task.async;
+
+import com.yeahmobi.yscheduler.agentframework.agent.event.task.AbstractAsyncTaskExecutor;
+import com.yeahmobi.yscheduler.agentframework.agent.task.AgentTask;
+
+public abstract class AsyncAgentTask implements AgentTask {
+
+    public abstract AbstractAsyncTaskExecutor getTaskExecutor();
+}

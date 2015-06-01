@@ -1,0 +1,39 @@
+package com.yeahmobi.yscheduler.model.service.impl;
+
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.yeahmobi.yscheduler.model.WorkflowDetail;
+import com.yeahmobi.yscheduler.model.WorkflowDetailExample;
+import com.yeahmobi.yscheduler.model.dao.WorkflowDetailDao;
+import com.yeahmobi.yscheduler.model.service.WorkflowDetailService;
+
+@Service
+public class WorkflowDetailServiceImpl implements WorkflowDetailService {
+
+    @Autowired
+    private WorkflowDetailDao workflowDetailDao;
+
+    @Transactional
+    public void save(long workflowId, List<WorkflowDetail> workflowDetails) {
+        WorkflowDetailExample example = new WorkflowDetailExample();
+        example.createCriteria().andWorkflowIdEqualTo(workflowId);
+        this.workflowDetailDao.deleteByExample(example);
+
+        for (WorkflowDetail detail : workflowDetails) {
+            detail.setWorkflowId(workflowId);
+            this.workflowDetailDao.insertSelective(detail);
+        }
+
+    }
+
+    public List<WorkflowDetail> list(long workflowId) {
+        WorkflowDetailExample example = new WorkflowDetailExample();
+        example.createCriteria().andWorkflowIdEqualTo(workflowId);
+        return this.workflowDetailDao.selectByExample(example);
+    }
+
+}

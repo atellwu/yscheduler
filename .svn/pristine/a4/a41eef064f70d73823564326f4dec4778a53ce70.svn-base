@@ -1,0 +1,26 @@
+package com.yeahmobi.yscheduler.web.service;
+
+import java.util.List;
+
+import com.yeahmobi.yscheduler.common.Paginator;
+import com.yeahmobi.yscheduler.model.Attempt;
+
+public interface AttemptService {
+
+    Attempt get(long id);
+
+    Attempt getLastOne(long instanceId);
+
+    List<Attempt> list(long instanceId, int pageNum, Paginator paginator);
+
+    List<Attempt> listAll(long instanceId);
+
+    void save(Attempt attempt);
+
+    List<Attempt> getAllUncompleteds();
+
+    int count(Long instanceId);
+
+    void update(Attempt attempt);
+
+}

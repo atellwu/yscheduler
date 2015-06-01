@@ -1,0 +1,145 @@
+package com.yeahmobi.yscheduler.web.controller.log;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
+import javax.servlet.http.HttpSession;
+
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import com.alibaba.fastjson.JSON;
+import com.yeahmobi.yscheduler.common.log.AgentLogUtils;
+import com.yeahmobi.yscheduler.common.log.impl.HdfsLogServiceImpl;
+import com.yeahmobi.yscheduler.model.service.AttemptService;
+import com.yeahmobi.yscheduler.web.controller.AbstractController;
+
+/**
+ * @author wukezhu
+ */
+@Controller
+@RequestMapping(value = { LogController.SCREEN_NAME })
+public class LogController extends AbstractController {
+
+    public static final String               SCREEN_NAME  = "task/instance/attempt";
+
+    private static final Logger              LOGGER       = LoggerFactory.getLogger(LogController.class);
+
+    @Autowired
+    private AttemptService                   attemptService;
+
+    @Autowired
+    private HdfsLogServiceImpl               logService;
+
+    private ConcurrentHashMap<String, Entry> logStreamMap = new ConcurrentHashMap<String, Entry>();
+
+    @RequestMapping(value = "/getLog", method = RequestMethod.GET, produces = "application/json; charset=utf-8")
+    @ResponseBody
+    public Object getAttemptLog(HttpSession session, String uuid, long attemptId) {
+        Map<String, Object> map = new HashMap<String, Object>();
+        // 获取inputstream
+        Entry entry = this.logStreamMap.get(uuid);
+        try {
+            if (entry == null) {
+                Entry tempEntry = new Entry(attemptId);
+                if ((entry = this.logStreamMap.putIfAbsent(uuid, tempEntry)) != null) {
+                    // 如果put失败(因为重复)，则关闭
+                    tempEntry.close();
+                } else {
+                    entry = tempEntry;
+                }
+            }
+
+            // 读取logStream
+            StringBuilder data = tryRead(entry);
+
+            // checkEndline
+            map.put("continue", checkEndline(entry, data));
+
+            map.put("data", data);
+            map.put("success", true);
+        } catch (IllegalArgumentException e) {
+            entry.close();
+            map.put("continue", false);
+            map.put("success", false);
+            map.put("errorMsg", e.getMessage());
+        } catch (Exception e) {
+            entry.close();
+            map.put("continue", false);
+            map.put("success", false);
+            map.put("errorMsg", e.getMessage());
+            LOGGER.error(e.getMessage(), e);
+        }
+        return JSON.toJSONString(map);
+
+    }
+
+    private StringBuilder tryRead(Entry entry) throws IOException, InterruptedException {
+        StringBuilder data = new StringBuilder();
+        int count = 0;
+        int available = entry.logStream.available();
+
+        // 如果一直没有数据，最多会等待30s
+        while ((count++ < 300) && ((available = entry.logStream.available()) <= 0)) {
+            Thread.sleep(100);
+        }
+
+        while (available > 0) {
+            byte[] buffer = new byte[available];
+            // IOUtils.read
+            entry.logStream.read(buffer);
+            String bufferStr = new String(buffer);
+            data.append(bufferStr);
+            available = entry.logStream.available();
+        }
+        return data;
+    }
+
+    private boolean checkEndline(Entry entry, StringBuilder data) {
+        for (int i = 0; i < data.length(); i++) {
+            char ch = data.charAt(i);
+            if (ch == AgentLogUtils.ENDLINE_SPLIT) {
+                entry.lastLine = new StringBuilder();
+            } else {
+                entry.lastLine.append(ch);
+            }
+
+            if ((entry.lastLine.length() == entry.endline.length())) {
+                if (StringUtils.equals(entry.lastLine.toString(), entry.endline)) {
+                    // if end
+                    return true;
+                } else {
+                    entry.lastLine = new StringBuilder();
+                }
+            }
+        }
+        return false;
+    }
+
+    class Entry {
+
+        final String      endline;
+        final InputStream logStream;
+        StringBuilder     lastLine = new StringBuilder();
+
+        public Entry(long attemptId) throws IOException {
+            this.logStream = LogController.this.logService.getInputStream(attemptId);
+            this.endline = AgentLogUtils.getEndline(attemptId);
+        }
+
+        public void close() {
+            IOUtils.closeQuietly(this.logStream);
+        }
+
+    }
+}

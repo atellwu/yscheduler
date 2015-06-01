@@ -1,0 +1,17 @@
+package com.yeahmobi.yscheduler.notice;
+
+import com.yeahmobi.yscheduler.model.TaskInstance;
+import com.yeahmobi.yscheduler.model.WorkflowInstance;
+
+/**
+ * @author Ryan Sun
+ */
+public interface NoticeService {
+
+    public void alert(Message message);
+
+    public void alert(WorkflowInstance workflowInstance);
+
+    public void alert(TaskInstance taskInstance);
+
+}

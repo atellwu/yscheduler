@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- dbunit用于初始化数据的文件，每个ut方法都会执行一遍 -->
+<!-- 默认从以下路径尝试找setup.xml文件，找不到会便停止往下找： -->
+<!-- 1. <packageName>/<className>.<methodName>-setup.xml -->
+<!-- 2. <packageName>/<className>-setup.xml -->
+<!-- 3. <packageName>/setup.xml -->
+<!-- 4. <className>.<methodName>-setup.xml -->
+<!-- 5. <className>.setup.xml -->
+<!-- 6. setup.xml -->
+<dataset>
+	<Workflow_Instance id="0" workflow_id="1" status="1"
+		schedule_time="2014-11-26 17:38:00" start_time="2014-11-26 17:38:10"
+		end_time="2014-11-26 17:38:10" create_time="2014-11-26 17:37:00"
+		update_time="2014-11-26 17:38:30" />
+	<Workflow_Instance id="1" workflow_id="1" status="1"
+		schedule_time="2014-11-26 00:00:00" start_time="2014-11-26 00:00:00"
+		end_time="2014-11-26 00:00:10" create_time="2014-11-26 00:00:00"
+		update_time="2014-11-26 00:00:00" />
+	<Workflow_Instance id="2" workflow_id="1" status="1"
+		start_time="2014-11-26 00:00:00" end_time="2014-11-26 00:00:10"
+		create_time="2014-11-26 00:00:00" update_time="2014-11-26 00:00:00" />
+	<Workflow_Instance id="3" workflow_id="1" status="1"
+		schedule_time="2014-11-26 00:05:00" start_time="2014-11-26 00:05:00"
+		end_time="2014-11-26 00:05:10" create_time="2014-11-26 00:05:00"
+		update_time="2014-11-26 00:05:00" />
+	<Workflow_Instance id="4" workflow_id="1" status="1"
+		schedule_time="2014-11-26 00:15:00" start_time="2014-11-26 00:15:00"
+		end_time="2014-11-26 00:15:10" create_time="2014-11-26 00:15:00"
+		update_time="2014-11-26 00:15:00" />
+</dataset> 

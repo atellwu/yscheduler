@@ -1,0 +1,116 @@
+package com.yeahmobi.yscheduler.agentframework.agent.task;
+
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+import org.apache.commons.io.IOUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.yeahmobi.yscheduler.agentframework.exception.TaskNotFoundException;
+import com.yeahmobi.yscheduler.agentframework.exception.TaskSubmitException;
+
+/**
+ * @author Leo.Liang
+ */
+public class DefaultTaskExecutionContainer implements TaskExecutionContainer {
+
+    private static final Logger                        log                 = LoggerFactory.getLogger(DefaultTaskExecutionContainer.class);
+    private static final String                        DATE_FORMAT         = "yyyy-MM-dd HH:mm:ss";
+
+    private TaskTransactionManager                     taskTransactionManager;
+    private ExecutorService                            workerPool          = Executors.newCachedThreadPool();
+    private final ConcurrentMap<Long, TaskTransaction> runningTransactions = new ConcurrentHashMap<Long, TaskTransaction>();
+
+    public void setTaskTransactionManager(TaskTransactionManager transactionManager) {
+        this.taskTransactionManager = transactionManager;
+    }
+
+    private void info(TaskTransaction taskTransaction, String msg) throws IOException {
+        SimpleDateFormat sdf = new SimpleDateFormat(DATE_FORMAT);
+        IOUtils.write(String.format("[INFO][%s] %s", sdf.format(new Date()), msg), taskTransaction.getOutputStream());
+        IOUtils.write(IOUtils.LINE_SEPARATOR, taskTransaction.getOutputStream());
+    }
+
+    public void init() throws TaskNotFoundException, IOException {
+        // get all ‘RUNNING’ tx，change status to UNKNOWN
+        List<TaskTransaction> allTransaction = this.taskTransactionManager.getAllTransaction();
+        if ((allTransaction != null) && (allTransaction.size() > 0)) {
+            for (TaskTransaction tx : allTransaction) {
+                if (tx.getStatus() == TaskTransactionStatus.RUNNING) {
+                    info(tx,
+                         "Agent restarting and set the status to 'COMPLETE_WITH_UNKNOWN_STATUS', because tx is 'RUNNING' before agent down.");
+                    tx.endWithUnknownStatus();
+                }
+            }
+        }
+    }
+
+    public long submit(AgentTask task) throws TaskSubmitException {
+        try {
+            final TaskTransaction transaction = this.taskTransactionManager.createTransaction(task.getTaskExecutor());
+            final long txId = transaction.getId();
+            this.runningTransactions.put(txId, transaction);
+
+            this.workerPool.submit(new Callable<Void>() {
+
+                public Void call() {
+                    try {
+                        transaction.execute();
+
+                        if (transaction.getStatus() == TaskTransactionStatus.SUCCESS) {
+                            log.info("Agent task execute successfully.(transactionId={})", transaction.getId());
+                        } else if (transaction.getStatus() == TaskTransactionStatus.FAIL) {
+                            log.info("Fail to execute agent task.(transactionId={})", transaction.getId());
+                        } else if (transaction.getStatus() == TaskTransactionStatus.CANCEL) {
+                            log.info("Agent task cancelled.(transactionId={})", transaction.getId());
+                        } else if (transaction.getStatus() == TaskTransactionStatus.COMPLETE_WITH_UNKNOWN_STATUS) {
+                            log.info("Agent task completed with unknown status.(transactionId={})", transaction.getId());
+                        }
+                    } finally {
+                        DefaultTaskExecutionContainer.this.runningTransactions.remove(txId);
+                    }
+
+                    return null;
+                }
+            });
+
+            return txId;
+
+        } catch (Throwable e) {
+            log.error(String.format("Fail to submit task. (AgentTask's type=%s)", task.getClass().getName()), e);
+            throw new TaskSubmitException(e);
+        }
+    }
+
+    public TaskStatus checkStatus(long transactionId) throws TaskNotFoundException {
+        TaskTransaction transaction = findTransaction(transactionId);
+        return new TaskStatus(transaction.getStatus(), transaction.getDuration(), transaction.getReturnValue());
+    }
+
+    public String getLog(long transactionId) throws TaskNotFoundException {
+        return findTransaction(transactionId).getLog();
+    }
+
+    private TaskTransaction findTransaction(long transactionId) throws TaskNotFoundException {
+        return this.taskTransactionManager.getTransaction(transactionId);
+    }
+
+    public void cancel(long transactionId) throws TaskNotFoundException {
+        TaskTransaction tx = this.runningTransactions.get(transactionId);
+        if (tx == null) {
+            throw new TaskNotFoundException(String.format("Task with transaction id {%s} not found",
+                                                          String.valueOf(transactionId)));
+        } else {
+            tx.cancel();
+            this.runningTransactions.remove(transactionId);
+        }
+    }
+}

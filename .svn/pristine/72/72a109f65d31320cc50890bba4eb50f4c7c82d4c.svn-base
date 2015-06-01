@@ -1,0 +1,81 @@
+<link href="${rc.contextPath}/assets/css/autocomplete.css" rel="stylesheet" />
+<link href="${rc.contextPath}/assets/css/chosen.min.css" rel="stylesheet" />
+<link href="${rc.contextPath}/static/css/custom.css" rel="stylesheet" />
+
+<script type="text/javascript" src="${rc.contextPath}/assets/js/jquery.dataTables.min.js"></script>
+<script type="text/javascript" src="${rc.contextPath}/assets/js/jquery.dataTables.bootstrap.js"></script>
+<script src="${rc.contextPath}/assets/js/jquery.autocomplete.js" type="text/javascript"></script>
+<script src="${rc.contextPath}/assets/js/chosen.jquery.min.js" type="text/javascript"></script>
+<script src="${rc.contextPath}/assets/js/bootbox.min.js" type="text/javascript"></script>
+<script src="${rc.contextPath}/assets/js/jquery.validate.min.js" type="text/javascript"></script>
+<script src="${rc.contextPath}/static/js/validate.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+	function addTask() {
+		$("#taskTable").append($("#taskRow").html());
+		$(".chosen-select").chosen({});
+	};
+	function removeTask(btn) {
+		$(btn).parent().parent().remove();
+	};
+	function updateTask(form) {
+		var btn = $('#updateBtn');
+		if (btn.text().trim() == "修改") {
+			app.onCrontabTip();
+			btn.html("保存");
+			$('#cancelBtn').html("取消");
+			$('.field').removeAttr("readonly");
+			$(".btn_field").show();
+			$('select[name="taskId"]').prop('disabled', false).trigger("chosen:updated");
+			$('select[name="dependencyTaskId"]').prop('disabled', false).trigger("chosen:updated");
+
+		} else {
+			//遍历form，修改name，后缀添加i
+			try {
+				$.each($("#taskTable tr"), function(i, el) {
+					var tds = $(el).children("td");
+					$.each(tds, function(j, td) {
+						var input = $(td).children("input");
+						if (!(input.length > 0)) {
+							input = $(td).children("select");
+						}
+						var name = input.attr("name");
+						if (name) {
+							//去掉下划线后面
+							var _index = name.indexOf('_');
+							if(_index != -1){
+								name = name.substring(0, _index);
+							}
+							//添加下划线和序号
+							input.attr("name", name + '_' + i);
+						}
+					});
+				});
+			} catch (e) {
+				console.log(e);
+			}
+			$.ajax({
+				type : $(form).attr('method'),
+				url : $(form).attr('action'),
+				data : $(form).serialize(),
+				dataType : "json",
+				success : updateTaskDone,
+				error : app.httpError
+			});
+		}
+		return false;
+
+	};
+	function updateTaskDone(data) {
+		if (data.success == false) {
+			app.alertError(data.errorMsg);
+		} else {
+			window.location = window.contextPath + "/workflow";
+		}
+	};
+	$("[rel=tooltip]").tooltip();
+	$(document).ready(function() {
+		$(".chosen-select").chosen({});
+	});
+</script>
+

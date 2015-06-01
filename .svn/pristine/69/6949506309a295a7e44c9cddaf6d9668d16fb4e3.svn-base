@@ -1,0 +1,152 @@
+package com.yeahmobi.yscheduler.web.service.impl;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.yeahmobi.yscheduler.model.Authority;
+import com.yeahmobi.yscheduler.model.AuthorityExample;
+import com.yeahmobi.yscheduler.model.dao.AuthorityDao;
+import com.yeahmobi.yscheduler.model.type.AuthorityMode;
+import com.yeahmobi.yscheduler.web.service.AuthorityService;
+
+/**
+ * @author Ryan Sun
+ */
+@Service
+public class AuthorityServiceImpl implements AuthorityService {
+
+    @Autowired
+    private AuthorityDao     authorityDao;
+
+    @SuppressWarnings("unused")
+    private static final Log LOGGER = LogFactory.getLog(AuthorityServiceImpl.class);
+
+    public List<Authority> listByTask(long taskId) {
+        AuthorityExample example = new AuthorityExample();
+        example.or().andTaskIdEqualTo(taskId);
+        return this.authorityDao.selectByExample(example);
+    }
+
+    public List<Authority> listByUser(long userId) {
+        AuthorityExample example = new AuthorityExample();
+        example.or().andUserIdEqualTo(userId);
+        return this.authorityDao.selectByExample(example);
+    }
+
+    public List<Long> listReadableTask(long userId) {
+        List<Long> result = new ArrayList<Long>();
+        AuthorityExample example = new AuthorityExample();
+        example.or().andUserIdEqualTo(userId);
+        List<Authority> authorities = this.authorityDao.selectByExample(example);
+        for (Authority authority : authorities) {
+            if ((authority.getMode() == AuthorityMode.READONLY) || (authority.getMode() == AuthorityMode.WRITABLE)) {
+                result.add(authority.getTaskId());
+            }
+        }
+        return result;
+    }
+
+    public List<Long> listReadonlyUser(long taskId) {
+        List<Long> result = new ArrayList<Long>();
+        AuthorityExample example = new AuthorityExample();
+        example.or().andTaskIdEqualTo(taskId);
+        List<Authority> authorities = this.authorityDao.selectByExample(example);
+        for (Authority authority : authorities) {
+            if (authority.getMode() == AuthorityMode.READONLY) {
+                result.add(authority.getUserId());
+            }
+        }
+        return result;
+    }
+
+    public List<Long> listWriteableUser(long taskId) {
+        List<Long> result = new ArrayList<Long>();
+        AuthorityExample example = new AuthorityExample();
+        example.or().andTaskIdEqualTo(taskId);
+        List<Authority> authorities = this.authorityDao.selectByExample(example);
+        for (Authority authority : authorities) {
+            if (authority.getMode() == AuthorityMode.WRITABLE) {
+                result.add(authority.getUserId());
+            }
+        }
+        return result;
+    }
+
+    public List<Long> listFollowUser(long taskId) {
+        List<Long> result = new ArrayList<Long>();
+        AuthorityExample example = new AuthorityExample();
+        example.or().andTaskIdEqualTo(taskId);
+        List<Authority> authorities = this.authorityDao.selectByExample(example);
+        for (Authority authority : authorities) {
+            if (authority.getFollow()) {
+                result.add(authority.getUserId());
+            }
+        }
+        return result;
+    }
+
+    public boolean writable(long taskId, long userId) {
+        AuthorityExample example = new AuthorityExample();
+        example.or().andTaskIdEqualTo(taskId).andUserIdEqualTo(userId);
+        List<Authority> authorities = this.authorityDao.selectByExample(example);
+        if (authorities.size() == 1) {
+            return authorities.get(0).getMode() == AuthorityMode.WRITABLE;
+        } else {
+            return false;
+        }
+    }
+
+    @Transactional
+    public void add(List<Long> readableUsers, List<Long> writeableUsers, List<Long> followingUsers, long taskId) {
+        Map<Long, Authority> authorities = new HashMap<Long, Authority>();
+        for (long userId : readableUsers) {
+            Authority authority = createOrFindAuthority(authorities, userId, taskId);
+            authority.setMode(AuthorityMode.READONLY);
+        }
+        for (long userId : writeableUsers) {
+            Authority authority = createOrFindAuthority(authorities, userId, taskId);
+            authority.setMode(AuthorityMode.WRITABLE);
+        }
+        for (long userId : followingUsers) {
+            Authority authority = createOrFindAuthority(authorities, userId, taskId);
+            authority.setFollow(true);
+        }
+        for (Authority authority : authorities.values()) {
+            Date time = new Date();
+            authority.setCreateTime(time);
+            authority.setUpdateTime(time);
+            this.authorityDao.insert(authority);
+        }
+    }
+
+    @Transactional
+    public void update(List<Long> readableUsers, List<Long> writeableUsers, List<Long> followingUsers, long taskId) {
+        AuthorityExample example = new AuthorityExample();
+        example.or().andTaskIdEqualTo(taskId);
+        this.authorityDao.deleteByExample(example);
+        add(readableUsers, writeableUsers, followingUsers, taskId);
+    }
+
+    private Authority createOrFindAuthority(Map<Long, Authority> authorities, long userId, long taskId) {
+        Authority authority = authorities.get(userId);
+        if (authority == null) {
+            authority = new Authority();
+            authority.setUserId(userId);
+            authority.setTaskId(taskId);
+            authority.setMode(AuthorityMode.NONE);
+            authority.setFollow(false);
+            authorities.put(userId, authority);
+        }
+        return authority;
+    }
+
+}

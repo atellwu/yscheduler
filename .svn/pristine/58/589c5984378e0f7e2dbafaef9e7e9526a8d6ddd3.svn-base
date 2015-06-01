@@ -1,0 +1,2 @@
+serverDomain=dev.yscheduler.dy
+storageServerUri=http://172.20.0.180:8080/yscheduler-storage-dev

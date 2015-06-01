@@ -1,0 +1,9 @@
+package com.yeahmobi.yscheduler.notice;
+
+/**
+ * @author Ryan Sun
+ */
+public interface SmsSender {
+
+    boolean send(Message sms);
+}

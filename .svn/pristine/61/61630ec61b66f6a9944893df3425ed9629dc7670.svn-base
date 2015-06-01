@@ -1,0 +1,52 @@
+package com.yeahmobi.yscheduler.model.type;
+
+/**
+ * 1初始，2运行中，3成功，4失败
+ *
+ * @author atell
+ */
+public enum AttemptStatus {
+
+    RUNNING(1, "运行中"), SUCCESS(2, "运行成功"), FAILED(3, "运行失败");
+
+    private int    id;
+    private String desc;
+
+    AttemptStatus(int id, String desc) {
+        this.id = id;
+        this.desc = desc;
+    }
+
+    public int getId() {
+        return this.id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public String getDesc() {
+        return this.desc;
+    }
+
+    public void setDesc(String desc) {
+        this.desc = desc;
+    }
+
+    public static AttemptStatus valueOf(int id) {
+        switch (id) {
+            case 1:
+                return RUNNING;
+            case 2:
+                return SUCCESS;
+            case 3:
+                return FAILED;
+        }
+        return null;
+    }
+
+    public boolean isCompleted() {
+        return FAILED.equals(this) || SUCCESS.equals(this);
+    }
+
+}

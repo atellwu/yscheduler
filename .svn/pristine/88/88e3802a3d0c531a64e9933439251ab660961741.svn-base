@@ -1,0 +1,177 @@
+package com.yeahmobi.yscheduler.model.service.impl;
+
+import java.util.Date;
+import java.util.List;
+
+import javax.annotation.PostConstruct;
+
+import org.apache.ibatis.session.RowBounds;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.yeahmobi.yscheduler.common.Paginator;
+import com.yeahmobi.yscheduler.model.TaskInstance;
+import com.yeahmobi.yscheduler.model.TaskInstanceExample;
+import com.yeahmobi.yscheduler.model.common.Constants;
+import com.yeahmobi.yscheduler.model.dao.TaskInstanceDao;
+import com.yeahmobi.yscheduler.model.service.TaskInstanceService;
+import com.yeahmobi.yscheduler.model.type.TaskInstanceStatus;
+
+@Service
+public class TaskInstanceServiceImpl implements TaskInstanceService {
+
+    @Autowired
+    private TaskInstanceDao instanceDao;
+
+    @PostConstruct
+    public void init() {
+    }
+
+    public TaskInstance get(long id) {
+        return this.instanceDao.selectByPrimaryKey(id);
+    }
+
+    public List<TaskInstance> list(long taskId, int pageNum, Paginator paginator) {
+        TaskInstanceExample example = new TaskInstanceExample();
+
+        example.createCriteria().andTaskIdEqualTo(taskId);
+
+        int count = this.instanceDao.countByExample(example);
+
+        paginator.setItemsPerPage(Constants.PAGE_SIZE);
+        paginator.setItems(count);
+        paginator.setPage(pageNum);
+
+        int offset = paginator.getBeginIndex() - 1;
+        int limit = Constants.PAGE_SIZE;
+
+        RowBounds rowBounds = new RowBounds(offset, limit);
+
+        example.setOrderByClause("id DESC");
+        List<TaskInstance> instances = this.instanceDao.selectByExampleWithRowbounds(example, rowBounds);
+
+        return instances;
+    }
+
+    public List<TaskInstance> list(int pageNum, Paginator paginator) {
+        TaskInstanceExample example = new TaskInstanceExample();
+        int count = this.instanceDao.countByExample(example);
+
+        paginator.setItemsPerPage(Constants.PAGE_SIZE);
+        paginator.setItems(count);
+        paginator.setPage(pageNum);
+
+        int offset = paginator.getBeginIndex() - 1;
+        int limit = Constants.PAGE_SIZE;
+
+        RowBounds rowBounds = new RowBounds(offset, limit);
+
+        example.setOrderByClause("create_time DESC");
+        List<TaskInstance> instances = this.instanceDao.selectByExampleWithRowbounds(example, rowBounds);
+
+        return instances;
+    }
+
+    public List<TaskInstance> listAll(long taskId) {
+        TaskInstanceExample example = new TaskInstanceExample();
+
+        example.createCriteria().andTaskIdEqualTo(taskId);
+        example.setOrderByClause("id DESC");
+
+        return this.instanceDao.selectByExample(example);
+    }
+
+    public void save(TaskInstance instance) {
+        instance.setCreateTime(new Date());
+        this.instanceDao.insert(instance);
+    }
+
+    public TaskInstanceDao getInstanceDao() {
+        return this.instanceDao;
+    }
+
+    public void setInstanceDao(TaskInstanceDao instanceDao) {
+        this.instanceDao = instanceDao;
+    }
+
+    public List<TaskInstance> getAllUncompleteds() {
+        TaskInstanceExample example = new TaskInstanceExample();
+        example.createCriteria().andStatusEqualTo(TaskInstanceStatus.RUNNING);
+        example.or().andStatusEqualTo(TaskInstanceStatus.READY);
+        return this.instanceDao.selectByExample(example);
+    }
+
+    public void updateStatus(Long instanceId, TaskInstanceStatus status) {
+        Date now = new Date();
+        TaskInstance record = new TaskInstance();
+        record.setId(instanceId);
+        record.setStatus(status);
+        record.setUpdateTime(now);
+
+        if (status.isCompleted()) {
+            record.setEndTime(now);
+        } else if (TaskInstanceStatus.RUNNING.equals(status)) {
+            record.setStartTime(now);
+        }
+
+        this.instanceDao.updateByPrimaryKeySelective(record);
+    }
+
+    public void deleteByWorkflowInstanceId(long workflowInstanceId) {
+        TaskInstanceExample example = new TaskInstanceExample();
+        example.createCriteria().andWorkflowInstanceIdEqualTo(workflowInstanceId);
+        this.instanceDao.deleteByExample(example);
+    }
+
+    public List<TaskInstance> listAllDependencyWait() {
+        TaskInstanceExample example = new TaskInstanceExample();
+        example.createCriteria().andStatusEqualTo(TaskInstanceStatus.DEPENDENCY_WAIT);
+        return this.instanceDao.selectByExample(example);
+    }
+
+    public TaskInstance get(Long workflowInstanceId, long taskId) {
+        TaskInstanceExample example = new TaskInstanceExample();
+        example.createCriteria().andTaskIdEqualTo(taskId).andWorkflowInstanceIdEqualTo(workflowInstanceId);
+        List<TaskInstance> instances = this.instanceDao.selectByExample(example);
+        if (instances.size() != 0) {
+            return instances.get(0);
+        }
+        return null;
+
+    }
+
+    public List<TaskInstance> listByWorkflowInstanceId(long workflowInstanceId) {
+        TaskInstanceExample example = new TaskInstanceExample();
+        example.createCriteria().andWorkflowInstanceIdEqualTo(workflowInstanceId);
+        return this.instanceDao.selectByExample(example);
+    }
+
+    public List<TaskInstance> listByWorkflowInstanceId(Long instanceId, int pageNum, Paginator paginator) {
+        TaskInstanceExample example = new TaskInstanceExample();
+        example.createCriteria().andWorkflowInstanceIdEqualTo(instanceId);
+
+        int count = this.instanceDao.countByExample(example);
+
+        paginator.setItemsPerPage(Constants.PAGE_SIZE);
+        paginator.setItems(count);
+        paginator.setPage(pageNum);
+
+        int offset = paginator.getBeginIndex() - 1;
+        int limit = Constants.PAGE_SIZE;
+
+        RowBounds rowBounds = new RowBounds(offset, limit);
+
+        example.setOrderByClause("start_time DESC");
+
+        return this.instanceDao.selectByExampleWithRowbounds(example, rowBounds);
+    }
+
+    // (相同taskId,存在schedule，状态未完成的Inited和RUNNING)task
+    public boolean existUncompletedScheduled(long taskId) {
+        TaskInstanceExample example = new TaskInstanceExample();
+        example.createCriteria().andTaskIdEqualTo(taskId).andScheduleTimeIsNotNull().andStatusIn(TaskInstanceStatus.getUncompleted());
+
+        return this.instanceDao.countByExample(example) > 0;
+    }
+
+}

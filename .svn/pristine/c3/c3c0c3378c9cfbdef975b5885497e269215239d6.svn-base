@@ -1,0 +1,175 @@
+package com.yeahmobi.yscheduler.web.executor.impl;
+
+import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.yeahmobi.yscheduler.model.Attempt;
+import com.yeahmobi.yscheduler.model.Instance;
+import com.yeahmobi.yscheduler.model.Task;
+import com.yeahmobi.yscheduler.model.type.AttemptStatus;
+import com.yeahmobi.yscheduler.model.type.InstanceStatus;
+import com.yeahmobi.yscheduler.web.executor.AttemptExecutor;
+import com.yeahmobi.yscheduler.web.executor.InstanceExecutor;
+import com.yeahmobi.yscheduler.web.service.AttemptService;
+import com.yeahmobi.yscheduler.web.service.InstanceService;
+import com.yeahmobi.yscheduler.web.service.TaskService;
+
+@Service
+public class DefaultInstanceExecutor implements InstanceExecutor {
+
+    private static final Logger LOGGER      = LoggerFactory.getLogger(DefaultInstanceExecutor.class);
+
+    // ExecutorService executorService = Executors.newCachedThreadPool();
+
+    private Map<Long, Pair>     instanceMap = new ConcurrentHashMap<Long, Pair>();
+
+    @Autowired
+    private TaskService         taskService;
+
+    @Autowired
+    private InstanceService     instanceService;
+
+    @Autowired
+    private AttemptExecutor     attemptExecutor;
+
+    @Autowired
+    private AttemptService      attemptService;
+
+    private AtomicBoolean       closed      = new AtomicBoolean(false);
+
+    private ControllerThread    controllerThread;
+
+    @PostConstruct
+    public void init() {
+        // 加载RUNNING的instance
+        List<Instance> instanceList = this.instanceService.getAllUncompleteds();
+        for (Instance instance : instanceList) {
+            putPair(instance);
+        }
+
+        // 启动后台执行线程
+        this.controllerThread = new ControllerThread();
+        this.controllerThread.setName("instance-controller");
+        this.controllerThread.setDaemon(true);
+        this.controllerThread.start();
+    }
+
+    @PreDestroy
+    public void close() {
+        if (this.closed.compareAndSet(false, true)) {
+            this.controllerThread.interrupt();
+            // this.executorService.shutdownNow();
+        }
+    }
+
+    private void putPair(Instance instance) {
+        Long taskId = instance.getTaskId();
+        Task task = this.taskService.get(taskId);
+        Pair pair = new Pair(task, instance);
+        this.instanceMap.put(instance.getId(), pair);
+    }
+
+    public void submit(final Instance instance) {
+        // 创建instance，保存instance到数据库
+        this.instanceService.save(instance);
+        // 提交给map
+        putPair(instance);
+    }
+
+    /**
+     * 负责：<br>
+     * 1. 更新instance的状态<br>
+     * 2. 在attempt失败时决定是否重试
+     */
+    private class ControllerThread extends Thread {
+
+        @Override
+        public void run() {
+
+            while (!DefaultInstanceExecutor.this.closed.get()) {
+                Iterator<Entry<Long, Pair>> iterator = DefaultInstanceExecutor.this.instanceMap.entrySet().iterator();
+                while (iterator.hasNext() && !DefaultInstanceExecutor.this.closed.get()) {
+                    Entry<Long, Pair> entry = iterator.next();
+                    try {
+                        long instanceId = entry.getKey();
+                        Pair pair = entry.getValue();
+                        Task task = pair.task;
+                        Instance instance = pair.instance;
+
+                        // 若有正在运行的attempt，则不管。(此时instance状态仍是running，同时不需要重试，故不做任何事情)
+                        if (DefaultInstanceExecutor.this.attemptExecutor.isRunnig(instanceId)) {
+                            continue;
+                        }
+
+                        // 判断该instance的最新attempt的状态(访问db)
+                        // 1. 如果是成功
+                        // -- 更新instance状态为success(更新db)，从map中移除该instance
+                        // 2. 如果是失败或没有任何attempt
+                        // -- 则判断该instance的attempt数量(访问db)
+                        // ---(1)若未达到retryCount
+                        // ----- 创建attempt，提交给AttemptExecutor
+                        // ---(2)若达到retryCount
+                        // ----- 更新instance状态为failed(更新db)，从map中移除该instance
+                        Attempt attempt = DefaultInstanceExecutor.this.attemptService.getLastOne(instanceId);
+                        if ((attempt == null) || (attempt.getStatus() == AttemptStatus.FAILED)) {
+                            int count = DefaultInstanceExecutor.this.attemptService.count(instanceId);
+                            int retryTimes = task.getRetryTimes();
+                            if (count < (retryTimes + 1)) {
+                                Attempt attempt0 = new Attempt();
+                                attempt0.setStatus(AttemptStatus.RUNNING);
+                                attempt0.setAgentId(task.getAgentId());
+                                attempt0.setTaskId(task.getId());
+                                attempt0.setInstanceId(instance.getId());
+                                attempt0.setStartTime(new Date());
+                                DefaultInstanceExecutor.this.attemptExecutor.submit(attempt0);
+                            } else {
+                                DefaultInstanceExecutor.this.instanceService.updateStatus(instanceId,
+                                                                                          InstanceStatus.FAILED);
+                                DefaultInstanceExecutor.this.instanceMap.remove(instanceId);
+                            }
+                        } else if (attempt.getStatus() == AttemptStatus.SUCCESS) {
+                            DefaultInstanceExecutor.this.instanceService.updateStatus(instanceId,
+                                                                                      InstanceStatus.SUCCESS);
+                            DefaultInstanceExecutor.this.instanceMap.remove(instanceId);
+                        }
+                    } catch (RuntimeException e) {
+                        // log and continue
+                        LOGGER.error("Error when deel with instance, but controller thread will still go on.", e);
+                    }
+                }
+
+                try {
+                    TimeUnit.MILLISECONDS.sleep(100);
+                } catch (InterruptedException e) {
+                    // ignored
+                }
+            }
+        }
+    }
+
+    private static class Pair {
+
+        Task     task;
+        Instance instance;
+
+        public Pair(Task task, Instance instance) {
+            super();
+            this.task = task;
+            this.instance = instance;
+        }
+    }
+}
