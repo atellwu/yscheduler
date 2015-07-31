@@ -1,0 +1,60 @@
+<div class="page-header">
+	<h1>创建公共工作流</h1>
+</div>
+<div id="alertMessageDiv" style="text-align: center;"></div>
+<div class="tab-content well col-sm-10">
+	<form id="form" class="form-horizontal" onsubmit="return createTask(this);" action="${rc.contextPath}/common/create"
+		method="post" role="form">
+		<div class="row">
+			<div class="col-sm-12">
+				<div class="form-group">
+					<label class="col-sm-4 control-label no-padding-right" for="name"> 名称 </label>
+					<div class="col-sm-8">
+						<input type="text" name='name' class="field col-xs-10 col-sm-6" autocomplete="off" value="">
+					</div>
+				</div>
+				<div class="form-group">
+					<label class="col-sm-4 control-label no-padding-right" for="crontab"> 调度表达式 </label>
+					<div class="col-sm-8" id='crontab_div'>
+						<input type="text" id='crontab' name='crontab' class="field col-xs-10 col-sm-6" autocomplete="off" value="">
+					</div>
+				</div>
+				<div class="form-group">
+					<label class="col-sm-4 control-label no-padding-right" for="timeout"> 超时时间(单位:分钟) </label>
+					<div class="col-sm-8">
+						<input type="number" name='timeout' class="field col-xs-10 col-sm-6" autocomplete="off" value="60">
+					</div>
+				</div>
+				<div class="form-group">
+					<label class="col-sm-4 control-label no-padding-right" for="description"> 描述 </label>
+					<div class="col-sm-8">
+						<textarea name='description' class="field autosize-transition  col-xs-10 col-sm-6"></textarea>
+					</div>
+				</div>
+
+				<div class="form-group">
+					<label class="col-sm-4 control-label no-padding-right">启用调度</label>
+					<div class="col-sm-8">
+						<label> <input name="running" class="ace ace-checkbox-1" type="checkbox" checked="checked"> <span
+							class="lbl"></span>
+						</label>
+					</div>
+				</div>
+			</div>
+
+		</div>
+		<div class="row">
+			<div class="col-md-offset-5 col-md-9">
+				<button class="btn btn-info" type="submit" data-loading-text="提交中..">
+					<i class="icon-ok bigger-110"></i> 确定
+				</button>
+				<button id="cancelBtn" class="btn" type="button" onclick="window.location='${rc.contextPath}/common'">
+					<i class="icon-undo bigger-110"></i> 返回
+				</button>
+			</div>
+		</div>
+
+	</form>
+</div>
+
+

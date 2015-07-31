@@ -1,0 +1,54 @@
+<link href="${rc.contextPath}/assets/css/autocomplete.css"
+	rel="stylesheet" />
+<link href="${rc.contextPath}/assets/css/chosen.min.css"
+	rel="stylesheet" />
+<link href="${rc.contextPath}/static/css/custom.css" rel="stylesheet" />
+
+<script type="text/javascript"
+	src="${rc.contextPath}/assets/js/jquery.dataTables.min.js"></script>
+<script type="text/javascript"
+	src="${rc.contextPath}/assets/js/jquery.dataTables.bootstrap.js"></script>
+<script src="${rc.contextPath}/assets/js/jquery.autocomplete.js"
+	type="text/javascript"></script>
+<script src="${rc.contextPath}/assets/js/chosen.jquery.min.js"
+	type="text/javascript"></script>
+<script src="${rc.contextPath}/assets/js/bootbox.min.js"
+	type="text/javascript"></script>
+<script src="${rc.contextPath}/assets/js/jquery.validate.min.js"
+	type="text/javascript"></script>
+<script src="${rc.contextPath}/static/js/validate.js"
+	type="text/javascript"></script>
+
+<script type="text/javascript">
+	$("[rel=tooltip]").tooltip();
+
+	$(document).ready(function() {
+		$('#updateBtn').click(function(e) {
+			$('#updateBtn').button('loading');
+
+			$.ajax({
+				type : $('#form').attr('method'),
+				url : $('#form').attr('action'),
+				data : $('#form').serialize(),
+				dataType : "json",
+				success : function(data) {
+					$('#updateBtn').button('reset');
+					if (data.success == false) {
+						bootbox.alert({
+							message : data.notice,
+							title : "修改失败！"
+						});
+					} else {
+						bootbox.alert("修改成功！", function(result) {
+							window.location.href = '/profile';
+						});
+					}
+				},
+				error : function(data) {
+					app.httpError
+				}
+			});
+		});
+	});
+</script>
+

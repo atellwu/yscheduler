@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- dbunit用于初始化数据的文件，每个ut方法都会执行一遍 -->
+<!-- 默认从以下路径尝试找setup.xml文件，找不到会便停止往下找： -->
+<!-- 1. <packageName>/<className>.<methodName>-setup.xml -->
+<!-- 2. <packageName>/<className>-setup.xml -->
+<!-- 3. <packageName>/setup.xml -->
+<!-- 4. <className>.<methodName>-setup.xml -->
+<!-- 5. <className>.setup.xml -->
+<!-- 6. setup.xml -->
+<dataset>
+	<Schedule_progress id="1" current_schedule_time="2014-11-26 17:00:00" create_time="2014-11-26 17:00:00"
+		update_time="2014-11-26 17:38:00" />
+</dataset>

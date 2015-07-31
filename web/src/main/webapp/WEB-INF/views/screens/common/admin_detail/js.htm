@@ -1,0 +1,156 @@
+<link href="${rc.contextPath}/assets/css/autocomplete.css" rel="stylesheet" />
+<link href="${rc.contextPath}/assets/css/chosen.min.css" rel="stylesheet" />
+<link href="${rc.contextPath}/static/css/custom.css" rel="stylesheet" />
+
+<script type="text/javascript" src="${rc.contextPath}/assets/js/jquery.dataTables.min.js"></script>
+<script type="text/javascript" src="${rc.contextPath}/assets/js/jquery.dataTables.bootstrap.js"></script>
+<script src="${rc.contextPath}/assets/js/jquery.autocomplete.js" type="text/javascript"></script>
+<script src="${rc.contextPath}/assets/js/chosen.jquery.min.js" type="text/javascript"></script>
+<script src="${rc.contextPath}/assets/js/bootbox.min.js" type="text/javascript"></script>
+<script src="${rc.contextPath}/assets/js/jquery.validate.min.js" type="text/javascript"></script>
+<script src="${rc.contextPath}/static/js/validate.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+	function dyniframesize(down) {
+		var pTar = null;
+		if (document.getElementById) {
+			pTar = document.getElementById(down);
+		} else {
+			eval('pTar = ' + down + ';');
+		}
+		if (pTar && !window.opera) {
+			//begin resizing iframe 
+			pTar.style.display = "block"
+			if (pTar.contentDocument && pTar.contentDocument.body.offsetHeight) {
+				//ns6 syntax 
+				pTar.height = pTar.contentDocument.body.offsetHeight;
+			} else if (pTar.Document && pTar.Document.body.scrollHeight) {
+				//ie5+ syntax 
+				pTar.height = pTar.Document.body.scrollHeight;
+			}
+		}
+	}
+	var index = 100000;
+	function addTask() {
+		var html = $("#taskRow").html();
+		while( html.indexOf( "[index]" ) != -1 ) {
+			html = html.replace("[index]",index); 
+		}
+		$("#taskTable").append(html);
+		$(".chosen-select").chosen({});
+		index ++;
+	};
+	function removeTask(btn) {
+		$(btn).parent().parent().remove();
+	};
+
+	function getTopo(form) {
+		if ($('#updateBtn').text().trim() == "修改") {
+			$('#ifm').attr('src', '/topo?id=$!{workflow.id}&type=common_workflow');
+		} else {
+			form.attr('action', '${rc.contextPath}/topo?type=common_workflow');
+			form.attr('target', 'ifm');
+			updateTaskInner(form, null, null, null, true);
+		}
+	}
+
+	function updateTask() {
+		return updateTaskInner($('#form'), updateTaskDone, app.httpError, '${rc.contextPath}/common/edit',false);
+	}
+
+	var canSkip = $("input[name='canSkip']");
+	var concurrent = $("input[name='concurrent']");
+	var condition = $("input[name='condition']");
+	function updateDisabledInput() {
+		if (canSkip.prop('checked') == true) {
+			concurrent.prop('disabled', true);
+			condition.prop('disabled', true);
+		} else {
+			concurrent.prop('disabled', false);
+			if (concurrent.prop('checked') == true) {
+				condition.prop('disabled', true);
+			} else {
+				condition.prop('disabled', false);
+			}
+		}
+	}
+
+	function updateTaskInner(form, successFn, failFn, action, getTopo) {
+		var btn = $('#updateBtn');
+		if (btn.text().trim() == "修改") {
+			app.onCrontabTip();
+			btn.html("保存");
+			$('#cancelBtn').html("取消");
+			$('.field').removeAttr("readonly");
+			$("input[taskCondition]").removeAttr("disabled");
+			$('input[name="canSkip"]').removeAttr("disabled");
+			$(".btn_field").show();
+			$('select[name="taskId"]').prop('disabled', false).trigger("chosen:updated");
+			$('select[name="dependencyTaskId"]').prop('disabled', false).trigger("chosen:updated");
+			updateDisabledInput();
+
+		} else {
+			//遍历form，修改name，后缀添加i
+			try {
+				$.each($("#taskTable tr"), function(i, el) {
+					var tds = $(el).children("td");
+					$.each(tds, function(j, td) {
+						var input = $(td).children("input");
+						if (!(input.length > 0)) {
+							input = $(td).children("label").children("input");
+						}
+						if (!(input.length > 0)) {
+							input = $(td).children("select");
+						}
+						var name = input.attr("name");
+						if (name) {
+							//去掉下划线后面
+							var _index = name.indexOf('_');
+							if (_index != -1) {
+								name = name.substring(0, _index);
+							}
+							//添加下划线和序号
+							input.attr("name", name + '_' + i);
+						}
+					});
+				});
+			} catch (e) {
+				console.log(e);
+			}
+
+			if(getTopo){
+				form.submit();
+				return false;
+			}
+			$.ajax({
+				type : form.attr('method'),
+				url : action,
+				data : form.serialize(),
+				dataType : "json",
+				success : successFn,
+				error : failFn
+			});
+		}
+		return false;
+	};
+
+	function updateTaskDone(data) {
+		if (data.success == false) {
+			app.alertError(data.errorMsg);
+		} else {
+			window.location = window.contextPath + "/common";
+		}
+	};
+	$("[rel=tooltip]").tooltip();
+	$(document).ready(function() {
+		$(".chosen-select").chosen({});
+		$('textarea[class*=autosize]').autosize({append: "\n"});
+		canSkip.change(function(e){
+			updateDisabledInput();
+		});
+		concurrent.change(function(e){
+			updateDisabledInput();
+		});
+	});
+</script>
+

@@ -1,0 +1,21 @@
+Manifest-Version: 1.0
+Class-Path: scheduler.jar common.jar commons-codec-1.9.jar commons-htt
+ pclient-3.1.jar commons-logging-1.1.3.jar commons-io-2.4.jar velocity
+ -1.7.jar commons-collections-3.2.jar commons-lang-2.4.jar velocity-to
+ ols-view-1.3.jar model.jar mybatis-3.0.6.jar cglib-2.2.2.jar asm-3.3.
+ 1.jar mybatis-spring-1.0.1.jar spring-core-4.0.0.RELEASE.jar spring-t
+ x-4.0.0.RELEASE.jar spring-beans-4.0.0.RELEASE.jar spring-jdbc-3.0.5.
+ RELEASE.jar spring-context-4.0.0.RELEASE.jar spring-aop-4.0.0.RELEASE
+ .jar aopalliance-1.0.jar spring-expression-4.0.0.RELEASE.jar guava-18
+ .0.jar agent-framework.jar httpclient-4.3.5.jar httpcore-4.3.2.jar fa
+ stjson-1.1.42.jar slf4j-api-1.7.7.jar jcl-over-slf4j-1.7.7.jar logbac
+ k-classic-1.1.2.jar logback-core-1.1.2.jar commons-beanutils-1.9.2.ja
+ r commons-exec-1.2.jar commons-compress-1.9.jar ehcache-web-2.0.4.jar
+  ehcache-core-2.4.6.jar jsoup-1.7.1.jar httpmime-4.2.2.jar commons-di
+ gester-1.8.jar oro-2.0.8.jar spring-context-support-4.0.0.RELEASE.jar
+  spring-web-4.0.0.RELEASE.jar spring-webmvc-4.0.0.RELEASE.jar c3p0-0.
+ 9.1.2.jar mysql-connector-java-5.1.18.jar jackson-databind-2.4.3.jar 
+ jackson-annotations-2.4.0.jar jackson-core-2.4.3.jar gson-2.3.jar jet
+ ty-6.1.14.jar jetty-util-6.1.14.jar servlet-api-2.5-6.1.14.jar jsp-2.
+ 1-6.1.14.jar core-3.1.1.jar jsp-api-2.1-6.1.14.jar ant-1.6.5.jar
+

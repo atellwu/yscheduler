@@ -1,0 +1,179 @@
+<div id="alertMessageDiv" style="text-align: center;"></div>
+#if($!notice)
+<div id="alertContainer" class="container alert alert-danger">
+	<button type="button" class="close" data-dismiss="alert">&times;</button>
+	<strong>$notice</strong>
+</div>
+#end
+<div class="col-xs-10">
+	<form class="form-horizontal" id="form" action="${rc.contextPath}/task/update" method="post"  enctype="multipart/form-data"  role="form">
+		<input type="text" id="id" name="id" style="display: none" value="$!{task.id}">
+
+		<div class="form-group">
+			<label class="col-sm-3 control-label no-padding-right" for="name"> 任务名称 </label>
+			<div class="col-sm-9">
+				<input disabled type="text" name='name' class="field col-xs-10 col-sm-6" id="name" value="$!{task.name}">
+			</div>
+		</div>
+		<div class="form-group">
+			<label class="col-sm-3 control-label no-padding-right" for="owner">创建人</label>
+			<div class="col-sm-9">
+				<input disabled type="text" name="owner" class="field col-xs-10 col-sm-6" id="owner" value="$!{owner.name}">
+			</div>
+		</div>
+		<div class="form-group">
+			<label class="col-sm-3 control-label no-padding-right" for="type"> 任务类型 </label>
+			<div class="col-sm-9">
+				<select disabled name='type'   class="field col-xs-10 col-sm-6" id="form-field-select-1">
+					<option #if($task.type.id==1)selected= "" #end value="SHELL">SHELL</option>
+					<option #if($task.type.id==10)selected= "" #end value="HADOOP">HADOOP</option>
+					<option #if($task.type.id==20)selected= "" #end value="HTTP">HTTP</option>
+				</select> <input type="hidden" name="type" value="$!{task.type.id}">
+			</div>
+		</div>
+		#if(${task.type.id}==20)
+		<div class="form-group">
+			<label class="col-sm-3 control-label no-padding-right">触发url*</label>
+			<div class="col-sm-9">
+				<input disabled id="calloutUrl" class="field col-xs-10 col-sm-6" name="calloutUrl" type="text" value="$calloutUrl"
+					class="form-control" placeholder="例如 http://">
+			</div>
+		</div>
+		<div class="form-group">
+			<label class="col-sm-3 control-label no-padding-right">取消url</label>
+			<div class="col-sm-9">
+				<input disabled id="cancelUrl" class="field col-xs-10 col-sm-6" name="cancelUrl" type="text" value="$!cancelUrl"
+					class="form-control" placeholder="例如 http://">
+			</div>
+		</div>
+		<div class="form-group">
+			<label class="col-sm-3 control-label no-padding-right">是否需要回调</label>
+			<div class="col-sm-3">
+				<input disabled id="needCallback" class="field" name="needCallback" type="checkbox" #if($needCallback==
+					'true')checked="" #end>是
+			</div>
+		</div>
+		#else
+
+		<div class="form-group">
+			<label class="col-sm-3 control-label no-padding-right" for="command"> 调度命令 </label>
+			<div class="col-sm-9">
+				<input readonly type="text" name='command' class="field col-xs-10 col-sm-6" id="command" value="$!{task.command}"
+					autocomplete='off'> <span style="color: #bfbfbf; font-size: 12px; margin-left: 1px;"> <i
+					class="icon-info-sign"></i> 可以含多条命令，用分号“;”分开即可。但多条命令会导致任务执行时无法正常取消
+				</span>
+			</div>
+		</div>
+		
+		<div agent class="form-group">
+			<label for="type" class="col-sm-3 control-label no-padding-right">执行方式</label>
+			<div class="col-sm-9">
+				<input type="radio" disabled class="field" name="executeType" value="single" onchange="executetype_changed(this)" #if($task.agentId) checked #end>单台执行 <input
+					type="radio" disabled class="field" name="executeType" value="groups" onchange="executetype_changed(this)"  #if(!$task.agentId)checked #end>组内机器执行
+			</div>
+		</div>
+		<div id="selectAgent"  class="form-group" #if(!$task.agentId) style="display:none" #end>
+			<label for="agent" class="col-sm-3 control-label no-padding-right" for="agent">执行机器</label>
+			<div class="col-sm-9">
+				<select disabled id="agent" name="agent" class="field single chosen-select" data-placeholder="选择执行作业的机器IP">
+					#foreach($agent in $agents)
+					<option value="$agent.id" #if($task.agentId== $agent.id)selected #end>${agent.name}(${agent.ip})</option> #end
+				</select>
+			</div>
+		</div>
+		
+		<div class="form-group">
+			<label for="file" class="col-sm-3 control-label no-padding-right" >上传作业</label>
+			<div class="col-sm-9 input-append">
+				<input disabled type="file" class="field" name="fileUpload" /><span style="color: #bfbfbf; font-size: 12px; margin-left: 1px;">
+									<i class="icon-info-sign"></i> 请选择后缀名为.zip或.sh的文件上传，大小不超过100M!
+								</span>
+				#if($task.attachment)<br/><label id="removeAttachmentLabel">已上传附件$task.attachment<span id="removeAttachment" style="display:none">,若要删除该附件请点击<a onclick="removeAttachment();">这里</a></span></label>#end
+				<input type="hidden" name="nameSpace" value="task" /> 
+				<input type="hidden" name="key" id="key"  value="$!{task.name}"/>
+				<input type="hidden" name="taskId" id="taskId" value="$!{task.id}"/>
+			</div>
+		</div>
+		#end
+		
+		<div class="form-group">
+			<label class="col-sm-3 control-label no-padding-right" for="description"> 任务描述 </label>
+
+			<div class="col-sm-9">
+				<textarea readonly name='description' class="field autosize-transition col-xs-10 col-sm-6"
+					style="overflow: hidden; word-wrap: break-word; resize: horizontal; height: 52px;" autocomplete='off'>$!{task.description}</textarea>
+
+			</div>
+		</div>
+		<div class="form-group">
+			<label class="col-sm-3 control-label no-padding-right" for="timeout"> 超时时间(单位:分钟) </label>
+			<div class="col-sm-9">
+				<input readonly type="number" name='timeout' class="field col-xs-2 col-sm-1" id="timeout" value="$!{task.timeout}"
+					autocomplete='off'>
+			</div>
+		</div>
+		<div class="form-group">
+			<label class="col-sm-3 control-label no-padding-right" for="retryTimes"> 失败自动重试次数 </label>
+			<div class="col-sm-9">
+				<input readonly type="number" name='retryTimes' class="field col-xs-2 col-sm-1" id="retryTimes"
+					value="$!{task.retryTimes}" autocomplete='off'>
+			</div>
+		</div>
+		<div class="form-group">
+			<label for="schedule" class="col-sm-3 control-label no-padding-right">调度</label>
+			<div class="col-sm-9">
+				<input disabled class="field" type="radio" name="schedule" value="clock" #if("$!{task.status}"==
+					"OPEN") checked #end onchange="schedule_changed()">定时调度 <input disabled class="field" type="radio"
+					name="schedule" value="others" #if("$!{task.status}"== "PAUSED") checked #end onchange="schedule_changed()">暂停调度
+			</div>
+		</div>
+		<div id='schedule' #if("$!{task.status}"== "PAUSED")style='display: none' #end>
+			<div class="form-group">
+				<label class="col-sm-3 control-label no-padding-right" for="crontab"> 调度表达式 </label>
+				<div class="col-sm-9" id='crontab_div'>
+					<input readonly type="text" name='crontab' class="field col-xs-10 col-sm-6" id="crontab" value="$!{task.crontab}"
+						autocomplete='off'>
+				</div>
+			</div>
+
+			<div class="form-group">
+				<label for="canSkip" class="col-sm-3 control-label no-padding-right">允许跳过</label>
+				<div class="col-sm-9">
+					<label><input disabled="disabled" name="canSkip" class="ace ace-checkbox-1" type="checkbox"
+						#if($task.canSkip)checked="checked" #end value="true" autocomplete='off'> <span class="lbl"></span> </label>
+				</div>
+			</div>
+
+			<div class="form-group">
+				<label for="concurrent" class="col-sm-3 control-label no-padding-right">允许并行</label>
+				<div class="col-sm-9">
+					<label><input disabled="disabled" name="concurrent" class="ace ace-checkbox-1" type="checkbox"
+						#if($task.lastStatusDependency.id== 1)checked="checked" #end value="true"> <span class="lbl"></span> </label>
+				</div>
+			</div>
+			<div class="form-group">
+				<label for="condition" class="col-sm-3 control-label no-padding-right">触发条件</label>
+				<div class="col-sm-9">
+					<label><input disabled="disabled" name="condition" class="ace ace-checkbox-1" type="radio"
+						#if($task.lastStatusDependency.id== 20) checked="checked" #end value="completed"> <span class="lbl"></span>
+						完成即触发</label> <label><input disabled="disabled" #if($task.lastStatusDependency.id== 10) checked="checked" #end
+						name="condition" class="ace ace-checkbox-1" type="radio" value="success"> <span class="lbl"></span>成功才触发</label>
+				</div>
+			</div>
+
+		</div>
+
+		<div class="clearfix form-actions">
+			<div class="col-md-offset-5 col-md-9">
+				#if($canModify)
+				<button id="updateBtn" class="btn btn-info" type="button" data-loading-text="提交中..">
+					<i class="icon-ok bigger-110"></i>修改
+				</button>
+				#end &nbsp; &nbsp; &nbsp;
+				<button id="cancelBtn" class="btn" type="button" onclick="window.location='${rc.contextPath}/task'">
+					<i class="icon-undo bigger-110"></i> 返回
+				</button>
+			</div>
+		</div>
+	</form>
+</div>
