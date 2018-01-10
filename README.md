@@ -19,7 +19,7 @@ storage工程： 用于存储附件
 web工程：提供任务管理，权限管理等
 
 ## 部署架构图
-
+![](https://github.com/atellwu/yscheduler/blob/master/arch.jpg?raw=true)
 
 
 ## 项目依赖
@@ -49,7 +49,7 @@ web工程：提供任务管理，权限管理等
 1. 在agent管理菜单里，添加agent，输入“名称” “ip” “分组”
 2. 让agent所在的业务方，讲agent包下载后部署到agent机器上，启动起来。
     下载地址：http://qa.yscheduler.dy/download/agent.zip
-    部署方法： 
+    部署方法：
       (1)解压到指定目录：unzip agent.zip -p /dianyi/app/
       (2)启动：/dianyi/app/yagent/bin/jetty.sh start
 
