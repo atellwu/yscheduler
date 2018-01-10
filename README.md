@@ -8,15 +8,15 @@
 6. 支持cron表达式，更加灵活，azkaban是配置起始时间+周期
 
 ## 代码结构说明：
-agent工程：agent模块
-agent-framework工程：agent模块的基础框架，被agent模块依赖使用
-common工程：整个项目的基础类
-deploy工程：用于打包的工程
-model工程：整个项目的类模型
-monitor工程： 用于监控
-scheduler工程： 调度模块，负责触发任务，实时跟踪任务的状态
-storage工程： 用于存储附件
-web工程：提供任务管理，权限管理等
+ * agent工程：agent模块  
+ * agent-framework工程：agent模块的基础框架，被agent模块依赖使用
+ * common工程：整个项目的基础类
+ * deploy工程：用于打包的工程
+ * model工程：整个项目的类模型
+ * monitor工程： 用于监控
+ * scheduler工程： 调度模块，负责触发任务，实时跟踪任务的状态
+ * storage工程： 用于存储附件
+ * web工程：提供任务管理，权限管理等
 
 ## 部署架构图
 ![](https://github.com/atellwu/yscheduler/blob/master/arch.jpg?raw=true)
@@ -26,32 +26,31 @@ web工程：提供任务管理，权限管理等
 单元测试代码依赖了yunit，可从这里下载到本地再install：https://github.com/atellwu/yunit
 
 ## 打包命令：
-(1) 生成eclipse工程：  mvn eclipse:eclipse
-(2) 打包： mvn clean package，最终会在deploy/target下生成相应的包，如：
-   a.  yagent-0.6.1.zip   agent模块，用于部署到相应的负责执行的机器，解压后执行 bin/jetty.sh restart 即可启动
-   b.  yscheduler-monitor-0.6.1.zip   monitor模块，负责通过监控数据库检测任务的执行是否正常，解压后执行 bin/start.sh 启动
-   c.  yscheduler-storage-0.6.1.zip  附件存储模块，再创建Task时，界面可以上传附件，此模块就是用于存储附件的服务，是个war包，解压后放到jetty或tomcat的webapps目录即可。
-   d.  yscheduler-web-0.6.1.zip web模块，是个war包，解压后放到jetty或tomcat的webapps目录即可。
+ *  生成eclipse工程：  mvn eclipse:eclipse
+ *  打包： mvn clean package，最终会在deploy/target下生成相应的包，如：
+    * yagent-0.6.1.zip: agent模块，用于部署到相应的负责执行的机器，解压后执行 bin/jetty.sh restart 即可启动
+    *  yscheduler-monitor-0.6.1.zip: monitor模块，负责通过监控数据库检测任务的执行是否正常，解压后执行 bin/start.sh 启动
+    *  yscheduler-storage-0.6.1.zip:  附件存储模块，再创建Task时，界面可以上传附件，此模块就是用于存储附件的服务，是个war包，解压后放到jetty或tomcat的webapps目录即可。
+    *  yscheduler-web-0.6.1.zip: web模块，是个war包，解压后放到jetty或tomcat的webapps目录即可。
 
 ## 安装部署：
-1.agent模块部署：
-  解压到指定目录：unzip yagent-$VERSION.zip -p /dianyi/app/
-  启动：/dianyi/app/yagent/bin/jetty.sh start
-2.web模块部署：
-  解压到指定目录：unzip yscheduler-web-$VERSION.zip -d /dianyi/app/ue.yscheduler.dy/webapps/
-    启动：/etc/init.d/resin restart
-3.storage模块：
-  解压到指定目录：unzip yagent-$VERSION.zip -p /dianyi/app/
-  启动：/dianyi/app/yagent/bin/jetty.sh start
+ * agent模块部署：
+   * 解压到指定目录：unzip yagent-$VERSION.zip -p /dianyi/app/  
+   * 启动：/dianyi/app/yagent/bin/jetty.sh start
+ * web模块部署：
+   * 解压到指定目录：unzip yscheduler-web-$VERSION.zip -d /dianyi/app/ue.yscheduler.dy/webapps/
+   *  启动：/etc/init.d/resin restart
+ * storage模块：
+   * 解压到指定目录：unzip yagent-$VERSION.zip -p /dianyi/app/
+   * 启动：/dianyi/app/yagent/bin/jetty.sh start
 
 
 ## 添加一台agent的步骤：
-1. 在agent管理菜单里，添加agent，输入“名称” “ip” “分组”
-2. 让agent所在的业务方，讲agent包下载后部署到agent机器上，启动起来。
-    下载地址：http://qa.yscheduler.dy/download/agent.zip
-    部署方法：
-      (1)解压到指定目录：unzip agent.zip -p /dianyi/app/
-      (2)启动：/dianyi/app/yagent/bin/jetty.sh start
+ * 在agent管理菜单里，添加agent，输入“名称” “ip” “分组”
+ * 让agent所在的业务方，将agent包下载后部署到agent机器上，启动起来。
+ * 部署方法：
+   * 解压到指定目录：unzip agent.zip -p /dianyi/app/
+   * 启动：/dianyi/app/yagent/bin/jetty.sh start
 
 ## 管理员升级agent机器的方法：
 当agent有代码更新后，需要让已经安装agent的机器升级，可以使用此方法。
